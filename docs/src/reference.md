@@ -1,3 +1,3 @@
 ```@autodocs
-Modules = [PlotlyLightLite]
+Modules = [BinderPlots]
 ```
