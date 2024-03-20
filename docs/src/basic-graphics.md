@@ -69,7 +69,7 @@ For line plots, as created by this usage, the supported key words include
     For the first plot, the plotting command may need to be re-run if the underlying JavasScript libraries are loaded out of order. This may be the case with the `Jupyter` environment.
 
 
-### `plot(xs, ys)` and `plot(pts)`
+### `plot(xs, ys, [zs])` and `plot(pts)`
 
 The points to plot may be specified directly. Points can be given as ``\{(x_1, y_1), (x_2,y_2), \dots, (x_n, y_n)\}`` or as two vectors ``(x_1, x_2, \dots, x_n)`` and ``(y_1, y_2, \dots, y_n)``. When the latter, they must be of equal length, as internally they are paired off.
 
@@ -90,6 +90,11 @@ to_documenter(current())           # hide
 ```
 
 At times it is more convenient to generate pairs of points. In the above example, `g` returns ``(x,y)`` pairs. Containers of points can be plotted directly, as just shown.
+
+The `plot(xs, ys)` function simply connects the points
+``(x_1,y_1), (x_2,y_2), \dots``  sequentially with lines in a dot-to-dot manner (the `lineshape` argument can modify this). If values in `y` are non finite, then a break in the dot-to-dot graph is made.
+
+Use `plot(xs, ys, zs)` for line plots in 3 dimensions, which is illustrated in a different section.
 
 
 
@@ -116,14 +121,6 @@ As a convenience, to plot two or more traces in a graphic, a vector of functions
 
 The `Plots` keyword `line` arguments are recycled. For more control, using `plot!`, as above.
 
-### `plot(xs, ys, [zs])`.
-
-The `plot(xs, ys)` function simply connects the points
-``(x_1,y_1), (x_2,y_2), \dots``  sequentially with lines in a dot-to-dot manner (the `lineshape` argument can modify this). If values in `y` are non finite, then a break in the dot-to-dot graph is made.
-
-When `plot` is passed a  function in the first argument, the `x`-`y` values are created by `xs = unzip(f, a, b)` which uses an adaptive algorithm from `PlotUtils`; the values `x=xs` and `y=f.(xs)` are used.
-
-Use `plot(xs, ys, zs)` for line plots in 3 dimensions, which is illustrated in a different section.
 
 ### `plot(f::Function, g::Function, a, b)` or `plot(fs::Tuple, a, b)`
 
@@ -255,19 +252,19 @@ Some keywords chosen to mirror `Plots.jl` are:
 
 | Argument | Used by | Notes |
 |:---------|:--------|:------|
-| `width`, `height` | new plot calls | set figure size, cf. `size!` |
+| `size=(width=..., height=...)` | new plot calls | set figure size, cf. `size!` with named tuple; alias `windowsize` |
 | `xlims`, `ylims`  | new plot calls | set figure boundaries, cf `xlims!`, `ylims!`, `extrema` |
 | `legend`          | new plot calls | set or disable legend |
 |`aspect_ratio`     | new plot calls | set to `:equal` for equal `x`-`y` (and `z`) axes |
 |`label`	    	| `plot`, `plot!`| set with a name for trace in legend |
-|`linecolor`		| `plot`, `plot!`| set with a color, alias `lc` |
-|`linewidth`		| `plot`, `plot!`| set with an integer, aliases `width`, `lw` |
-|`linestyle`		| `plot`, `plot!`| set with `"solid"`, `"dot"`, `"dash"`, `"dotdash"`, ...; aliases `style`, `ls` |
-|`lineshape`		| `plot`, `plot!`| set with `"linear"`, `"hv"`, `"vh"`, `"hvh"`, `"vhv"`, `"spline"` |
+|`linecolor`		| `plot`, `plot!`| set with a color; alias `lc` |
+|`linewidth`		| `plot`, `plot!`| set with an integer; aliases `lw`, `width` |
+|`linestyle`		| `plot`, `plot!`| set with `"solid"`, `"dot"`, `"dash"`, `"dotdash"`, [...](https://plotly.com/javascript/reference/#scatter-line-dash); aliases `style`, `ls` |
+|`lineshape`		| `plot`, `plot!`| set with `"linear"`, `"hv"`, `"vh"`, `"hvh"`, `"vhv"`, `"spline"`; from [plotly](https://plotly.com/javascript/reference/#scatter-line-shape) |
 |`markershape`		| `scatter`, `scatter!` | set with `"diamond"`, `"circle"`, ...; alias `shape` |
-|`markersize`		| `scatter`, `scatter!` | set with integer, alias `ms` |
-|`markercolor`		| `scatter`, `scatter!` | set with color, alias `mc` |
-|`fillcolor`        | shapes                | interior color of a 2D shape, alias `fc` |
+|`markersize`		| `scatter`, `scatter!` | set with integer; alias `ms` |
+|`markercolor`		| `scatter`, `scatter!` | set with color; alias `mc` |
+|`fillcolor`        | shapes                | interior color of a 2D shape; alias `fc` |
 |`color`			| `annotate!` | set with color |
 |`family`			| `annotate!` | set with string (font family) |
 |`pointsize`		| `annotate!` | set with integer |

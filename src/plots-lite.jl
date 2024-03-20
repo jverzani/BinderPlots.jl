@@ -15,8 +15,9 @@ Not typically needed, as it is implicit in most mutating calls, though may be co
 current() = current_plot[]
 
 # make a new plot by calling `PlotlyLight.Plot`
+# doesn't consume
 function _new_plot(;
-                   width=800, height=600,
+                   windowsize=(width=800, height=600), size=windowsize,
                    xlim=nothing, xlims=xlim,
                    ylim=nothing, ylims=ylim,
                    legend = nothing,
@@ -32,6 +33,8 @@ function _new_plot(;
         first_plot[] = false
     end
 
+    width = get(size, :width, nothing)
+    height = get(size, :height, nothing)
     size!(p, width=width, height=height)
     xlims!(p, xlims)
     ylims!(p, ylims)
@@ -42,6 +45,7 @@ function _new_plot(;
 
     p
 end
+
 
 # plot attributes
 
@@ -155,11 +159,11 @@ function _linestyle!(cfg::Config;
                      style=nothing, ls=style, linestyle = ls, # solid, dot, dashdot,
                      lineshape = nothing,
                      kwargs...)
+
     _merge!(cfg; color=linecolor, width=linewidth, dash=linestyle,
             shape=lineshape)
     kwargs
 end
-
 
 function _markerstyle!(cfg::Config; # .marker
                        shape = nothing, markershape = shape,
