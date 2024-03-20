@@ -1,0 +1,13 @@
+name = "BinderPlots"
+uuid = "5e41213d-62ae-4ae0-a5b0-867e743d03c0"
+authors = ["jverzani <jverzani@gmail.com> and contributors"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
