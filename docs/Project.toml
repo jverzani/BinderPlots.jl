@@ -1,3 +1,6 @@
 [deps]
 BinderPlots = "5e41213d-62ae-4ae0-a5b0-867e743d03c0"
+Contour = "d38c429a-6771-53c6-b99e-75d170b6e991"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+PlotlyDocumenter = "9b90f1cd-2639-4507-8b17-2fbe371ceceb"
