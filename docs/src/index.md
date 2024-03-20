@@ -4,7 +4,7 @@ CurrentModule = BinderPlots
 
 # BinderPlots
 
-Documentation for [BinderPlots](https://github.com/jverzani/BinderPlots.jl), a simple plotting package for resource-constrained enviroments using `PlotlyLight.jl` to render graphics described with in an interface inspreded by `Plots.jl`.
+Documentation for [BinderPlots](https://github.com/jverzani/BinderPlots.jl), a simple plotting package for resource-constrained environments using `PlotlyLight.jl` to render graphics described with in an interface inspreded by `Plots.jl`.
 
 * [Plotly](https://plotly.com/) is a JavaScript library for plotting that is widely used and has supported interfaces for `Python`, `R`, and `Julia` (through `PlotlyJS`).
 * [PlotlyLight](https://github.com/JuliaComputing/PlotlyLight.jl) is a very lightweight package to create `Plotly` graphs using the JavaScript interface. The JSON structures are readily created using the clever `Config` constructor on the `Julia` side.
