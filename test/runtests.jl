@@ -16,7 +16,7 @@ using Test
     xlims!(p, (1,2))
     ylims!(p, (0, 1))
     title!(p, "plot of u")
-    annotate!(p, ((3/2, 1/2, "A"),), pointsize=20)
+    annotate!(p, ((3/2, 1/2, text("A", pointsize=20)),))
 
     @test isa(p, Plot)
 
