@@ -34,10 +34,7 @@ function _new_plot(;
     end
 
     # size is specified through a keyed object
-    width = get(size, :width, nothing)
-    height = get(size, :height, nothing)
-
-    size!(p, width=width, height=height)
+    size!(p, size)
     xlims!(p, xlims)
     ylims!(p, ylims)
 
@@ -119,6 +116,16 @@ function size!(p::Plot; width=nothing, height=nothing)
     p
 end
 size!(;width=nothing, height=nothing) = size!(current_plot[]; width, height)
+
+size!(s) = size!(current_plot[], size)
+size!(p::Plot, ::Nothing) = p
+function size!(p::Plot, s)
+    width = get(s, :width, nothing)
+    height = get(s, :height, nothing)
+    size!(p; width, height)
+end
+
+
 
 "`xlims!(p, lims)` set `x` limits of plot"
 function xlims!(p::Plot, lims)
