@@ -17,7 +17,7 @@ current() = current_plot[]
 # make a new plot by calling `PlotlyLight.Plot`
 # doesn't consume
 function _new_plot(;
-                   windowsize=(width=800, height=600), size=windowsize,
+                   windowsize=nothing, size=windowsize, # named tuple (width=, height=)
                    xlim=nothing, xlims=xlim,
                    ylim=nothing, ylims=ylim,
                    legend = nothing,
@@ -33,8 +33,10 @@ function _new_plot(;
         first_plot[] = false
     end
 
+    # size is specified through a keyed object
     width = get(size, :width, nothing)
     height = get(size, :height, nothing)
+
     size!(p, width=width, height=height)
     xlims!(p, xlims)
     ylims!(p, ylims)
