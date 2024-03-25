@@ -265,10 +265,10 @@ Some keywords chosen to mirror `Plots.jl` are:
 |`markersize`		| `scatter`, `scatter!` | set with integer; alias `ms` |
 |`markercolor`		| `scatter`, `scatter!` | set with color; alias `mc` |
 |`fillcolor`        | shapes                | interior color of a 2D shape; alias `fc` |
-|`color`			| `annotate!` | set with color |
+|`color`			| `annotate!` | set with color argument of `text`  |
 |`family`			| `annotate!` | set with string (font family) |
 |`pointsize`		| `annotate!` | set with integer |
-|`rotation`        	| `annotate!` | set with angle, degrees  |
+|`rotation`        	| `annotate!` | set with angle, degrees, real  |
 |`center`		   	| new ``3``d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
 |`up`				| new ``3``d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
 |`eye`				| new ``3``d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
