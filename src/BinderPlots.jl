@@ -110,10 +110,14 @@ export surface, surface!, wireframe, wireframe!
 export implicit_plot, implicit_plot!
 export quiver, quiver!, arrow, arrow!
 export annotate, annotate!, text, title!, size!, legend!
-export xlabel!, ylabel!, xlims!, ylims!, xaxis!, yaxis!
+export xlabel!, ylabel!, zlabel!
+export xlims!, ylims!, zlims!
+export xticks!, yticks!, zticks!
+export xaxis!, yaxis!, zaxis!
 export rect!, circle!, hline!, vline!
 export ★, ★!, ziptie, ziptie!
 export parallelogram, parallelogram!, circ3d, circ3d!, skirt, skirt!
+export Shape, Shape!
 export current
 
 export arrows, arrows!, poly, poly!, band, band!, hspan!, vspan!, ablines!, image!

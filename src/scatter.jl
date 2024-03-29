@@ -56,3 +56,6 @@ end
 scatter(pts; kwargs...) = scatter(unzip(pts)...; kwargs...)
 scatter!(pts; kwargs...) = scatter!(current_plot[], pts; kwargs...)
 scatter!(p::Plot, pts; kwargs...) = scatter!(p, unzip(pts)...; kwargs...)
+
+
+## zcolor argument

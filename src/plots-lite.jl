@@ -20,6 +20,8 @@ function _new_plot(;
                    windowsize=nothing, size=windowsize, # named tuple (width=, height=)
                    xlim=nothing, xlims=xlim,
                    ylim=nothing, ylims=ylim,
+                   xticks=nothing, yticks=nothing,zticks=nothing,
+                   xlabel=nothing, ylabel=nothing,zlabel=nothing,
                    legend = nothing,
                    aspect_ratio=nothing,
                    kwargs...)
@@ -37,6 +39,16 @@ function _new_plot(;
     size!(p, size)
     xlims!(p, xlims)
     ylims!(p, ylims)
+
+    # ticks
+    xticks!(p, xticks)
+    yticks!(p, yticks)
+    zticks!(p, zticks)
+
+    # labels
+    xlabel!(p, xlabel)
+    ylabel!(p, ylabel)
+    zlabel!(p, zlabel)
 
     # layout
     legend!(p, legend)
@@ -71,6 +83,23 @@ ylabel!(txt) = ylabel!(current_plot[], txt)
 zlabel!(p::Plot, txt) = (p.layout.zaxis.title=txt;p)
 zlabel!(txt) = zlabel!(current_plot[], txt)
 
+# ticks is values not (values, labels), as with Plots; use ticklabels for that
+xticks!(p::Plot, ticks=nothing; ticklabels=nothing, showticklabels=nothing ) =
+    xaxis!(;ticks, ticklabels, showticklabels)
+xticks!(p::Plot, ::Nothing; kwargs...) = p
+xticks!(ticks; kwargs...) = xticks!(current_plot[], ticks; kwargs...)
+
+yticks!(p::Plot, ticks=nothing; ticklabels=nothing, showticklabels=nothing ) =
+    yaxis!(;ticks, ticklabels, showticklabels)
+yticks!(p::Plot, ::Nothing; kwargs...) = p
+yticks!(ticks; kwargs...) = yticks!(current_plot[], ticks; kwargs...)
+
+zticks!(p::Plot, ticks=nothing; ticklabels=nothing, showticklabels=nothing ) =
+    zaxis!(;ticks, ticklabels, showticklabels)
+zticks!(p::Plot, ::Nothing; kwargs...) = p
+zticks!(ticks; kwargs...) = zticks!(current_plot[], ticks; kwargs...)
+
+
 """
     xaxis!([p::Plot]; kwargs...)
     yaxis!([p::Plot]; kwargs...)
@@ -81,29 +110,37 @@ Adjust ticks on chart.
 * ticklabels: optional labels (same length as `ticks`)
 * showticklabels::Bool
 """
-xaxis!(p::Plot; kwargs...) = (_merge!(p.layout.xaxis, _axis(;kwargs...)); p)
+xaxis!(p::Plot; kwargs...) = (_axisstyle!(p.layout.xaxis; kwargs...); p)
 xaxis!(;kwargs...) = xaxis!(current_plot[]; kwargs...)
-yaxis!(p::Plot; kwargs...) = (_merge!(p.layout.yaxis, _axis(;kwargs...)); p)
+yaxis!(p::Plot; kwargs...) = (_axisstyle!(p.layout.yaxis; kwargs...); p)
 yaxis!(;kwargs...) = yaxis!(current_plot[]; kwargs...)
-zaxis!(p::Plot; kwargs...) = (_merge!(p.layout.zaxis, _axis(;kwargs...)); p)
+zaxis!(p::Plot; kwargs...) = (_axisstyle!(p.layout.zaxis; kwargs...); p)
 zaxis!(;kwargs...) = zaxis!(current_plot[]; kwargs...)
+
 # https://plotly.com/javascript/tick-formatting/ .. more to do
-function _axis(;ticks=nothing, ticktext=nothing, showticklabels=nothing,
-               autotick=nothing, showgrid=nothing, zeroline=nothing,
-               kwargs...
-                )
-    d = Config()
-    if !isnothing(ticks)
-        if isa(ticks, AbstractRange)
-            tickvals, tick0, dtick, nticks = nothing, first(ticks), step(ticks), length(ticks)
-        else
-            tickvals, tick0, dtick, nticks = ticks, nothing, nothing, nothing
+# Configure ticks and other axis properties
+# to label ticks pass in values for ticks and matching length ticktext
+function _axisstyle!(cfg;
+                     ticks=nothing,
+                     tickvals = nothing,
+                     ticklabels=nothing, ticktext=ticklabels,
+                     showticklabels=nothing,
+                     autotick=nothing,
+                     showaxis=nothing, showgrid=showaxis,
+                     zeroline=nothing,
+                     kwargs...)
+
+    if isnothing(tickvals)
+        if !isnothing(ticks)
+            tickvals = isa(ticks, AbstractRange) ? collect(ticks) : ticks
         end
-        _merge!(d; tickvals, tick0, dtick, nticks)
     end
-    _merge!(d; ticktext, showticklabels, autotick, showgrid, zeroline)
-    d
+    _merge!(cfg; tickvals, ticktext, showticklabels, autotick, showgrid, zeroline)
+
+    kwargs
 end
+
+
 
 "`legend!([p::Plot], legend::Bool)` hide/show legend"
 legend!(p::Plot, legend=nothing) = !isnothing(legend) && (p.layout.showlegend = legend)
@@ -134,6 +171,8 @@ function xlims!(p::Plot, lims)
 end
 xlims!(p::Plot, ::Nothing) = p
 xlims!(lims) = xlims!(current_plot[], lims)
+xlims!(a::Real, b::Real) = xlims!(current_plot[], (a,b))
+xlims!(p::Plot, a::Real, b::Real) = xlims!(p, (a,b))
 
 "`ylims!(p, lims)` set `y` limits of plot"
 function ylims!(p::Plot, lims)
@@ -142,6 +181,8 @@ function ylims!(p::Plot, lims)
 end
 ylims!(p::Plot, ::Nothing) = p
 ylims!(lims) = ylims!(current_plot[], lims)
+ylims!(a::Real, b::Real) = ylims!(current_plot[], (a,b))
+ylims!(p::Plot, a::Real, b::Real) = ylims!(p, (a,b))
 
 "`zlims!(p, lims)` set `z` limits of plot"
 function zlims!(p::Plot, lims)
@@ -150,6 +191,8 @@ function zlims!(p::Plot, lims)
 end
 zlims!(p::Plot, ::Nothing) = p
 zlims!(lims) = zlims!(current_plot[], lims)
+zlims!(a::Real, b::Real) = zlims!(current_plot[], (a,b))
+zlims!(p::Plot, a::Real, b::Real) = zlims!(p, (a,b))
 
 "`scrollzoom!([p], x::Bool)` turn on/off scrolling to zoom"
 scroll_zoom!(p::Plot,x::Bool) = p.config.scrollZoom = x
