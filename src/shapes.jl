@@ -215,7 +215,8 @@ function poly!(p::Plot,points;
     p
 end
 
-
+const Shape = poly
+const Shape! = poly!
 
 """
     circle([p::Plot], x0, x1, y0, y1; kwargs...)

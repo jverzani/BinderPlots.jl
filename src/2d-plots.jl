@@ -76,6 +76,9 @@ function contour!(p::Plot, x, y, z;
     p
 end
 
+## contourf(...) --> countour(...; fill=true)
+
+
 """
     implicit_plot(f; xlims=(-5,5), ylims=(-5,5), legend=false, linewidth=2, kwargs...)
     implicit_plot!([p::Plot], f; kwargs...)
