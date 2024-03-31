@@ -105,11 +105,11 @@ include("layout.jl")
 export Plot, Config # but not Preset, preset, plot
 
 export plot, plot!, scatter, scatter!
-export contour, contour!, heatmap, heatmap!
+export contour, contour!, contourf, contourf!, heatmap, heatmap!
 export surface, surface!, wireframe, wireframe!
 export implicit_plot, implicit_plot!
 export quiver, quiver!, arrow, arrow!
-export annotate, annotate!, text, title!, size!, legend!
+export annotate, annotate!, text, font, title!, size!, legend!
 export xlabel!, ylabel!, zlabel!
 export xlims!, ylims!, zlims!
 export xticks!, yticks!, zticks!

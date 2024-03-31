@@ -1,7 +1,7 @@
 name = "BinderPlots"
 uuid = "5e41213d-62ae-4ae0-a5b0-867e743d03c0"
 authors = ["jverzani <jverzani@gmail.com> and contributors"]
-version = "1.0.1"
+version = "1.0.2"
 
 [deps]
 PlotUtils = "995b91a9-d308-5afd-9ec6-746e21dbc043"

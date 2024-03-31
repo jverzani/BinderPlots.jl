@@ -194,7 +194,7 @@ poly(f.(repeat([1,2],5), range(0, 2pi-pi/5, length=10)))
 ```
 """
 function poly(points; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     poly!(p, points; kwargs...)
 end
 poly!(points; kwargs...) = poly!(current_plot[], points; kwargs...)
@@ -265,7 +265,7 @@ band(x -> -0.2 * sin(x) - 0.25, x -> 0.2 * sin(x) + 0.25,
 ```
 """
 function band(lower, upper, args...; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     band!(p, lower, upper, args...; kwargs...)
 end
 band!(lower::Function, upper::Function, a,b,n=251; kwargs...) =

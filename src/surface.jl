@@ -85,7 +85,7 @@ plot!(unzip(γ.(xs))...; linewidth=3)
 ```
 """
 function surface(x, y, z; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     surface!(p, x, y, z; kwargs...)
 end
 
@@ -148,7 +148,7 @@ wireframe!(xs, ys, f)
 ```
 """
 function wireframe(x, y, z; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     wireframe!(p, x, y, z; kwargs...)
 end
 

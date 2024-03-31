@@ -57,7 +57,7 @@ quiver!(x, y, txt=nothing; quiver=nothing, kwargs...) =
     quiver!(current_plot[], x, y, txt; quiver=quiver, kwargs...)
 
 function quiver(as...; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     quiver!(p, as...; kwargs...)
 end
 
@@ -79,7 +79,7 @@ arrows!(unzip(grid)..., f)
 ```
 """
 function arrows(x,y,f::Function; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     arrows!(p, x, y, f; kwargs...)
 end
 arrows!(x,y,f::Function; kwargs...) =
@@ -91,7 +91,7 @@ function arrows!(p::Plot, x,y,f::Function; kwargs...)
 end
 
 function arrows(x,y,z,f::Function; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     arrows!(p, x, y, z, f; kwargs...)
 end
 arrows!(x,y,z,f::Function; kwargs...) =
@@ -103,7 +103,7 @@ function arrows!(p::Plot, x,y,z,f::Function; kwargs...)
 end
 
 function arrows(x,y,u,v; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     arrows!(p, x, y, u, v; kwargs...)
 end
 arrows!(x,y,u,v; kwargs...) =
@@ -113,7 +113,7 @@ function arrows!(p::Plot, x,y,u,v; kwargs...)
 end
 
 function arrows(x,y,z,u,v,w; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     arrows!(p, x, y, z, u, v, w; kwargs...)
 end
 arrows!(x,y,z,u,v,w; kwargs...) = arrows!(current_plot[], x,y,z,u,v,w; kwargs...)
@@ -139,7 +139,7 @@ Hacked in support for 3D using combination of lines + cones.
 Use `Plotly` attributes `arrowcolor`, `arrowwidth`,
 """
 function arrow(tails, vs; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     arrow!(p, tails, vs; kwargs...)
     p
 end

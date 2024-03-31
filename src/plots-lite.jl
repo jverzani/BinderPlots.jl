@@ -54,7 +54,7 @@ function _new_plot(;
     legend!(p, legend)
     aspect_ratio == :equal && (p.layout.yaxis.scaleanchor="x")
 
-    p
+    p, kwargs
 end
 
 
@@ -63,39 +63,104 @@ end
 """
     title!([p::Plot], txt)
     xlabel!([p::Plot], txt)
-    ylable!([p::Plot], txt)
+    ylabel!([p::Plot], txt)
     zlabel!([p::Plot], txt)
 
 Set plot title.
+
+* `txt`: either a string or a string with font information produced by [`text`](@ref).
+
+# Example
+
+```
+f = font(20, :red, :left, :bottom, 45.0)
+
+p = plot(sin, 0, 2pi)
+title!(p, text("Plot", f))
+xlabel!(p, text("sine function", f))
+xticks!(p, 0:pi:2pi, ticklabels = ["0", "π", "2π"], tickfont=f)
+annotate!(p, [(pi, 0, text("Zero", f))])
+quiver!(p, [pi],[1/2], [text("zero",f)], quiver=([0],[-1/2]))
+```
 """
 function title!(p::Plot, txt)
     p.layout.title = txt
     p
 end
+function title!(p::Plot, txt::TextFont)
+    p.layout.title.text = txt.str
+    _fontstyle!(p.layout.title.font, txt.font)
+    p
+end
+
 title!(txt) = title!(current_plot[], txt)
 
-xlabel!(p::Plot, txt) = (p.layout.xaxis.title=txt;p)
+"""
+    xlabel!([p::Plot], txt::Union{String, TextFont})
+    ylabel!([p::Plot], txt::Union{String, TextFont})
+    zlabel!([p::Plot], txt::Union{String, TextFont})
+
+Set axis label. Use a `text` object to specify font information.
+"""
+function xlabel!(p::Plot, txt; kwargs...)
+    _labelstyle!(p.layout.xaxis, txt; kwargs...)
+    p
+end
 xlabel!(txt) = xlabel!(current_plot[], txt)
 
-ylabel!(p::Plot, txt) = (p.layout.yaxis.title=txt;p)
+function ylabel!(p::Plot, txt; kwargs...)
+    _labelstyle!(p.layout.yaxis, txt; kwargs...)
+    p
+end
 ylabel!(txt) = ylabel!(current_plot[], txt)
 
-zlabel!(p::Plot, txt) = (p.layout.zaxis.title=txt;p)
+function zlabel!(p::Plot, txt; kwargs...)
+    _labelstyle!(p.layout.zaxis, txt; kwargs...)
+    p
+end
 zlabel!(txt) = zlabel!(current_plot[], txt)
 
+function _labelstyle!(cfg, txt=nothing;
+                      titlefont=nothing, # ::Font?
+                      kwargs...)
+    cfg.title.text = txt
+    _fontstyle!(cfg.title.font, titlefont)
+    kwargs
+end
+
+_labelstyle!(cfg, txt::TextFont; kwargs...) =
+    _labelstyle!(cfg, txt.str;  titlefont=txt.font)
+
+
 # ticks is values not (values, labels), as with Plots; use ticklabels for that
-xticks!(p::Plot, ticks=nothing; ticklabels=nothing, showticklabels=nothing ) =
-    xaxis!(;ticks, ticklabels, showticklabels)
+"""
+    xticks!([p::Plot], ticks; [ticklabels], [tickfont], kwargs...)
+    yticks!([p::Plot], ticks; [ticklabels], [tickfont], kwargs...)
+    zticks!([p::Plot], ticks; [ticklabels], [tickfont], kwargs...)
+
+Set ticks. Optionally add labels using a matching length container. Passing a `Font` object to `tickfont` will set the font.,
+
+* `ticks:` a range of collection of tick positions
+* `ticklabels`: if given, a matching length collection of strings
+* `tickfont`: a `Font` instance to adjust font of all specified ticks.
+* `kwargs...`: passed to `[xyz]axis!` method.
+
+"""
+xticks!(p::Plot, ticks=nothing; ticklabels=nothing,
+        tickfont=nothing, kwargs... ) =
+    xaxis!(;ticks, ticklabels, tickfont, kwargs...)
 xticks!(p::Plot, ::Nothing; kwargs...) = p
 xticks!(ticks; kwargs...) = xticks!(current_plot[], ticks; kwargs...)
 
-yticks!(p::Plot, ticks=nothing; ticklabels=nothing, showticklabels=nothing ) =
-    yaxis!(;ticks, ticklabels, showticklabels)
+yticks!(p::Plot, ticks=nothing; ticklabels=nothing,
+        tickfont=nothing, kwargs...) =
+    yaxis!(;ticks, ticklabels, tickfont, kwargs...)
 yticks!(p::Plot, ::Nothing; kwargs...) = p
 yticks!(ticks; kwargs...) = yticks!(current_plot[], ticks; kwargs...)
 
-zticks!(p::Plot, ticks=nothing; ticklabels=nothing, showticklabels=nothing ) =
-    zaxis!(;ticks, ticklabels, showticklabels)
+zticks!(p::Plot, ticks=nothing; ticklabels=nothing,
+        tickfont=nothing, kwargs...) =
+    zaxis!(;ticks, ticklabels, tickfont, kwargs...)
 zticks!(p::Plot, ::Nothing; kwargs...) = p
 zticks!(ticks; kwargs...) = zticks!(current_plot[], ticks; kwargs...)
 
@@ -105,18 +170,28 @@ zticks!(ticks; kwargs...) = zticks!(current_plot[], ticks; kwargs...)
     yaxis!([p::Plot]; kwargs...)
     zaxis!([p::Plot]; kwargs...)
 
-Adjust ticks on chart.
-* ticks: a container or range
-* ticklabels: optional labels (same length as `ticks`)
-* showticklabels::Bool
-"""
-xaxis!(p::Plot; kwargs...) = (_axisstyle!(p.layout.xaxis; kwargs...); p)
-xaxis!(;kwargs...) = xaxis!(current_plot[]; kwargs...)
-yaxis!(p::Plot; kwargs...) = (_axisstyle!(p.layout.yaxis; kwargs...); p)
-yaxis!(;kwargs...) = yaxis!(current_plot[]; kwargs...)
-zaxis!(p::Plot; kwargs...) = (_axisstyle!(p.layout.zaxis; kwargs...); p)
-zaxis!(;kwargs...) = zaxis!(current_plot[]; kwargs...)
+Adjust properties of an axis on a chart using `Plotly` keywords.
 
+* `ticks`, `ticktext`, `ticklen`, `tickwidth`, `tickcolor`, `tickfont`, `showticklabels`
+* `showgrid`, `gridcolor`, `gridwidth`
+* `zeroline`, `zerolinecolor`, `zerolinewidth`
+"""
+xaxis!(p::Plot; kwargs...) = xyzaxis!(p.layout.xaxis; kwargs...)
+xaxis!(p::Plot, args...) = _axis_args!(p.layout.xaxis, args...)
+xaxis!(;kwargs...) = xaxis!(current_plot[]; kwargs...)
+xaxis!(args...) = xaxis!(current_plot[], args...)
+
+yaxis!(p::Plot; kwargs...) = xyzaxis!(p.layout.yaxis; kwargs...)
+yaxis!(p::Plot, args...) = _axis_args!(p.layout.yaxis, args...)
+yaxis!(;kwargs...) = yaxis!(current_plot[]; kwargs...)
+yaxis!(args...) = yaxis!(current_plot[], args...)
+
+zaxis!(p::Plot; kwargs...) = xyzaxis!(p.layout.zaxis; kwargs...)
+zaxis!(p::Plot, args...) = _axis_args!(p.layout.zaxis, args...)
+zaxis!(;kwargs...) = zaxis!(current_plot[]; kwargs...)
+zaxis!(args...) = zaxis!(current_plot[], args...)
+
+xyzaxis!(cfg; kwargs...) = (_axisstyle!(cfg; kwargs...), p)
 # https://plotly.com/javascript/tick-formatting/ .. more to do
 # Configure ticks and other axis properties
 # to label ticks pass in values for ticks and matching length ticktext
@@ -124,10 +199,25 @@ function _axisstyle!(cfg;
                      ticks=nothing,
                      tickvals = nothing,
                      ticklabels=nothing, ticktext=ticklabels,
+                     ticklen=nothing,
+                     tickwidth=nothing,
+                     tickcolor=nothing,
+                     tickfont=nothing,
                      showticklabels=nothing,
                      autotick=nothing,
+                     #
+                     type = nothing, # "log"
+                     #
                      showaxis=nothing, showgrid=showaxis,
+                     #
+                     mirror=nothing,
+                     gridcolor=nothing,
+                     gridwidth=nothing,
+                     #
                      zeroline=nothing,
+                     zerolinecolor=nothing,
+                     zerolinewidth=nothing,
+                     #
                      kwargs...)
 
     if isnothing(tickvals)
@@ -135,11 +225,50 @@ function _axisstyle!(cfg;
             tickvals = isa(ticks, AbstractRange) ? collect(ticks) : ticks
         end
     end
-    _merge!(cfg; tickvals, ticktext, showticklabels, autotick, showgrid, zeroline)
+    _merge!(cfg; tickvals, ticktext, showticklabels, autotick,
+            ticklen, tickwidth, tickcolor,
+            type,
+            showgrid, mirror,
+            gridcolor, gridwidth,
+            zeroline,zerolinecolor, zerolinewidth
+
+            )
+
+    if !isnothing(tickfont)
+        _fontstyle!(cfg.tickfont, tickfont)
+        cfg.tickangle = tickfont.rotation
+    end
 
     kwargs
 end
 
+# match args to axis property
+function _axis_args!(cfg, args...)
+    for a ∈ args
+        if isa(a, Font)
+            _fontstyle!(cfg.tickfont, a)
+            cfg.tickangle = a.rotation
+        elseif a ∈ (:log, :linear)
+            cfg.type = a
+        elseif a ∈ (:flip, :invert, :inverted)
+            cfg.autorange = "reversed"
+        elseif (isa(a, Tuple) || isa(a, AbstractVector))
+            if length(a) == 2
+                cfg.range = a
+            else
+                x₁ = first(a)
+                if isa(x₁, Number)
+                    cfg.tickvals = collect(a)
+                else
+                    cfg.ticktext = collect(a)
+                end
+            end
+        elseif isa(a, Bool)
+            cfg.showgrid = a
+        end
+    end
+    cfg
+end
 
 
 "`legend!([p::Plot], legend::Bool)` hide/show legend"

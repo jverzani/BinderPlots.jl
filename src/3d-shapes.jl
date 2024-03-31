@@ -19,7 +19,7 @@ xs, ys, zs = unzip(collect(Base.Iterators.flatten(ps)))
 
 """
 function ★(q, xs, ys, zs; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     ★!(p, q, xs, ys, zs; kwargs...)
 end
 
@@ -58,7 +58,7 @@ ziptie(unzip(r.(ts))..., unzip(s.(ts))...;
 ```
 """
 function ziptie(xs, ys, zs, xs′, ys′, zs′; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     ziptie!(p, xs, ys, zs, xs′, ys′, zs′; kwargs...)
 end
 ziptie!(xs, ys, zs, xs′, ys′, zs′; kwargs...) =
@@ -91,7 +91,7 @@ end
 Plot parallelogram formed by two vectors, `v̄` and `w̄`, both anchored at point `q`.
 """
 function parallelogram(q, v̄, w̄; kwargs...)
-    p = _new_plot(;kwargs...)
+    p, kwargs = _new_plot(;kwargs...)
     parallelogram!(p, q, v̄, w̄; kwargs...)
 end
 parallelogram!(q, v̄, w̄; kwargs...) =
@@ -133,7 +133,7 @@ parallelogram!(q, v̂, ŵ; opacity=0.5, color=:yellow)
 ```
 """
 function circ3d(q, r, n̄; kwargs...)
-    p = _new_plot(;kwargs...)
+    p, kwargs = _new_plot(;kwargs...)
     circ3d!(p, q, r, n̄; kwargs...)
 end
 circ3d!(q, r, n̄; kwargs...) =
@@ -193,7 +193,7 @@ skirt!(xs, -ys, zs, f; color="blue", opacity=0.6)
 
 """
 function skirt(q, v, f::Function; kwargs...)
-    p = _new_plot(;kwargs...)
+    p, kwargs = _new_plot(;kwargs...)
     skirt!(p, q, v, f; kwargs...)
 end
 skirt!(q, v, f::Function; kwargs...) = skirt!(current(), q, v, f; kwargs...)
@@ -205,7 +205,7 @@ end
 
 # xs, ys, zs are path in space
 function skirt(xs, ys, zs, f::Function; kwargs...)
-    p = _new_plot()
+    p, kwargs = _new_plot()
     skirt!(p, xs, ys, zs, f)
 end
 skirt!(xs, ys, zs, f::Function; kwargs...) =

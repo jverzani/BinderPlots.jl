@@ -7,7 +7,7 @@
 Create contour function of `f`
 """
 function contour(x, y, z; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     contour!(p, x, y, z; kwargs...)
 end
 
@@ -76,7 +76,8 @@ function contour!(p::Plot, x, y, z;
     p
 end
 
-## contourf(...) --> countour(...; fill=true)
+contourf(args...; kwargs...) = contour(args...; fill=true, kwargs...)
+contourf!(args...; kwargs...) = contour!(args...; fill=true, kwargs...)
 
 
 """
@@ -94,7 +95,7 @@ implicit_plot(f)
 (Basically just `contour` plot with `levels=0` and points detremined by extrema of `xlims` and `ylims`.)
 """
 function implicit_plot(f::Function; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     implicit_plot!(p, f; kwargs...)
 end
 
@@ -124,7 +125,7 @@ end
 Create heatmap function of `f`
 """
 function heatmap(x, y, z; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     heatmap!(p, x, y, z; kwargs...)
 end
 
