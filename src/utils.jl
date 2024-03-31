@@ -71,6 +71,7 @@ end
 
 ## -----
 # what is a good heuristic to identify vertical lines?
+
 ## -----
 include("SplitApplyCombine_invert.jl")
 
@@ -92,9 +93,10 @@ This uses the `invert` function of `SplitApplyCombine`.
 unzip(vs) = invert(vs) # use SplitApplyCombine.invert (copied below)
 unzip(vs::Base.Iterators.Zip) = vs.is
 #unzip(v,vs...) = unzip([v, vs...])
-unzip(r::Function, a, b, n) = unzip(r.(range(a, stop=b, length=n)))
+unzip(@nospecialize(r::Function), a, b, n) = unzip(r.(range(a, stop=b, length=n)))
 # return (xs, f.(xs)) or (f₁(xs), f₂(xs), ...)
 function unzip(f::Function, a, b)
+    @nospecialize
     n = length(f(a))
     if n == 1
         return PlotUtils.adapted_grid(f, (a,b))
@@ -107,3 +109,105 @@ function unzip(f::Function, a, b)
 end
 # return matrices for x, y, [z]
 unzip(as, bs, F::Function) = unzip(F.(as', bs))
+
+
+
+## ====
+
+# hold text and font
+struct TextFont{S,F}
+    str::S
+    font::F
+end
+
+"""
+    text(str, args...; kwargs...)
+    text(str, f::Font)
+
+Create text with font information to be passed to labeling functions.
+
+* `f::Font`: object produced by [`font`](@ref)
+* `args...`, `kwargs...`: passed to `font` to create font information. The positional arguments are matched by type.
+"""
+text(str, args...; kwargs...) = TextFont(str, font(args...; kwargs...))
+text(t::TextFont, args...; kwargs...) = t
+
+struct Font{F,PS,HA,VA,R,C}
+    family::F
+    pointsize::PS
+    halign::HA
+    valign::VA
+    rotation::R
+    color::C
+end
+
+"""
+    font(args...)
+
+(This is from Plots.jl)
+
+Create a Font from a list of features. Values may be specified either as
+arguments (which are distinguished by type/value) or as keyword arguments.
+
+# Arguments
+
+- `family`: AbstractString. "serif" or "sans-serif" or "monospace"
+- `pointsize`: Integer. Size of font in points
+- `halign`: Symbol. Horizontal alignment (:hcenter, :left, or :right)
+- `valign`: Symbol. Vertical alignment (:vcenter, :top, or :bottom)
+- `rotation`: Real. Angle of rotation for text in degrees (use a non-integer type). (Works with ticks and annotations.)
+- `color`
+# Examples
+```julia-repl
+julia> font(8)
+julia> font(family="serif", halign=:center, rotation=45.0)
+```
+"""
+font(f::Font; kwargs...) = f
+function font(args...;
+              family="sans-serif",
+              pointsize = 14,
+              halign = nothing,
+              valign = nothing,
+              rotation = 0,
+              color = "black"
+              )
+
+    for a ∈ args
+        # string is family
+        isa(a, AbstractString) && (family = a)
+        # pointsize or rotation
+        if isa(a, Real)
+            if isa(a, Integer)
+                pointsize = a
+            else
+                rotation = a
+            end
+        end
+        # symbol is color or alignment
+        if isa(a, Symbol)
+            if a ∈ (:top, :bottom,:center)
+                valign = a
+            elseif a ∈ (:left, :right)
+                halign = a
+            else
+                color=a
+            end
+        end
+    end
+
+    Font(family, pointsize, halign, valign, rotation, color)
+end
+
+_fontstyle!(cfg, Nothing) = nothing
+function _fontstyle!(cfg, f::Font)
+    (;family, pointsize, halign, valign, rotation, color) = f
+    _merge!(cfg; family, color,
+            textangle=rotation,
+            size=pointsize,textposition=_align(halign, valign))
+end
+
+_align(::Nothing, x::Symbol) = string(x)
+_align(x::Symbol, ::Nothing) = string(x)
+_align(::Nothing, ::Nothing) = ""
+_align(x::Symbol, y::Symbol) = join((string(x), string(y)), " ")

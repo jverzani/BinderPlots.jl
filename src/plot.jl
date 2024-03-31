@@ -51,22 +51,29 @@ p
     You may need to run the first plot cell twice to see an image.
 """
 function plot(x, y, zs...; kwargs...)
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     plot!(p, x, y, zs...; kwargs...)
     p
 end
 
 function plot(f::Function, a::Real, b::Real;
               kwargs...)
-    p = _new_plot(;kwargs...)
+    @nospecialize
+    p, kwargs = _new_plot(;kwargs...)
     plot!(p, f, a, b; kwargs...)
     p
 end
 
 # ab is some interval specification via `extrema`
-plot(f::Function, ab; kwargs...) = plot(f, extrema(ab)...; kwargs...)
+function plot(f::Function, ab; kwargs...)
+    @nospecialize
+    plot(f, extrema(ab)...; kwargs...)
+end
 # default
-plot(f::Function; kwargs...) = plot(f, -5, 5; kwargs...)
+function plot(f::Function; kwargs...)
+    @nospecialize
+    plot(f, -5, 5; kwargs...)
+end
 
 # makie style
 plot(pts; kwargs...) = plot(unzip(pts)...; kwargs...)
@@ -134,21 +141,28 @@ end
 
 
 function plot!(p::Plot, f::Function, a, b; kwargs...)
+    @nospecialize
     x, y = unzip(f, a, b)
     plot!(p, x, y; kwargs...)
 end
 
-plot!(p::Plot, f::Function, ab; kwargs...) =
+function plot!(p::Plot, f::Function, ab; kwargs...)
+    @nospecialize
     plot!(p, f, extrema(ab)...; kwargs...)
+end
 
 function plot!(p::Plot, f::Function; kwargs...)
+    @nospecialize
     m, M = extrema(p).x
     m < M || throw(ArgumentError("Can't identify interval to plot over"))
     plot!(p, f, m, M; kwargs...)
 end
 
 plot!(x, y; kwargs...) =  plot!(current_plot[], x, y; kwargs...)
-plot!(f::Function, args...; kwargs...) =  plot!(current_plot[], f, args...; kwargs...)
+function plot!(f::Function, args...; kwargs...)
+    @nospecialize
+    plot!(current_plot[], f, args...; kwargs...)
+end
 
 # convenience to make multiple plots by passing in vector
 # using plot! allows line customizations...
@@ -191,7 +205,7 @@ Make parametric plot from tuple of functions, `f` and `g`.
 """
 function plot(uv::NTuple{N,Function}, a, b=nothing; kwargs...) where {N}
     2 <= N <= 3 || throw(ArgumentError("2 or 3 functions only"))
-    p = _new_plot(; kwargs...)
+    p, kwargs = _new_plot(; kwargs...)
     plot!(p, uv, a, b, kwargs...)
 end
 
@@ -244,7 +258,7 @@ function plot(; layout::Union{Nothing, Config}=nothing,
               legend=nothing,
               aspect_ratio = nothing,
               kwargs...)
-    p = _new_plot(;size, xlims, ylims, legend, aspect_ratio)
+    p, kwargs = _new_plot(;size, xlims, ylims, legend, aspect_ratio)
     plot!(p; layout, config, kwargs...)
     p
 end
