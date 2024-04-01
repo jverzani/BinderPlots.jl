@@ -57,10 +57,11 @@ function plot(x, y, zs...; kwargs...)
 end
 
 function plot(f::Function, a::Real, b::Real;
+              line = nothing,
               kwargs...)
     @nospecialize
     p, kwargs = _new_plot(;kwargs...)
-    plot!(p, f, a, b; kwargs...)
+    plot!(p, f, a, b; line, kwargs...)
     p
 end
 
@@ -86,14 +87,31 @@ plot(pts; kwargs...) = plot(unzip(pts)...; kwargs...)
 Used to add a new tract to an existing plot. Like `Plots.plot!`. See [`plot`](@ref) for argument details.
 """
 function plot!(p::Plot, x, y;
+               line = nothing,
                label = nothing,
                kwargs...)
-
     # fussiness to handle NaNs in `y` values
     y′ = [isfinite(yᵢ) ? yᵢ : nothing for yᵢ ∈ y]
-    _push_line_trace!(p, x, y′; label, kwargs...)
+    kwargs = _layout_attrs!(p; kwargs...)
+    cfg = _push_line_trace!(p, x, y′; label, kwargs...)
+    _line_magic!(cfg, line)
     p
 end
+
+# every column is a series
+# XXX need to use Recycler here
+function plot!(p::Plot, x, y::Matrix;
+               label = nothing,
+               kwargs...)
+    ## XXX need to be able to recycle keywords
+    Label = Recycler(label)
+    for (j,yⱼ) ∈ enumerate(eachcol(y))
+        plot!(p, x, yⱼ;  label=Label[j], kwargs...)
+    end
+
+    p
+end
+
 
 plot!(pts; kwargs...) = plot!(current_plot[], pts; kwargs...)
 plot!(p::Plot, pts; kwargs...) = plot!(p, unzip(pts)...; kwargs...)
@@ -105,6 +123,7 @@ function plot!(p::Plot; layout::Union{Nothing, Config}=nothing,
                kwargs...)
     !isnothing(layout) && merge!(p.layout, layout)
     !isnothing(config) && merge!(p.config, config)
+    kwargs = _layout_attrs!(p; kwargs...)
     d = Config(kwargs...)
     !isempty(d) && push!(p.data, d)
     p
@@ -121,6 +140,7 @@ function _push_line_trace!(p, x, y;
     kws = _linestyle!(c.line; kwargs...)
     _merge!(c; kws...)
     push!(p.data, c)
+    c
 end
 
 plot!(x, y, z; kwargs...) = plot!(current_plot[], x, y, z; kwargs...)
@@ -163,6 +183,7 @@ function plot!(f::Function, args...; kwargs...)
     @nospecialize
     plot!(current_plot[], f, args...; kwargs...)
 end
+
 
 # convenience to make multiple plots by passing in vector
 # using plot! allows line customizations...
@@ -253,12 +274,12 @@ Pass keyword arguments through `Config` and onto `PlotlyLight.Plot`.
 """
 function plot(; layout::Union{Nothing, Config}=nothing,
               config::Union{Nothing, Config}=nothing,
-              size=(width=800, height=600),
+              size=(width=nothing, height=nothing),
               xlims=nothing, ylims=nothing,
               legend=nothing,
               aspect_ratio = nothing,
               kwargs...)
-    p, kwargs = _new_plot(;size, xlims, ylims, legend, aspect_ratio)
+    p, kwargs = _new_plot(;size, xlims, ylims, legend, aspect_ratio, kwargs...)
     plot!(p; layout, config, kwargs...)
     p
 end
