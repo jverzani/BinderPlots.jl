@@ -26,8 +26,9 @@ function scatter!(p::Plot, x, y; marker=nothing, kwargs...)
 end
 
 function scatter!(p::Plot, x, y::Matrix; kwargs...)
+    kw = Recycler(kwargs)
     for (j, yⱼ) ∈ enumerate(eachcol(y))
-        scatter!(p, x, yⱼ) # <<-- XXX recycle kwargs
+        scatter!(p, x, yⱼ; kw[j]...)
     end
 end
 

@@ -22,6 +22,7 @@ function _new_plot(;
                    ylim=nothing, ylims=ylim,
                    xticks=nothing, yticks=nothing,zticks=nothing,
                    xlabel=nothing, ylabel=nothing,zlabel=nothing,
+                   xscale=nothing, yscale=nothing,zscale=nothing,
                    legend = nothing,
                    aspect_ratio=nothing,
                    kwargs...)
@@ -39,6 +40,7 @@ function _new_plot(;
                             size, xlims, ylims,
                             xticks, yticks, zticks,
                             xlabel, ylabel, zlabel,
+                            xscale, yscale, zscale,
                             legend,
                             aspect_ratio,
                             kwargs...)
@@ -51,6 +53,7 @@ function _layout_attrs!(p;
                         size=nothing, xlims=nothing, ylims=nothing,
                         xticks=nothing, yticks=nothing, zticks=nothing,
                         xlabel=nothing, ylabel=nothing, zlabel=nothing,
+                        xscale=nothing, yscale=nothing, zscale=nothing,
                         legend=nothing,
                         aspect_ratio=nothing,
                         kwargs...)
@@ -68,6 +71,11 @@ function _layout_attrs!(p;
     xlabel!(p, xlabel)
     ylabel!(p, ylabel)
     zlabel!(p, zlabel)
+
+    # scale
+    xscale!(p, xscale)
+    yscale!(p, yscale)
+    zscale!(p, zscale)
 
     # layout
     legend!(p, legend)
@@ -190,6 +198,24 @@ zticks!(p::Plot, ticks, ticklabels;
 zticks!(ticks; kwargs...) = zticks!(current_plot[], ticks; kwargs...)
 zticks!(ticks, ticklabels; kwargs...) =
     zticks!(current_plot[], ticks, ticklabels; kwargs...)
+
+
+xscale!(p, ::Nothing) = nothing
+xscale!(p, scale) = _scale!(p.layout.xaxis, scale)
+yscale!(p, ::Nothing) = nothing
+yscale!(p, scale) = _scale!(p.layout.yaxis, scale)
+zscale!(p, ::Nothing) = nothing
+zscale!(p, scale) = _scale!(p.layout.zaxis, scale)
+
+# only :log10
+function _scale!(cfg, scale)
+    if scale ∈ (:ln, :log, :log10, :log2)
+        cfg.type = :log
+        cfg.autorange=true
+    else
+        @warn "Scale :$scale is not supported"
+    end
+end
 
 
 """
@@ -392,7 +418,7 @@ function _linestyle!(cfg::Config;
 end
 
 # magic
-_linestyles = (:solid, :dot, :dashdot)
+_linestyles = (:dash, :dashdot, :dot, :sold, :auto)
 _line_magic!(cfg, line::Nothing) = nothing
 function _line_magic!(cfg, line)
     for a ∈ line
@@ -427,7 +453,6 @@ _marker_shapes = (:circle, :circle_open, :circle_dot, :circle_open_dot, :square,
 
 function _marker_magic!(cfg, marker)
     for a ∈ marker # a tuple
-        @show a
         if isa(a, Symbol)
             if a ∈ _marker_shapes
                 cfg.symbol = replace(string(a), "_" => "-")

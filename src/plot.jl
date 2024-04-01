@@ -99,14 +99,11 @@ function plot!(p::Plot, x, y;
 end
 
 # every column is a series
-# XXX need to use Recycler here
 function plot!(p::Plot, x, y::Matrix;
-               label = nothing,
                kwargs...)
-    ## XXX need to be able to recycle keywords
-    Label = Recycler(label)
+    ks = Recycler(kwargs)
     for (j,yⱼ) ∈ enumerate(eachcol(y))
-        plot!(p, x, yⱼ;  label=Label[j], kwargs...)
+        plot!(p, x, yⱼ; ks[j]...)
     end
 
     p
@@ -190,29 +187,12 @@ end
 plot(fs::Vector{<:Function}; kwargs...) = plot(fs, -5,5; kwargs...)
 plot(fs::Vector{<:Function}, ab; kwargs...) = plot(fs, extrema(ab)...; kwargs...)
 function plot(fs::Vector{<:Function}, a, b;
-              label = nothing,
-              linecolor = nothing, # string, symbol, RGB?
-              linewidth = nothing, # pixels
-              linestyle = nothing, # solid, dot, dashdot,
-              lineshape = nothing,
               kwargs...)
     u, vs... = fs
-
-    la = Recycler(label)
-    lc, lw, ls, lsh = Recycler.((linecolor, linewidth, linestyle, lineshape))
-    p = plot(u, a, b;
-             label=la[1],
-             linecolor=lc[1], linewidth=lw[1],
-             linesstyle=ls[1], lineshape=lsh[1],
-             kwargs...)
+    kws = Recycler(kwargs)
+    p = plot(u, a, b; kws[1]...)
     for (j,v) ∈ enumerate(vs)
-        i = j + 1
-        plot!(p, v, a, b;
-              label=la[i],
-              linecolor=lc[i], linewidth=lw[i],
-              linesstyle=ls[i], lineshape=lsh[i],
-              kwargs...
-              )
+        plot!(p, v; kws[j+1]...)
     end
     p
 end

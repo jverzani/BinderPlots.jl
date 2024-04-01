@@ -69,6 +69,22 @@ function Base.getindex(R::Recycler, i::Int)
     R.itr[idx]
 end
 
+
+function Recycler(kw::Base.Pairs)
+    y = Base.Pairs((;zip(keys(kw), [BinderPlots.Recycler(kw[k]) for k in keys(kw)])...), keys(kw))
+    @show y
+    Recycler(y, 0)
+end
+
+function Base.getindex(R::Recycler{T}, i::Int) where {T <: Base.Pairs}
+    ks = keys(R.itr)
+    vals = [R.itr[k][i] for k in ks]
+    Base.Pairs((; zip(ks, vals)...), ks)
+end
+
+
+
+
 ## -----
 # what is a good heuristic to identify vertical lines?
 
