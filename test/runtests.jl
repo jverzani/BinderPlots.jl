@@ -32,6 +32,13 @@ using Test
 
 end
 
+@testset "Magic" begin
+    plot(1:5, rand(5), xticks=((1:5, string.(1:5))))
+    plot(1:5, rand(5), line=(:dot, 10, 0.5))
+    scatter(1:5, rand(5), marker=(:diamond, 10, 0.5,:red))
+    f = font(:red, 20)
+    title!(text("title", f))
+end
 
 @testset "shapes" begin
     # shapes are definitely idiosyncratic

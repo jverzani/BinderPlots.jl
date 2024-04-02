@@ -22,6 +22,7 @@ function _new_plot(;
                    ylim=nothing, ylims=ylim,
                    xticks=nothing, yticks=nothing,zticks=nothing,
                    xlabel=nothing, ylabel=nothing,zlabel=nothing,
+                   xscale=nothing, yscale=nothing,zscale=nothing,
                    legend = nothing,
                    aspect_ratio=nothing,
                    kwargs...)
@@ -35,6 +36,27 @@ function _new_plot(;
         first_plot[] = false
     end
 
+    kwargs = _layout_attrs!(p;
+                            size, xlims, ylims,
+                            xticks, yticks, zticks,
+                            xlabel, ylabel, zlabel,
+                            xscale, yscale, zscale,
+                            legend,
+                            aspect_ratio,
+                            kwargs...)
+
+    p, kwargs
+end
+
+
+function _layout_attrs!(p;
+                        size=nothing, xlims=nothing, ylims=nothing,
+                        xticks=nothing, yticks=nothing, zticks=nothing,
+                        xlabel=nothing, ylabel=nothing, zlabel=nothing,
+                        xscale=nothing, yscale=nothing, zscale=nothing,
+                        legend=nothing,
+                        aspect_ratio=nothing,
+                        kwargs...)
     # size is specified through a keyed object
     size!(p, size)
     xlims!(p, xlims)
@@ -50,13 +72,17 @@ function _new_plot(;
     ylabel!(p, ylabel)
     zlabel!(p, zlabel)
 
+    # scale
+    xscale!(p, xscale)
+    yscale!(p, yscale)
+    zscale!(p, zscale)
+
     # layout
     legend!(p, legend)
     aspect_ratio == :equal && (p.layout.yaxis.scaleanchor="x")
 
-    p, kwargs
+    kwargs
 end
-
 
 # plot attributes
 
@@ -146,23 +172,50 @@ Set ticks. Optionally add labels using a matching length container. Passing a `F
 * `kwargs...`: passed to `[xyz]axis!` method.
 
 """
-xticks!(p::Plot, ticks=nothing; ticklabels=nothing,
+xticks!(p::Plot, ::Nothing; kwargs...) = p
+xticks!(p::Plot, ticks; kwargs...) = xaxis!(p; ticks, kwargs...)
+xticks!(p::Plot, ticks, ticklabels;
         tickfont=nothing, kwargs... ) =
     xaxis!(;ticks, ticklabels, tickfont, kwargs...)
-xticks!(p::Plot, ::Nothing; kwargs...) = p
 xticks!(ticks; kwargs...) = xticks!(current_plot[], ticks; kwargs...)
+xticks!(ticks, ticklabels; kwargs...) =
+    xticks!(current_plot[], ticks, ticklabels; kwargs...)
 
-yticks!(p::Plot, ticks=nothing; ticklabels=nothing,
-        tickfont=nothing, kwargs...) =
-    yaxis!(;ticks, ticklabels, tickfont, kwargs...)
 yticks!(p::Plot, ::Nothing; kwargs...) = p
+yticks!(p::Plot, ticks; kwargs...) = xaxis!(p; ticks, kwargs...)
+yticks!(p::Plot, ticks, ticklabels;
+        tickfont=nothing, kwargs... ) =
+    xaxis!(;ticks, ticklabels, tickfont, kwargs...)
 yticks!(ticks; kwargs...) = yticks!(current_plot[], ticks; kwargs...)
+yticks!(ticks, ticklabels; kwargs...) =
+    yticks!(current_plot[], ticks, ticklabels; kwargs...)
 
-zticks!(p::Plot, ticks=nothing; ticklabels=nothing,
-        tickfont=nothing, kwargs...) =
-    zaxis!(;ticks, ticklabels, tickfont, kwargs...)
 zticks!(p::Plot, ::Nothing; kwargs...) = p
+zticks!(p::Plot, ticks; kwargs...) = xaxis!(p; ticks, kwargs...)
+zticks!(p::Plot, ticks, ticklabels;
+        tickfont=nothing, kwargs... ) =
+    xaxis!(;ticks, ticklabels, tickfont, kwargs...)
 zticks!(ticks; kwargs...) = zticks!(current_plot[], ticks; kwargs...)
+zticks!(ticks, ticklabels; kwargs...) =
+    zticks!(current_plot[], ticks, ticklabels; kwargs...)
+
+
+xscale!(p, ::Nothing) = nothing
+xscale!(p, scale) = _scale!(p.layout.xaxis, scale)
+yscale!(p, ::Nothing) = nothing
+yscale!(p, scale) = _scale!(p.layout.yaxis, scale)
+zscale!(p, ::Nothing) = nothing
+zscale!(p, scale) = _scale!(p.layout.zaxis, scale)
+
+# only :log10
+function _scale!(cfg, scale)
+    if scale ∈ (:ln, :log, :log10, :log2)
+        cfg.type = :log
+        cfg.autorange=true
+    else
+        @warn "Scale :$scale is not supported"
+    end
+end
 
 
 """
@@ -176,28 +229,27 @@ Adjust properties of an axis on a chart using `Plotly` keywords.
 * `showgrid`, `gridcolor`, `gridwidth`
 * `zeroline`, `zerolinecolor`, `zerolinewidth`
 """
-xaxis!(p::Plot; kwargs...) = xyzaxis!(p.layout.xaxis; kwargs...)
-xaxis!(p::Plot, args...) = _axis_args!(p.layout.xaxis, args...)
+xaxis!(p::Plot; kwargs...) = (xyzaxis!(p.layout.xaxis; kwargs...); p)
+xaxis!(p::Plot, args...) = _axis_magic!(p.layout.xaxis, args...)
 xaxis!(;kwargs...) = xaxis!(current_plot[]; kwargs...)
 xaxis!(args...) = xaxis!(current_plot[], args...)
 
-yaxis!(p::Plot; kwargs...) = xyzaxis!(p.layout.yaxis; kwargs...)
-yaxis!(p::Plot, args...) = _axis_args!(p.layout.yaxis, args...)
+yaxis!(p::Plot; kwargs...) = (xyzaxis!(p.layout.yaxis; kwargs...); p)
+yaxis!(p::Plot, args...) = _axis_magic!(p.layout.yaxis, args...)
 yaxis!(;kwargs...) = yaxis!(current_plot[]; kwargs...)
 yaxis!(args...) = yaxis!(current_plot[], args...)
 
-zaxis!(p::Plot; kwargs...) = xyzaxis!(p.layout.zaxis; kwargs...)
-zaxis!(p::Plot, args...) = _axis_args!(p.layout.zaxis, args...)
+zaxis!(p::Plot; kwargs...) = (xyzaxis!(p.layout.zaxis; kwargs...);p)
+zaxis!(p::Plot, args...) = _axis_magic!(p.layout.zaxis, args...)
 zaxis!(;kwargs...) = zaxis!(current_plot[]; kwargs...)
 zaxis!(args...) = zaxis!(current_plot[], args...)
 
-xyzaxis!(cfg; kwargs...) = (_axisstyle!(cfg; kwargs...), p)
+xyzaxis!(cfg; kwargs...) = _axisstyle!(cfg; kwargs...)
 # https://plotly.com/javascript/tick-formatting/ .. more to do
 # Configure ticks and other axis properties
 # to label ticks pass in values for ticks and matching length ticktext
 function _axisstyle!(cfg;
-                     ticks=nothing,
-                     tickvals = nothing,
+                     ticks=nothing, tickvals = ticks,
                      ticklabels=nothing, ticktext=ticklabels,
                      ticklen=nothing,
                      tickwidth=nothing,
@@ -220,12 +272,30 @@ function _axisstyle!(cfg;
                      #
                      kwargs...)
 
-    if isnothing(tickvals)
-        if !isnothing(ticks)
-            tickvals = isa(ticks, AbstractRange) ? collect(ticks) : ticks
+    # process ticks first
+    # range -- use one style
+    # 2-tuple (can specify vals/labels)
+    if !isnothing(tickvals)
+        if isa(tickvals, AbstractRange)
+            tick0, dtick, nticks =
+                first(tickvals), step(tickvals),length(tickvals)
+            _merge!(cfg; tick0, dtick, nticks, ticktext)
+        else
+            if isa(tickvals, Tuple) &&
+                length(tickvals) == 2 &&
+                !isa(first(tickvals), Number)
+                # vals/labels
+                _merge!(cfg;
+                        tickvals = collect(first(tickvals)),
+                        ticktext = last(tickvals))
+
+            else
+                _merge!(cfg; tickvals, ticktext)
+            end
         end
     end
-    _merge!(cfg; tickvals, ticktext, showticklabels, autotick,
+
+    _merge!(cfg; showticklabels, autotick,
             ticklen, tickwidth, tickcolor,
             type,
             showgrid, mirror,
@@ -243,7 +313,8 @@ function _axisstyle!(cfg;
 end
 
 # match args to axis property
-function _axis_args!(cfg, args...)
+# https://docs.juliaplots.org/latest/attributes/#magic-arguments
+function _axis_magic!(cfg, args...)
     for a ∈ args
         if isa(a, Font)
             _fontstyle!(cfg.tickfont, a)
@@ -346,6 +417,27 @@ function _linestyle!(cfg::Config;
     kwargs
 end
 
+# magic
+_linestyles = (:dash, :dashdot, :dot, :sold, :auto)
+_line_magic!(cfg, line::Nothing) = nothing
+function _line_magic!(cfg, line)
+    for a ∈ line
+        if isa(a, Symbol)
+            if a ∈ _linestyles
+                cfg.line.dash = a
+            else
+                cfg.line.color = a
+            end
+        end
+        if isa(a, Number)
+            isa(a, Integer) && (cfg.line.width=a)
+            0 < a < 1 && (cfg.opacity = a)
+        end
+    end
+end
+
+## ---
+
 function _markerstyle!(cfg::Config; # .marker
                        shape = nothing, markershape = shape,
                        ms=nothing, markersize  = ms,
@@ -355,6 +447,32 @@ function _markerstyle!(cfg::Config; # .marker
     kwargs
 end
 
+# magic arguments
+# use :nm_attribute not nm-attribute
+_marker_shapes = (:circle, :circle_open, :circle_dot, :circle_open_dot, :square, :square_open, :square_dot, :square_open_dot, :diamond, :diamond_open, :diamond_dot, :diamond_open_dot, :cross, :cross_open, :cross_dot, :cross_open_dot, :x, :x_open, :x_dot, :x_open_dot, :triangle_up, :triangle_up_open, :triangle_up_dot, :triangle_up_open_dot, :triangle_down, :triangle_down_open, :triangle_down_dot, :triangle_down_open_dot, :triangle_left, :triangle_left_open, :triangle_left_dot, :triangle_left_open_dot, :triangle_right, :triangle_right_open, :triangle_right_dot, :triangle_right_open_dot, :triangle_ne, :triangle_ne_open, :triangle_ne_dot, :triangle_ne_open_dot, :triangle_se, :triangle_se_open, :triangle_se_dot, :triangle_se_open_dot, :triangle_sw, :triangle_sw_open, :triangle_sw_dot, :triangle_sw_open_dot, :triangle_nw, :triangle_nw_open, :triangle_nw_dot, :triangle_nw_open_dot, :pentagon, :pentagon_open, :pentagon_dot, :pentagon_open_dot, :hexagon, :hexagon_open, :hexagon_dot, :hexagon_open_dot, :hexagon2, :hexagon2_open, :hexagon2_dot, :hexagon2_open_dot, :octagon, :octagon_open, :octagon_dot, :octagon_open_dot, :star, :star_open, :star_dot, :star_open_dot, :hexagram, :hexagram_open, :hexagram_dot, :hexagram_open_dot, :star_triangle_up, :star_triangle_up_open, :star_triangle_up_dot, :star_triangle_up_open_dot, :star_triangle_down, :star_triangle_down_open, :star_triangle_down_dot, :star_triangle_down_open_dot, :star_square, :star_square_open, :star_square_dot, :star_square_open_dot, :star_diamond, :star_diamond_open, :star_diamond_dot, :star_diamond_open_dot, :diamond_tall, :diamond_tall_open, :diamond_tall_dot, :diamond_tall_open_dot, :diamond_wide, :diamond_wide_open, :diamond_wide_dot, :diamond_wide_open_dot, :hourglass, :hourglass_open, :bowtie, :bowtie_open, :circle_cross, :circle_cross_open, :circle_x, :circle_x_open, :square_cross, :square_cross_open, :square_x, :square_x_open, :diamond_cross, :diamond_cross_open, :diamond_x, :diamond_x_open, :cross_thin, :cross_thin_open, :x_thin, :x_thin_open, :asterisk, :asterisk_open, :hash, :hash_open, :hash_dot, :hash_open_dot, :y_up, :y_up_open, :y_down, :y_down_open, :y_left, :y_left_open, :y_right, :y_right_open, :line_ew, :line_ew_open, :line_ns, :line_ns_open, :line_ne, :line_ne_open, :line_nw, :line_nw_open, :arrow_up, :arrow_up_open, :arrow_down, :arrow_down_open, :arrow_left, :arrow_left_open, :arrow_right, :arrow_right_open, :arrow_bar_up, :arrow_bar_up_open, :arrow_bar_down, :arrow_bar_down_open, :arrow_bar_left, :arrow_bar_left_open, :arrow_bar_right, :arrow_bar_right_open, :arrow, :arrow_open, :arrow_wide, :arrow_wide_open)
+
+function _marker_magic!(cfg, marker)
+    for a ∈ marker # a tuple
+        if isa(a, Symbol)
+            if a ∈ _marker_shapes
+                cfg.symbol = replace(string(a), "_" => "-")
+            else
+                cfg.color = a
+            end
+        end
+        if isa(a, Number)
+            if isa(a, Integer)
+                cfg.size = a
+            else
+                0 ≤ a ≤ 1  && (cfg.opacity = a)
+            end
+        end
+        ## XXX Add Stroke properties?
+    end
+end
+_marker_magic!(cfg, ::Nothing) = nothing
+
+## ---
 function _textstyle!(cfg::Config;
                      family    = nothing,
                      pointsize = nothing,
@@ -374,6 +492,79 @@ function _textstyle!(cfg::Config;
     kwargs
 end
 
+# https://docs.juliaplots.org/latest/attributes/#magic-arguments
+"""
+    font(args...)
+
+(This is from Plots.jl)
+
+Create a Font from a list of features. Values may be specified either as
+arguments (which are distinguished by type/value) or as keyword arguments.
+
+# Arguments
+
+- `family`: AbstractString. "serif" or "sans-serif" or "monospace"
+- `pointsize`: Integer. Size of font in points
+- `halign`: Symbol. Horizontal alignment (:hcenter, :left, or :right)
+- `valign`: Symbol. Vertical alignment (:vcenter, :top, or :bottom)
+- `rotation`: Real. Angle of rotation for text in degrees (use a non-integer type). (Works with ticks and annotations.)
+- `color`
+# Examples
+```julia-repl
+julia> font(8)
+julia> font(family="serif", halign=:center, rotation=45.0)
+```
+"""
+font(f::Font; kwargs...) = f
+function font(args...;
+              family="sans-serif",
+              pointsize = 14,
+              halign = nothing,
+              valign = nothing,
+              rotation = 0,
+              color = "black"
+              )
+
+    for a ∈ args
+        # string is family
+        isa(a, AbstractString) && (family = a)
+        # pointsize or rotation
+        if isa(a, Real)
+            if isa(a, Integer)
+                pointsize = a
+            else
+                rotation = a
+            end
+        end
+        # symbol is color or alignment
+        if isa(a, Symbol)
+            if a ∈ (:top, :bottom,:center)
+                valign = a
+            elseif a ∈ (:left, :right)
+                halign = a
+            else
+                color=a
+            end
+        end
+    end
+
+    Font(family, pointsize, halign, valign, rotation, color)
+end
+
+_fontstyle!(cfg, Nothing) = nothing
+function _fontstyle!(cfg, f::Font)
+    (;family, pointsize, halign, valign, rotation, color) = f
+    _merge!(cfg; family, color,
+            textangle=rotation,
+            size=pointsize,textposition=_align(halign, valign))
+end
+
+_align(::Nothing, x::Symbol) = string(x)
+_align(x::Symbol, ::Nothing) = string(x)
+_align(::Nothing, ::Nothing) = ""
+_align(x::Symbol, y::Symbol) = join((string(x), string(y)), " ")
+
+## ---
 # for filled shapes
 # XXX test this! clean up code calling style! functions (kwargs)
 # XXX image
@@ -385,6 +576,14 @@ function _fillstyle!(cfg::Config;
     kwargs
 end
 
+
+# XXX not yet integrated
+# range, color, alpha
+function _fill_magic!(cfg, fill)
+end
+_fill_magic!(cfg, ::Nothing) = nothing
+
+## ----
 
 # The camera position and direction is determined by three vectors: up, center, eye.
 #
