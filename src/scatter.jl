@@ -60,7 +60,6 @@ scatter!(x, y; kwargs...) = scatter!(current_plot[], x, y; kwargs...)
 "`scatter(x, y; kwargs...)` see [`scatter!`](@ref)"
 function scatter(x, y, zs...; kwargs...)
     p, kwargs = _new_plot(; kwargs...)
-
     scatter!(p, x, y, zs...; kwargs...)
     p
 end

@@ -263,3 +263,238 @@ function plot(; layout::Union{Nothing, Config}=nothing,
     plot!(p; layout, config, kwargs...)
     p
 end
+
+
+## ------
+
+# This is the identifier of the type of visualization for this series. Choose from [:none, :line, :path, :steppre, :stepmid, :steppost, :sticks, :scatter, :heatmap, :hexbin, :barbins, :barhist, :histogram, :scatterbins, :scatterhist, :stepbins, :stephist, :bins2d, :histogram2d, :histogram3d, :density, :bar, :hline, :vline, :contour, :pie, :shape, :image, :path3d, :scatter3d, :surface, :wireframe, :contour3d, :volume, :mesh3d] or any series recipes which are defined.
+
+
+SeriesType(x::Symbol) = SeriesType(Val(x))
+SeriesType(::Val{:lines}) =  (:scatter, :line)
+SeriesType(::Val{:path3d}) = (:scatter3d, :line)
+SeriesType(::Val{:scatter}) = (:scatter, :markers)
+SeriesType(::Val{:contour}) = (:surface, :contour)
+SeriesType(::Val{:surface}) = (:surface, :surface)
+
+
+
+
+## plt
+function plt(args...; kwargs...)
+    p, kws = _new_plot(; kwargs...)
+    plt!(args...; kwargs...)
+end
+
+plt!(args...; kwargs...) = plt!(current_plot[], args...; kwargs...)
+
+# XXX dispatch on type and mode
+# no xyz for surface type, say
+function plt!(p::Plot, x=nothing, y=nothing, z=nothing;
+              seriestype::Symbol=:lines,
+              kwargs...)
+    kws = _make_magic(; kwargs...) # XXX move if you want to be able to recycle
+    kws = _layout_styles!(p;  kws...)
+    type, mode =  SeriesType(seriestype)
+    plt!(Val(type), p, x, y, z; mode, kws...)
+end
+
+# scatter type (to dispatch on mode)
+function plt!(::Val{:scatter}, p::Plot, x=nothing, y=nothing, z=nothing;
+              mode::Symbol=:lines,
+              kwargs...)
+    KWs = Recycler(kwargs)
+    for (i, xyzₛ) ∈ enumerate(xyz(x,y,z))
+        _plt(Val(:scatter), Val(mode), p, xyzₛ...; KWs[i]...)
+    end
+    p
+end
+
+# utils
+_replace_infinite(f::Function) = f
+_replace_infinite(::Nothing) = nothing
+_replace_infinite(y) = [isfinite(yᵢ) ? yᵢ : nothing for yᵢ ∈ y]
+
+# make recipes here
+# x,y one
+_valtype(::Val{T}) where {T} = T
+
+# generic one
+function _plt(::Val{:scatter}, m::Val{T}, p::Plot, x, y, z=nothing; kwargs...) where {T}
+    mode = _valtype(m)
+    c = Config(;
+               x=_replace_infinite(x),
+               y=_replace_infinite(y),
+               z=_replace_infinite(z),
+               mode=mode)
+    c.type = isnothing(z) ? "scatter" : "scatter3d" # XXX not general?
+    kws = _trace_styles!(c; kwargs...)
+    _merge!(c; kws...)
+
+    push!(p.data, c)
+    nothing
+end
+
+function _plt(t::Val{:scatter}, m::Val{T}, p::Plot, f::Function, y, z; kwargs...) where {T}
+    a,b = isnothing(z) ? extrema(y) : (y,z)
+    _plt(t, m, p, unzip(f, a, b)...; kwargs...)
+end
+
+# scatter shorthand
+function sctter(args...; kwargs...)
+    p, kws = _new_plot(; kwargs...)
+    sctter!(args...; kwargs...)
+end
+sctter!(args...; kwargs...) = plt!(args...; seriestype=:scatter, kwargs...)
+export sctter,sctter!
+
+
+export plt, plt!
+
+# xyziterator
+struct XYZ{X,Y,Z}
+    x::X
+    y::Y
+    z::Z
+    n::Integer
+end
+
+# how many traces does the data represent
+# when there can be more than one
+ntraces(x) =  last(size(x))
+ntraces(::Nothing) = 0
+ntraces(::Tuple) = 1
+ntraces(::AbstractVector) = 1
+ntraces(x::AbstractVector{T}) where {T <: Function} = length(x)
+ntraces(::Function) = 1
+ntraces(::Number) = 1
+
+# use Tables.
+_eachcol(x::Matrix) = [x[:,i] for i in 1:size(x)[2]]
+_eachcol(x::Vector) = (x,)
+_eachcol(x::Vector{T}) where {T <: Function} = x
+_eachcol(x::Tuple) = (x,)
+_eachcol(x::AbstractRange) = (x,)
+_eachcol(::Nothing) = nothing
+_eachcol(x) = (x,)
+
+# make a reccyler for x,y,z values
+function xyz(x,y=nothing,z=nothing)
+    ns = ntraces.((x,y,z))
+    allequal(filter(>(1), ns)) || throw(ArgumentError("mismatched dimensions"))
+    n = maximum(ns)
+    XYZ(Recycler(_eachcol(x)),
+        Recycler(_eachcol(y)),
+        Recycler(_eachcol(z)), n)
+end
+
+function Base.iterate(xyz::XYZ, state=nothing)
+    n = xyz.n
+    i = isnothing(state) ? 1 : state
+    iszero(n) && return nothing
+    i > n && return nothing
+    return((x=xyz.x[i], y=xyz.y[i], z=xyz.z[i]), i+1)
+end
+
+
+
+
+# styles
+# turn magic into keyword arguments
+_set(d, key, value) = (d[key] = value)
+_set(d, key, ::Nothing) = d
+function _make_magic(;
+                     line = nothing,
+                     marker = nothing,
+                     fill = nothing,
+                     kwargs...)
+    d = Dict{Symbol, Any}()
+
+    for a ∈ something(line, tuple())
+        if isa(a, Symbol)
+            if a ∈ _linestyles
+                _set(d, :linestyle, a)
+            else
+                _set(d, :linecolor, a)
+            end
+        end
+        if isa(a, Number)
+            isa(a, Integer) && _set(d, :linewidth, a)
+            0 < a < 1 && _set(d, :opacity, a)
+        end
+    end
+
+    for a ∈ something(marker, tuple())
+        if isa(a, Symbol)
+            if a ∈ _marker_shapes
+                _set(d, :markershape, replace(string(a), "_" => "-"))
+            else
+                _set(d, :markercolor, a)
+            end
+        end
+        if isa(a, Number)
+            if isa(a, Integer)
+                @show a
+                _set(d, :markersize, a)
+            else
+                _set(d, :opacity, a)
+            end
+        end
+    end
+
+    ## axis has x,y,z
+
+    for a ∈ something(fill, tuple())
+        # XXX
+    end
+
+    # covert back
+    kws = merge(Dict(kwargs...), d)
+    nt = NamedTuple(kws)
+    Base.Pairs(nt, keys(nt))
+
+end
+
+function _trace_styles!(c; label=nothing,  kwargs...)
+    c.name = label
+    kws = _linestyle!(c.line; kwargs...)
+    kws = _fillstyle!(c.fill; kws...)
+    kws = _markerstyle!(c.marker; kws...)
+    kws
+end
+
+# XXX this needs work
+function _layout_styles!(p;
+                         size=nothing, xlims=nothing, ylims=nothing,
+                         xticks=nothing, yticks=nothing, zticks=nothing,
+                         xlabel=nothing, ylabel=nothing, zlabel=nothing,
+                         xscale=nothing, yscale=nothing, zscale=nothing,
+                         legend=nothing,
+                         aspect_ratio=nothing,
+                         kwargs...)
+        # size is specified through a keyed object
+    size!(p, size)
+    xlims!(p, xlims)
+    ylims!(p, ylims)
+
+    # ticks
+    xticks!(p, xticks)
+    yticks!(p, yticks)
+    zticks!(p, zticks)
+
+    # labels
+    xlabel!(p, xlabel)
+    ylabel!(p, ylabel)
+    zlabel!(p, zlabel)
+
+    # scale
+    xscale!(p, xscale)
+    yscale!(p, yscale)
+    zscale!(p, zscale)
+
+    # layout
+    legend!(p, legend)
+    aspect_ratio == :equal && (p.layout.yaxis.scaleanchor="x")
+
+    kwargs
+end

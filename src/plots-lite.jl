@@ -109,6 +109,7 @@ annotate!(p, [(pi, 0, text("Zero", f))])
 quiver!(p, [pi],[1/2], [text("zero",f)], quiver=([0],[-1/2]))
 ```
 """
+title!(p::Plot, ::Nothing) = nothing
 function title!(p::Plot, txt)
     p.layout.title = txt
     p
@@ -128,18 +129,21 @@ title!(txt) = title!(current_plot[], txt)
 
 Set axis label. Use a `text` object to specify font information.
 """
+xlabel!(p::Plot, ::Nothing) = nothing
 function xlabel!(p::Plot, txt; kwargs...)
     _labelstyle!(p.layout.xaxis, txt; kwargs...)
     p
 end
 xlabel!(txt) = xlabel!(current_plot[], txt)
 
+ylabel!(p::Plot, ::Nothing) = nothing
 function ylabel!(p::Plot, txt; kwargs...)
     _labelstyle!(p.layout.yaxis, txt; kwargs...)
     p
 end
 ylabel!(txt) = ylabel!(current_plot[], txt)
 
+zlabel!(p::Plot, ::Nothing) = nothing
 function zlabel!(p::Plot, txt; kwargs...)
     _labelstyle!(p.layout.zaxis, txt; kwargs...)
     p

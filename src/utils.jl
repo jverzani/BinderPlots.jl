@@ -62,6 +62,8 @@ struct Recycler{T}
 end
 Recycler(x) =  Recycler(x, length(x))
 Recycler(::Nothing) =  Recycler([nothing],1)
+Recycler(x::Symbol) = Recycler((x,))
+Recycler(x::AbstractString) = Recycler((x,))
 
 function Base.getindex(R::Recycler, i::Int)
     q, r = divrem(i, R.n)
@@ -72,7 +74,6 @@ end
 
 function Recycler(kw::Base.Pairs)
     y = Base.Pairs((;zip(keys(kw), [BinderPlots.Recycler(kw[k]) for k in keys(kw)])...), keys(kw))
-    @show y
     Recycler(y, 0)
 end
 
