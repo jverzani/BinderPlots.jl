@@ -117,7 +117,6 @@ export xaxis!, yaxis!, zaxis!
 export rect!, circle!, hline!, vline!
 export ★, ★!, ziptie, ziptie!
 export parallelogram, parallelogram!, circ3d, circ3d!, skirt, skirt!
-export Shape, Shape!
 export current
 
 export arrows, arrows!, poly, poly!, band, band!, hspan!, vspan!, ablines!, image!
