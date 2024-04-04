@@ -88,6 +88,7 @@ Used to add a new tract to an existing plot. Like `Plots.plot!`. See [`plot`](@r
 """
 function plot!(p::Plot, x, y;
                line = nothing,
+               fill = nothing,
                label = nothing,
                kwargs...)
     # fussiness to handle NaNs in `y` values
@@ -95,6 +96,7 @@ function plot!(p::Plot, x, y;
     kwargs = _layout_attrs!(p; kwargs...)
     cfg = _push_line_trace!(p, x, y′; label, kwargs...)
     _line_magic!(cfg, line)
+    _fill_magic!(cfg, fill)
     p
 end
 
@@ -207,7 +209,7 @@ Make parametric plot from tuple of functions, `f` and `g`.
 function plot(uv::NTuple{N,Function}, a, b=nothing; kwargs...) where {N}
     2 <= N <= 3 || throw(ArgumentError("2 or 3 functions only"))
     p, kwargs = _new_plot(; kwargs...)
-    plot!(p, uv, a, b, kwargs...)
+    plot!(p, uv, a, b; kwargs...)
 end
 
 # Plots interface is 2/3 functions, not a tuple.

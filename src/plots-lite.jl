@@ -441,6 +441,27 @@ function _line_magic!(cfg, line)
 end
 
 ## ---
+_fill_magic!(cfg, ::Nothing) = nothing
+function _fill_magic!(cfg, fill)
+    fillrange = fillalpha = fillcolor = nothing
+    for a ∈ fill
+        if isa(a, Symbol)
+            fillcolor = a
+        elseif isa(a, String)
+            fillrange = a # tonexty, tozeroy, toself
+        elseif isa(a, Real)
+            if 0 < a < 1
+                fillalpha = a # no fillalpha keyword
+                cfg.opacity = a
+            elseif isa(a, Integer)
+                @warn "Fill to a y value is not implemented"
+            end
+        end
+    end
+    _merge!(cfg; fill=fillrange, fillcolor)
+end
+
+## ---
 
 function _markerstyle!(cfg::Config; # .marker
                        shape = nothing, markershape = shape,

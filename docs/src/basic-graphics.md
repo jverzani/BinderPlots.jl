@@ -13,15 +13,22 @@ The `PlotlyLight` interface is essentially the `JavaScript` interface for `Plotl
 
 * In Plots.jl, every column is a series, a set of related points which form lines, surfaces, or other plotting primitives.
 
-`Plotly` refers to series as traces. This style is not supported in `BinderPlots`, rather multiple layers are suggested. (E.g. plot each column of a matrix.)
+`Plotly` refers to series as traces. This style is only partially supported in `BinderPlots`, though multiple layers are suggested. (E.g. plot each column of a matrix.)
 
 * In `Plots.jl` for keyword arguments many aliases are used, allowing for shorter calling patterns for experienced users.
 
+This is only partially the case with `BinderPlots`.
+
+* In `Plots.jl` some arguments encompass magic [arguments](https://docs.juliaplots.org/latest/attributes/#magic-arguments) for setting many related arguments at the same time.
+
+This is only partially the case with `BinderPlots`.
+
+* In `Plots.jl` the available plot types are specified through `seriestype` and there are shorthands to produce different methods (e.g., `scatter` is a shorthand for the seriestype `scatter`.
+
 This is not the case with `BinderPlots`.
 
-* In `Plots.jl` some arguments encompass smart [shorthands](https://docs.juliaplots.org/latest/attributes/#magic-arguments) for setting many related arguments at the same time.
 
-This is not the case with `BinderPlots`.
+Altogehter, most basic graphics created through `Plots` can be produced with `BinderPlots`, but the showcase of [examples](https://github.com/JuliaPlots/Plots.jl/blob/master/src/examples.jl), which utilize many conveniences, and mostly not runnable as is.
 
 
 ## Supported plotting functions
@@ -239,7 +246,7 @@ As seen in this overblown example, there are other methods besides `plot` for ot
 
 * `quiver!` is used to add arrows to a plot. These can optionally have their tails labeled, so this method can be repurposed to add annotations.  The `quiver` command allows for text rotation. Also `arrow` and `arrows` for different interfaces for drawing arrows. The `annotate!` function is used to add annotations at a given point. There are keyword arguments to adjust the text size, color, font-family, etc.
 
-* `rect!` is used to make a rectangle. There are also `hspan!` and `vspan!`. `Plots.jl` uses `Shape`. For lines, there are `hline!` and `vline!` to draw horizontal or vertical lines across the extent of the plotting region. There is also `ablines!` to draw lines specified in intercept-slope form across the extent of the plotting region. Other regions can be draws. For example, `circle!` to draw a circle, and, more generally, `poly` can be used to draw a polygonal region.
+* `rect!` is used to make a rectangle. There are also `hspan!` and `vspan!`. For lines, there are `hline!` and `vline!` to draw horizontal or vertical lines across the extent of the plotting region. There is also `ablines!` to draw lines specified in intercept-slope form across the extent of the plotting region. Other regions can be draws. For example, `circle!` to draw a circle, and, more generally, `poly` can be used to draw a polygonal region.
 
 
 
