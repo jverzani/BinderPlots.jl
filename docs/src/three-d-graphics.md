@@ -81,7 +81,7 @@ to_documenter(current())           # hide
 
 ### Contour graphs
 
-The contour lines are automatically selected. Passing a range to the `levels` argument allows a user choice. Contour plots can be filled with colors. Passing `fill=true` is all it takes:
+The contour lines are automatically selected. Passing a range to the `levels` argument allows a user choice. Contour plots can be filled with colors. Passing `fill=true` is all it takes (or calling with `contourf`):
 
 ```@example lite
 contour(xs, ys, peaks; levels=-3:3, fill=true, colorscale="Picnic")

@@ -23,9 +23,9 @@ This is only partially the case with `BinderPlots`.
 
 This is only partially the case with `BinderPlots`.
 
-* In `Plots.jl` the available plot types are specified through `seriestype` and there are shorthands to produce different methods (e.g., `scatter` is a shorthand for the seriestype `scatter`.
+* In `Plots.jl` the available plot types are specified through `seriestype` and there are shorthands to produce different methods (e.g., `scatter` is a shorthand for the seriestype `:scatter`.
 
-This is not the case with `BinderPlots`.
+This is only partially the case with `BinderPlots`, though the more direct calling methods are suggested.
 
 
 Altogehter, most basic graphics created through `Plots` can be produced with `BinderPlots`, but the showcase of [examples](https://github.com/JuliaPlots/Plots.jl/blob/master/src/examples.jl), which utilize many conveniences, and mostly not runnable as is.
@@ -129,11 +129,12 @@ As a convenience, to plot two or more traces in a graphic, a vector of functions
 The `Plots` keyword `line` arguments are recycled. For more control, using `plot!`, as above.
 
 
-### `plot(f::Function, g::Function, a, b)` or `plot(fs::Tuple, a, b)`
+### `plot(fs::Tuple, a, b)`
 
 Two dimensional parametric plots show the trace of ``(f(t), g(t))`` for ``t`` in ``[a,b]``. These are easily created by `plot(x,y)` where the `x` and `y` values are produced by broadcasting, say, such as `f.(ts)` where `ts = range(a,b,n)`.
 
-The `Plots.jl` convenience signature is `plot(f::Function, g::Function, a, b)`. This packages also provides for passing a tuple of functions, as in `plot((f,g), a, b)`.
+!!! note "Not supported"
+    The `Plots.jl` convenience signature is `plot(f::Function, g::Function, a, b)`. This is not supported. Rather, pass a tuple of functions, as in `plot((f,g), a, b)`.
 
 ### `plot(::Array{<:Plot,N})`
 
@@ -142,11 +143,25 @@ Arrange an array of plot objects into a regular layout for display.
 (`Plots.jl` uses a different convention.)
 
 
-### `plot(; kwargs...)`
+### `plot(; seriestype::Symbol, kwargs...)`
 
-This basically is the same as `PlotlyLight`'s `Plot` function, but adds a reference so that `current` will point to the new `Plot` object.
+There are a few series types for which the underlying `PlotlyLight` `Plot` function is basically called. A few examples from statistics, might be:
 
-Unlike `plot` in `Plots.jl`, the `plot` function -- except in this usage and the previous -- always produces a line plot. However, with this usage, `plot.name(kwargs...)` produces a plot with "type" `name`, which can be any of `plotly`'s supported plot types.
+```@example lite
+p1 = plot(; values = [19, 26, 55], labels=["a","b", "c"], seriestype=:pie)
+p2 = plot(randn(100); seriestype=:histogram)
+p3 = plot(nothing, randn(100); seriestype=:boxplot)
+animals = ["giraffes", "orangutans", "monkeys"]
+p4 = plot(animals, [10,20,30]; seriestype=:bar, label="Zoo 1")
+plot!(p4, animals, [5,6,8];    seriestype=:bar, label="Zoo 2")
+p4.layout.barmode="group";
+
+plot([p1 p2; p3 p4])   # lost labels are a bug
+
+to_documenter(current())           # hide
+```
+
+The keyword arguments defined within this package are processed; the rest passed onto the data configuration of Plotly. The bar plot required a specification of the layout configuration.
 
 
 ### `scatter(xs, ys, [zs])` or `scatter(pts)`
@@ -162,7 +177,10 @@ The following `Plots.jl` marker attributes are supported:
 * `markersize` to set the marker size
 * `markercolor` to adjust the color
 
-(In `Plotly`, just using `mode="lines+markers"` is needed to show both markers and lines, but in this interface, one would make a line plot and then layer on a scatter plot.)
+A specification like `marker=(:diamond, 20, :blue)` will set the 3 attributes above with matching by type.
+
+!!! note "Plotly difference"
+    In `Plotly`, just using `mode="lines+markers"` is needed to show both markers and lines, but in this interface, one would make a line plot and then layer on a scatter plot.
 
 ### Text and arrows
 
@@ -184,7 +202,7 @@ The following `Plots.jl` text attributes are supported:
 * `pointsize`
 * `rotation`
 
-There is no `Text` function.
+For labels and annotations, the `text(str, arguments)` can be used to specify font properties. For example `text("label", :red, 20)` specifies the color and text size for the string when used to label a graphic.
 
 ### Shapes
 
@@ -268,10 +286,13 @@ Some keywords chosen to mirror `Plots.jl` are:
 |`linewidth`		| `plot`, `plot!`| set with an integer; aliases `lw`, `width` |
 |`linestyle`		| `plot`, `plot!`| set with `"solid"`, `"dot"`, `"dash"`, `"dotdash"`, [...](https://plotly.com/javascript/reference/#scatter-line-dash); aliases `style`, `ls` |
 |`lineshape`		| `plot`, `plot!`| set with `"linear"`, `"hv"`, `"vh"`, `"hvh"`, `"vhv"`, `"spline"`; from [plotly](https://plotly.com/javascript/reference/#scatter-line-shape) |
+|`line`             | `plot`, `plot!` | set with tuple of magic line arguments |
 |`markershape`		| `scatter`, `scatter!` | set with `"diamond"`, `"circle"`, ...; alias `shape` |
 |`markersize`		| `scatter`, `scatter!` | set with integer; alias `ms` |
 |`markercolor`		| `scatter`, `scatter!` | set with color; alias `mc` |
+|`marker`           | `plot`, `plot!` | set with tuple of magic marker arguments |
 |`fillcolor`        | shapes                | interior color of a 2D shape; alias `fc` |
+|`fill`             | shapes                | set with magic fill arguments |
 |`color`			| `annotate!` | set with color argument of `text`  |
 |`family`			| `annotate!` | set with string (font family) |
 |`pointsize`		| `annotate!` | set with integer |
@@ -286,6 +307,7 @@ Some exported names are used to adjust a plot after construction:
 
 * `title!`, `xlabel!`, `ylabel!`, `zlabel!`: to adjust title; ``x``-axis label; ``y``-axis label
 * `xlims!`, `ylims!`, `zlims!`: to adjust limits of viewing window
+* `xticks!`, `yticks!`, `zticks!`: to adjust axis ticks
 * `xaxis!`, `yaxis!`, `zaxis!`: to adjust the axis properties
 
 !!! note "Subject to change"

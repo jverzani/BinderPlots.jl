@@ -30,22 +30,80 @@ _something(x::Any, xs...) = x
 
 _allowmissing(x::AbstractArray{T}) where {T} = convert(AbstractArray{Union{T, Missing}}, x)
 
+## ---
+# utils
+_replace_infinite(f::Function) = f
+_replace_infinite(::Nothing) = nothing
+_replace_infinite(y) = [isfinite(yᵢ) ? yᵢ : nothing for yᵢ ∈ y]
+
+# pick out symbol
+_valtype(::Val{T}) where {T} = T
+
+# xyziterator
+struct XYZ{X,Y,Z}
+    x::X
+    y::Y
+    z::Z
+    n::Integer
+end
+
+# how many traces does the data represent
+# when there can be more than one
+ntraces(x) =  last(size(x))
+ntraces(::Nothing) = 0
+ntraces(::Tuple) = 1
+ntraces(::AbstractVector) = 1
+ntraces(x::AbstractVector{T}) where {T <: Function} = length(x)
+ntraces(::Function) = 1
+ntraces(::Number) = 1
+
+# use Tables.
+_eachcol(x::Matrix) = [x[:,i] for i in 1:size(x)[2]]
+_eachcol(x::Vector) = (x,)
+_eachcol(x::Vector{T}) where {T <: Function} = x
+_eachcol(x::Tuple) = (x,)
+_eachcol(x::AbstractRange) = (x,)
+_eachcol(::Nothing) = nothing
+_eachcol(x) = (x,)
+
+# make a reccyler for x,y,z values
+function xyz(x,y=nothing,z=nothing)
+    ns = ntraces.((x,y,z))
+    allequal(filter(>(1), ns)) || throw(ArgumentError("mismatched dimensions"))
+    n = maximum(ns)
+    XYZ(Recycler(_eachcol(x)),
+        Recycler(_eachcol(y)),
+        Recycler(_eachcol(z)), n)
+end
+
+function Base.iterate(xyz::XYZ, state=nothing)
+    n = xyz.n
+    i = isnothing(state) ? 1 : state
+    iszero(n) && return nothing
+    i > n && return nothing
+    return((x=xyz.x[i], y=xyz.y[i], z=xyz.z[i]), i+1)
+end
+
+
+
+
+
 ## ----
 function Base.extrema(p::Plot)
     mx,Mx = (Inf, -Inf)
     my,My = (Inf, -Inf)
     mz,Mz = (Inf, -Inf)
     for d ∈ p.data
-        if haskey(d, :x)
+        if haskey(d, :x) && !isnothing(d.x)
             a,b = extrema(d.x)
             mx = min(a, mx); Mx = max(b, Mx)
         end
-        if haskey(d, :y)
+        if haskey(d, :y)  && !isnothing(d.y)
             a,b = extrema(filter(!isnothing, d.y))
             my = min(a, my); My = max(b, My)
         end
-        if haskey(d, :z)
-            a,b = extrema(d.z)
+        if !haskey(d, :z) && !isnothing(d.z)
+            a,b = extrema(filter(!isnothing, d.z))
             mz = min(a, mz); Mz = max(b, Mz)
         end
 

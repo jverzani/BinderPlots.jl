@@ -31,7 +31,7 @@ for i ∈ eachindex(nms)
             p = Plot()
         elseif j == i
             x = d[:,j]
-            p = plot(x, type="histogram")
+            p = plot(x, seriestype=:histogram)
             xlabel!(p, nms[j])  # <<- not working in grid! as differe xaxis purposes
         else
             x = d[:,i]; y = d[:,j]
@@ -41,7 +41,7 @@ for i ∈ eachindex(nms)
         m[i,j] = p
     end
 end
-grid_layout(m)
+plot(m)
 ```
 """
 function grid_layout(ps::Array{<:Plot};

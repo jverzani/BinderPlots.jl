@@ -1,44 +1,60 @@
+##
+## Basic 2d plots of f::𝐑² → 𝐑
+##
+SeriesType(::Val{:contour}) = (:contour, :contour)
+SeriesType(::Val{:heatmap}) = (:heatmap, :heatmap)
+
+# types and modes here
+ContourTypes = Union{Val{:contour}, Val{:heatmap},
+                     Val{:surface}, Val{:wireframe}}
+
+function plot!(t::T, m::M, p::Plot, x, y, z;
+               kwargs...) where {T <: ContourTypes, M<:ContourTypes}
+
+    x, y, z = _adjust_matrix.((x,y,z))
+    c = Config(; x, y, z, type=_valtype(t))
+    push!(p.data, c)
+
+    kws = _bivariate_scalar_styles!(t, m, p; kwargs...)
+    _merge!(c; kws...)
+
+    p
+
+end
+
 """
     contour(x, y, z; kwargs...)
     contour!([p::Plot], x, y, z; kwargs...)
     contour(x, y, f::Function; kwargs...)
     contour!(x, y, f::Function; kwargs...)
 
-Create contour function of `f`
+Create contour map
 """
-function contour(x, y, z; kwargs...)
-    p, kwargs = _new_plot(; kwargs...)
-    contour!(p, x, y, z; kwargs...)
+function contour(args...; kwargs...)
+    p, kws = _new_plot(; kwargs...)
+    contour!(p, args...; kwargs...)
 end
+contour!(args...; kwargs...) = plot!(args...; seriestype=:contour, kwargs...)
 
-contour(x, y, f::Function; kwargs...) =
-    contour(x,y, f.(x', y); kwargs...)
+# filled
+contourf(args...; kwargs...) = contour(args...; fillrange=true, kwargs...)
+contourf!(args...; kwargs...) = contour!(args...; fillrange=true, kwargs...)
 
-contour!(x, y, z; kwargs...) =
-    contour!(current_plot[], x, y, z; kwargs...)
-contour!(x, y, f::Function; kwargs...) =
-    contour!(current_plot[], x, y, f.(x', y); kwargs...)
-
-## XXX might have more options *if* used Contours and did this manually
-function contour!(p::Plot, x, y, z;
-                  levels = nothing, # a number or something w/ step method
-                  color = nothing, # scale or single color
-                  colorbar::Union{Nothing, Bool} = nothing, # show colorbar
-                  fill::Bool = false,
-                  contour_labels::Bool = false,
-                  linewidth = nothing,
-                  kwargs...)
-
-    x, y, z = _adjust_matrix.((x,y,z))
-    c = Config(;x,y,z,type="contour")
-    c.contours = Config()
-    c.line = Config()
-    _merge!(c; kwargs...)
-
+_bivariate_scalar_styles!(::Val{T}, ::Val{M}, p; kwargs...) where {T,M} = kwargs
+function  _bivariate_scalar_styles!(t::Val{:contour}, ::Val{M}, p;
+                           levels = nothing, # a number or something w/ step method
+                           color = nothing, # scale or single color
+                           colorbar::Union{Nothing, Bool} = nothing, # show colorbar
+                           fillrange::Bool = false,
+                           contour_labels::Bool = false,
+                           linewidth = nothing,
+                           kwargs...) where {M}
 
     # color --> colorscale A symbol or name (or container)
     # levels
-    !fill && (c.contours.coloring = "lines")
+    c = p.data[end]
+
+    !fillrange && (c.contours.coloring = "lines")
 
     if !isnothing(color)
         # support a named colorscale or a single color
@@ -72,13 +88,25 @@ function contour!(p::Plot, x, y, z;
     ## labels (adjust font? via contours.labelfont
     c.contours.showlabels = contour_labels
 
-    push!(p.data, c)
-    p
+    kwargs
 end
 
-contourf(args...; kwargs...) = contour(args...; fill=true, kwargs...)
-contourf!(args...; kwargs...) = contour!(args...; fill=true, kwargs...)
 
+"""
+    heatmap(x, y, z; kwargs...)
+    heatmap!([p::Plot], x, y, z; kwargs...)
+    heatmap(x, y, f::Function; kwargs...)
+    heatmap!(x, y, f::Function; kwargs...)
+
+Create heatmap function of `f`
+"""
+function heatmap(args...; kwargs...)
+    p, kws = _new_plot(; kwargs...)
+    heatmap!(p, args...; kwargs...)
+end
+heatmap!(args...; kwargs...) = plot!(args...; seriestype=:heatmap, kwargs...)
+
+## -----
 
 """
     implicit_plot(f; xlims=(-5,5), ylims=(-5,5), legend=false, linewidth=2, kwargs...)
@@ -112,38 +140,4 @@ function implicit_plot!(p::Plot, f::Function;
     contour!(p, xs, ys, zs;
              levels=0,  colorbar=legend, linewidth,
              kwargs...)
-end
-
-##
-
-"""
-    heatmap(x, y, z; kwargs...)
-    heatmap!([p::Plot], x, y, z; kwargs...)
-    heatmap(x, y, f::Function; kwargs...)
-    heatmap!(x, y, f::Function; kwargs...)
-
-Create heatmap function of `f`
-"""
-function heatmap(x, y, z; kwargs...)
-    p, kwargs = _new_plot(; kwargs...)
-    heatmap!(p, x, y, z; kwargs...)
-end
-
-heatmap(x, y, f::Function; kwargs...) =
-    heatmap(x,y, f.(x', y); kwargs...)
-
-heatmap!(x, y, z; kwargs...) =
-    heatmap!(current_plot[], x, y, z; kwargs...)
-heatmap!(x, y, f::Function; kwargs...) =
-    heatmap!(current_plot[], x, y, f.(x', y); kwargs...)
-
-function heatmap!(p::Plot, x, y, z;
-                  kwargs...)
-
-    x, y, z = _adjust_matrix.((x,y,z))
-    c = Config(; x, y, z, type="heatmap")
-    _merge!(c; kwargs...)
-
-    push!(p.data, c)
-    p
 end
