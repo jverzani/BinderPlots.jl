@@ -392,7 +392,6 @@ end
 # https://docs.juliaplots.org/latest/attributes/#magic-arguments
 function _axis_magic!(cfg, args...)
     for a ∈ args
-        @show a
         if isa(a, Font)
             _fontstyle!(cfg.tickfont, a)
             cfg.tickangle = a.rotation
@@ -426,8 +425,12 @@ end
 
 
 "`legend!([p::Plot], legend::Bool)` hide/show legend"
-legend!(p::Plot, legend=nothing) = !isnothing(legend) && (p.layout.showlegend = legend)
-legend!(val::Bool) = legend!(current_plot[], val)
+legend!(p::Plot, ::Nothing) = nothing
+legend!(p::Plot, legend::Bool) = (p.layout.showlegend = legend)
+legend!(p::Plot, legend::Tuple) = _legend_magic!(p, legend)
+legend!(p::Plot, args...) = legend!(args)
+legend!(legend::Bool) = legend!(current_plot[], legend)
+legend!(args...) = legend!(current_plot[], args...)
 
 "`size!([p::Plot]; [width], [height])` specify size of plot figure"
 function size!(p::Plot; width=nothing, height=nothing)
@@ -487,7 +490,7 @@ scroll_zoom!(x::Bool) = scroll_zoom!(current_plot[], x)
 # linecolor - color
 # linewidth - integer
 # linestyle: solic, dot, dashdot, ...
-# lineshape: linear, hv, vh, hvh, vhv, spline
+# lineshape: linear, hv, vh, hvh, vhv, spline; or keys of _lineshapes
 function _linestyle!(cfg::Config;
                      lc=nothing, linecolor = lc, # string, symbol, RGB?
                      lw=nothing, width=lw, linewidth = width, # pixels
@@ -495,14 +498,18 @@ function _linestyle!(cfg::Config;
                      lineshape = nothing,
                      kwargs...)
 
+    shape = isnothing(lineshape) ? nothing :
+        lineshape ∈ keys(_lineshapes) ? _lineshapes[lineshape] : lineshape
     _merge!(cfg; color=linecolor, width=linewidth, dash=linestyle,
-            shape=lineshape)
+            shape)
     kwargs
 end
 
 # magic
 _linestyles = (:dash, :dashdot, :dot, :sold, :auto)
-
+_lineshapes = (path=:linear, spline=:spline,
+              steppre=:vh, steppost=:hv)
+# [:path :steppre :steppost :sticks :scatter]
 
 ## ---
 
@@ -679,8 +686,37 @@ function _3d_styles!(p;
     kws
 end
 
+_legend_positions =
+    (topleft=(0,1), top=(1/2,1), topright=(1,1),
+     left=(0,1/2),  inside=(1/2,1/2), right=(1,1/2),
+     bottomleft=(0,0), bottom=(1/2,0), bottomright=(1,0))
 
 
+function _legend_magic!(p, legend)
+    cfg = p.layout.legend
+    for a ∈ legend
+        if isa(a, Tuple)
+            x, y = a
+            cfg.x = x; cfg.y=y
+        elseif isa(a, Font)
+            cfg.font.family = a.family
+            cfg.font.size = a.pointsize
+            cfg.font.color = a.color
+        elseif isa(a, Bool)
+            cfg.showlegend=a
+        elseif isa(a, Symbol)
+            if haskey(_legend_positions, a)
+                x,y = _legend_positions[a]
+                cfg.x = x; cfg.y=y
+            elseif a == :reversed
+                cfg.traceorder = :reversed
+            else
+                cfg.bgcolor = a
+            end
+        end
+    end
+    nothing
+end
 
 ## -----
 # merge in
@@ -700,6 +736,8 @@ function _make_magic(;
         if isa(a, Symbol)
             if a ∈ _linestyles
                 _set(d, :linestyle, a)
+            elseif a ∈ keys(_lineshapes)
+                _set(d, :lineshape, _lineshapes[a])
             else
                 _set(d, :linecolor, a)
             end
@@ -733,14 +771,16 @@ function _make_magic(;
         if isa(a, Symbol)
             _set(d, :fillcolor, a)
         elseif isa(a, String)
-            _set(d, :fillrange, a) # tonexty, tozeroy, toself
+            _set(d, :fill, a) # tonexty, tozeroy, toself
         elseif isa(a, Bool)
-            _set(d, :fillrange, a) # true false
+            _set(d, :fill, a) # true false
         elseif isa(a, Real)
             if 0 < a < 1
                 _set(d, :opacity, a)
+            elseif iszero(a)
+                _set(d, :fill, "tozeroy")
             elseif isa(a, Integer)
-                @warn "Fill to a y value is not implemented"
+                @warn "Fill to a non-zero y value is not implemented"
             end
         end
     end
@@ -751,6 +791,7 @@ function _make_magic(;
     Base.Pairs(nt, keys(nt))
 
 end
+
 
 function _trace_styles!(c; label=nothing,  kwargs...)
     c.name = label
@@ -766,6 +807,7 @@ function _layout_styles!(p;
                          xticks=nothing, yticks=nothing, zticks=nothing,
                          xlabel=nothing, ylabel=nothing, zlabel=nothing,
                          xscale=nothing, yscale=nothing, zscale=nothing,
+                         xaxis=nothing, yaxis=nothing, zaxis=nothing,
                          legend=nothing,
 
                          kwargs...)
@@ -788,8 +830,15 @@ function _layout_styles!(p;
     yscale!(p, yscale)
     zscale!(p, zscale)
 
+    # axis
+    isa(xaxis, Tuple) ? xaxis!(p, xaxis...) : xaxis!(p, xaxis)
+    isa(yaxis, Tuple) ? yaxis!(p, yaxis...) : yaxis!(p, yaxis)
+    isa(zaxis, Tuple) ? zaxis!(p, zaxis...) : zaxis!(p, zaxis)
+
+
     # layout
     legend!(p, legend)
+
     # don't consume
     haskey(kwargs, :aspect_ratio) &&
         kwargs[:aspect_ratio] == :equal && (p.layout.yaxis.scaleanchor="x")

@@ -49,45 +49,60 @@ function plot!(::Val{:scatter}, m::Val{T}, p::Plot, x, y, z=nothing; kwargs...) 
     nothing
 end
 
+# plot matrix by padding ut
+function plot!(t::Val{:scatter}, p::Plot,
+               x::Matrix, ::Nothing, ::Nothing; kwargs...)
+    m, n = size(x)
+    plot!(t, p, 1:m, x, nothing; kwargs...)
+end
+
+
 # recipe(s) for function f,[a],[b]
 # XXX a little lower than desirable
-function plot!(t::Val{:scatter}, m::Val{T}, p::Plot,
-               f::Function, y, z; kwargs...) where {T}
+function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
+               f::Function, y, z; kwargs...) where {M}
     plot!(t, m, p, unzip(f, extrema((y,z))...)...; kwargs...)
 end
 
-function plot!(t::Val{:scatter}, m::Val{T}, p::Plot,
-               f::Function, y, ::Nothing; kwargs...) where {T}
+function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
+               f::Function, y, ::Nothing; kwargs...) where {M}
     plot!(t, m, p, f, extrema(y)...; kwargs...)
 end
 
-function plot!(t::Val{:scatter}, m::Val{T}, p::Plot,
-               f::Function, y::Nothing, ::Nothing; kwargs...) where {T}
+function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
+               f::Function, y::Nothing, ::Nothing; kwargs...) where {M}
     a, b= extrema(p).x
     plot!(t, m, p, unzip(f, a, b)...; kwargs...)
 end
 
 ## parametric
-function plot!(t::Val{:scatter}, m::Val{T}, p::Plot,
-               fs::NTuple{N,Function}, y, z; kwargs...) where {T,N}
+function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
+               fs::NTuple{N,Function}, y, z; kwargs...) where {M,N}
     2 ≤ N ≤ 3 || throw(ArgumentError("parametric plots needs 2 or 3 functions"))
     ts = range(y,z,length=251)
     plot!(t, m, p, (f.(ts) for f ∈ fs)...; kwargs...)
 end
 
-function plot!(t::Val{:scatter}, m::Val{T}, p::Plot,
-               fs::NTuple{N,Function}, y, ::Nothing; kwargs...) where {T,N}
+function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
+               fs::NTuple{N,Function}, y, ::Nothing; kwargs...) where {M,N}
     plot!(t, m, p, fs, extrema(y)...; kwargs...)
 end
 
-function plot!(t::Val{:scatter}, m::Val{T}, p::Plot,
-               fs::NTuple{N,Function}, ::Nothing, ::Nothing; kwargs...) where {T,N}
+function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
+               fs::NTuple{N,Function}, ::Nothing, ::Nothing; kwargs...) where {M,N}
     throw(ArgumentError("parametric plots needs 2 or 3 functions"))
 end
+
+##
+function plot!(t::Val{:scatter}, p::Plot,
+               f::Function, g::Function, a, b; kwargs...)
+    @show :hi
+end
+
 
 
 # Recipe for pts style
 # different from Plots which fill in 1:m for values
-function plot!(t::Val{:scatter}, m::Val{T}, p::Plot, x, y::Nothing, z::Nothing; kwargs...) where {T}
+function plot!(t::Val{:scatter}, m::Val{M}, p::Plot, x, y::Nothing, z::Nothing; kwargs...) where {M}
     plot!(t, m, p, unzip(x)...; kwargs...)
 end
