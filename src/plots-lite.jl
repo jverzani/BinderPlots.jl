@@ -133,13 +133,6 @@ current() = current_plot[]
 # doesn't consume
 function _new_plot(;
                    windowsize=nothing, size=windowsize, # named tuple (width=, height=)
-                   # xlim=nothing, xlims=xlim,
-                   # ylim=nothing, ylims=ylim,
-                   # xticks=nothing, yticks=nothing,zticks=nothing,
-                   # xlabel=nothing, ylabel=nothing,zlabel=nothing,
-                   # xscale=nothing, yscale=nothing,zscale=nothing,
-                   # legend = nothing,
-                   # aspect_ratio=nothing,
                    kwargs...)
 
     p = Plot(Config[],
@@ -151,15 +144,7 @@ function _new_plot(;
         first_plot[] = false
     end
 
-    # kwargs = _layout_attrs!(p;
-    #                         size, xlims, ylims,
-    #                         xticks, yticks, zticks,
-    #                         xlabel, ylabel, zlabel,
-    #                         xscale, yscale, zscale,
-    #                         legend,
-    #                         aspect_ratio,
-    #                         kwargs...)
-
+    size!(p, size)
     p, kwargs
 end
 
@@ -777,15 +762,14 @@ end
 
 # XXX this needs work
 function _layout_styles!(p;
-                         size=nothing, xlims=nothing, ylims=nothing,
+                         xlims=nothing, ylims=nothing,
                          xticks=nothing, yticks=nothing, zticks=nothing,
                          xlabel=nothing, ylabel=nothing, zlabel=nothing,
                          xscale=nothing, yscale=nothing, zscale=nothing,
                          legend=nothing,
 
                          kwargs...)
-        # size is specified through a keyed object
-    size!(p, size)
+    # size is specified through a keyed object
     xlims!(p, xlims)
     ylims!(p, ylims)
 
@@ -812,105 +796,3 @@ function _layout_styles!(p;
 
     kwargs
 end
-
-###
-## Bonepile
-#=
-function _layout_attrs!(p;
-                        size=nothing, xlims=nothing, ylims=nothing,
-                        xticks=nothing, yticks=nothing, zticks=nothing,
-                        xlabel=nothing, ylabel=nothing, zlabel=nothing,
-                        xscale=nothing, yscale=nothing, zscale=nothing,
-                        legend=nothing,
-                        aspect_ratio=nothing,
-                        kwargs...)
-    # size is specified through a keyed object
-    size!(p, size)
-    xlims!(p, xlims)
-    ylims!(p, ylims)
-
-    # ticks
-    xticks!(p, xticks)
-    yticks!(p, yticks)
-    zticks!(p, zticks)
-
-    # labels
-    xlabel!(p, xlabel)
-    ylabel!(p, ylabel)
-    zlabel!(p, zlabel)
-
-    # scale
-    xscale!(p, xscale)
-    yscale!(p, yscale)
-    zscale!(p, zscale)
-
-    # layout
-    legend!(p, legend)
-    aspect_ratio == :equal && (p.layout.yaxis.scaleanchor="x")
-
-    kwargs
-end
-
-_line_magic!(cfg, line::Nothing) = nothing
-function _line_magic!(cfg, line)
-    for a ∈ line
-        if isa(a, Symbol)
-            if a ∈ _linestyles
-                cfg.line.dash = a
-            else
-                cfg.line.color = a
-            end
-        end
-        if isa(a, Number)
-            isa(a, Integer) && (cfg.line.width=a)
-            0 < a < 1 && (cfg.opacity = a)
-        end
-    end
-end
-
-
-## ---
-_fill_magic!(cfg, ::Nothing) = nothing
-function _fill_magic!(cfg, fill)
-    fillrange = fillalpha = fillcolor = nothing
-    for a ∈ fill
-        if isa(a, Symbol)
-            fillcolor = a
-        elseif isa(a, String)
-            fillrange = a # tonexty, tozeroy, toself
-        elseif isa(a, Real)
-            if 0 < a < 1
-                fillalpha = a # no fillalpha keyword
-                cfg.opacity = a
-            elseif isa(a, Integer)
-                @warn "Fill to a y value is not implemented"
-            end
-        end
-    end
-    _merge!(cfg; fill=fillrange, fillcolor)
-end
-
-
-function _marker_magic!(cfg, marker)
-    for a ∈ marker # a tuple
-        if isa(a, Symbol)
-            if a ∈ _marker_shapes
-                cfg.symbol = replace(string(a), "_" => "-")
-            else
-                cfg.color = a
-            end
-        end
-        if isa(a, Number)
-            if isa(a, Integer)
-                cfg.size = a
-            else
-                0 ≤ a ≤ 1  && (cfg.opacity = a)
-            end
-        end
-        ## XXX Add Stroke properties?
-    end
-end
-_marker_magic!(cfg, ::Nothing) = nothing
-
-
-=#
