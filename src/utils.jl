@@ -194,7 +194,7 @@ struct TextFont{S,F}
     str::S
     font::F
 end
-
+Base.string(lab::TextFont) = lab.str
 """
     text(str, args...; kwargs...)
     text(str, f::Font)
