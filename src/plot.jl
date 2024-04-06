@@ -51,7 +51,7 @@ end
 
 # plot matrix by padding ut
 function plot!(t::Val{:scatter}, p::Plot,
-               x::Matrix, ::Nothing, ::Nothing; kwargs...)
+               x::AbstractMatrix, ::Nothing, ::Nothing; kwargs...)
     m, n = size(x)
     plot!(t, p, 1:m, x, nothing; kwargs...)
 end

@@ -78,7 +78,9 @@ For line plots, as created by this usage, the supported key words include
 
 ### `plot(xs, ys, [zs])` and `plot(pts)`
 
-The points to plot may be specified directly. Points can be given as ``\{(x_1, y_1), (x_2,y_2), \dots, (x_n, y_n)\}`` or as two vectors ``(x_1, x_2, \dots, x_n)`` and ``(y_1, y_2, \dots, y_n)``. When the latter, they must be of equal length, as internally they are paired off.
+The points to plot may be specified directly.
+
+Points can be given as ``\{(x_1, y_1), (x_2,y_2), \dots, (x_n, y_n)\}`` or as two vectors ``(x_1, x_2, \dots, x_n)`` and ``(y_1, y_2, \dots, y_n)``. When the latter, they must be of equal length, as internally they are paired off.
 
 For example, we might bypass the automatic selection of points to plot and create these directly:
 
@@ -102,6 +104,19 @@ The `plot(xs, ys)` function simply connects the points
 ``(x_1,y_1), (x_2,y_2), \dots``  sequentially with lines in a dot-to-dot manner (the `lineshape` argument can modify this). If values in `y` are non finite, then a break in the dot-to-dot graph is made.
 
 Use `plot(xs, ys, zs)` for line plots in 3 dimensions, which is illustrated in a different section.
+
+
+*If* one or more `x` or `y` (or `z`) is a matrix, then each *column* will be treated as specifying a trace. In this case, most keyword arguments will be cycled over (except for the magic ones like `line`, `markers`, and `fill`). For example:
+
+```@example lite
+m, n = 10, 3
+x = 1:m
+y = rand(m, n)
+plot(x, y; label=("one","two","threee"), linecolor=(:red, :green, :blue))
+```
+
+!!! note "Plotting a vector"
+    The `Plots.jl` interface has a recipe for `plot(x::Vector)` which will plot `x` against the values `1:length(x)` **unless** `x` is a vector of tuples, in which case it will plot as points (as above). This is **not** supported. If only a vector for `x` is specified, it is assumed to contain a vector of points; if not an error for `unzip` will be thrown. If only a **matrix** is passed for x then each column is plotted against `1:size(x)[1]`. (In the last example `plot(y;...)` would produce the same figure as `plot(x, y; ...)`.)
 
 
 
@@ -129,7 +144,7 @@ As a convenience, to plot two or more traces in a graphic, a vector of functions
 The `Plots` keyword `line` arguments are recycled. For more control, using `plot!`, as above.
 
 
-### `plot(fs::Tuple, a, b)`
+### `plot(fs::NTuple{N,Function}, a, b)`
 
 Two dimensional parametric plots show the trace of ``(f(t), g(t))`` for ``t`` in ``[a,b]``. These are easily created by `plot(x,y)` where the `x` and `y` values are produced by broadcasting, say, such as `f.(ts)` where `ts = range(a,b,n)`.
 
@@ -163,6 +178,8 @@ to_documenter(current())           # hide
 
 The keyword arguments defined within this package are processed; the rest passed onto the data configuration of Plotly. The bar plot required a specification of the layout configuration.
 
+!!! note "seriestype"
+    The `seriestype` argument refers to a plotly `type` and `mode` which could be specified directly. For example, `plot(x,y; type="scatter", mode="markers+lines", ...) would produce a scatter plot along with lines connecting the points, a task otherwise done by combinign `plot` with `scatter!` (introduced next).
 
 ### `scatter(xs, ys, [zs])` or `scatter(pts)`
 
@@ -179,8 +196,6 @@ The following `Plots.jl` marker attributes are supported:
 
 A specification like `marker=(:diamond, 20, :blue)` will set the 3 attributes above with matching by type.
 
-!!! note "Plotly difference"
-    In `Plotly`, just using `mode="lines+markers"` is needed to show both markers and lines, but in this interface, one would make a line plot and then layer on a scatter plot.
 
 ### Text and arrows
 
@@ -202,14 +217,14 @@ The following `Plots.jl` text attributes are supported:
 * `pointsize`
 * `rotation`
 
-For labels and annotations, the `text(str, arguments)` can be used to specify font properties. For example `text("label", :red, 20)` specifies the color and text size for the string when used to label a graphic.
+For labels and annotations, the call `text(str, args...)` can be used to specify font properties. For example `text("label", :red, 20)` specifies the color and text size for the string when used to label a graphic. The `font` function takes the `args...` and returns a `Font` object, which allow various text attributes to be customized.
 
 ### Shapes
 
 There are a few simple shapes, including lines:
 
-* `hline!(y; xmin=0,xmax=1)` draws a horizontal line at elevation `y` across the computed axis, or adjusted via `xmin` and `xmax`.  The `extrema` function computes the axis sizes.
-* `vline(x)`  draws a vertical line at  `x` across the computed axis, or adjusted via `ymin` and `ymax`. The `extrema` function computes the axis sizes.
+* `hline!(y; xmin=0,xmax=1)` draws a horizontal line at elevation `y` across the computed axis, or adjusted via `xmin` and `xmax`.  The `extrema` function computes the axis sizes. If `y` is a container, multiple lines are drawn.
+* `vline(x)`  draws a vertical line at  `x` across the computed axis, or adjusted via `ymin` and `ymax`. The `extrema` function computes the axis sizes. If `x` is a container, multiple lines are drawn.
 * `ablines!(intercept, slope)` for drawing lines `a + bx` in the current frame.
 
 The following create regions which can be filled.  Shapes have an interior and exterior boundary. The exterior line has attributes that can be adjusted with `linecolor`, `linewidth`, and `linestyle`.
@@ -217,6 +232,7 @@ The following create regions which can be filled.  Shapes have an interior and e
 The following `Plots.jl` fill attributes are supported:
 
 * `fillcolor`
+* `fill` (one of `0`, `"tonexty"`, `"tozerox"`)
 
 The `plotly` `opacity` argument can adjust the interior color's transparency level.
 
@@ -227,7 +243,7 @@ Plots that create 2d-regions are:
 * `vspan!(xs,XS; ymin=0.0, ymax=1.0)` draws vertical rectangle(s) with left and right vertices specified by `xs` and `XS`.
 * `circle!(x0, x1, y0, y1)` draws a "circular" shape in the rectangle given by `(x0, y0)` and `(x1, y1)`.
 * `poly!(points; kwargs...)` where points is a container of ``(x,y)`` or ``(x,y,z)`` coordinates.
-* `band!(lower, upper, args...; kwargs...)` draws a ribbon or band between `lower` and `upper`. These are either containers of `(x,y)` points or functions, in which case `args...` is read as `a,b,n=251` to specify a range of values to plot over. The function can be scalar valued or parameterizations of a space curve in ``2`` or ``3`` dimensions.
+* `band!(lower, upper, args...; kwargs...)` draws a ribbon or band between `lower` and `upper`. These are either containers of `(x,y)` points or functions, in which case `args...` is read as `a,b,n=251` to specify a range of values to plot over. The function can be scalar valued or parameterizations of a space curve in ``2`` or ``3`` dimensions. The `ribbon` argument of `Plots` is not supported.
 
 
 ----
