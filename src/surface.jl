@@ -1,5 +1,11 @@
-
 ##
+## surface and wireplots of:
+## * f::𝐑² → 𝐑
+## * a parametrization F::𝐑² → 𝐑³ (through xs,ys,zs)
+##
+SeriesType(::Val{:surface}) = (:surface, :surface)
+SeriesType(::Val{:wireframe}) = (:surface, :wireframe)
+
 """
     surface(x, y, z; kwargs...)
     surface!(x, y, z; kwargs...)
@@ -76,7 +82,7 @@ plane(x,z) = (d - a*x - c*z) / b
 Ys = plane.(xs', zzs)
 
 # intersection
-g(t) = (d - a*t) / b
+y(t) = (d - a*t) / b
 γ(t) = (t, y(t), f(t, y(t)))
 
 surface(xs, ys, zs)
@@ -84,52 +90,22 @@ surface!(Xs, Ys, Zs, opacity=0.2)
 plot!(unzip(γ.(xs))...; linewidth=3)
 ```
 """
-function surface(x, y, z; kwargs...)
-    p, kwargs = _new_plot(; kwargs...)
-    surface!(p, x, y, z; kwargs...)
+function surface(args...; kwargs...)
+    p, kws = _new_plot(; kwargs...)
+    surface!(p, args...; kwargs...)
+end
+surface!(args...; kwargs...) = plot!(args...; seriestype=:surface, kwargs...)
+
+# XXX not quite a good name, as surface plats can be parameterized
+# but this covers basic cases of surface, wireframe, contour, heatmpa
+function  _bivariate_scalar_styles!(t::Val{:surface}, m::Val{M}, p::Plot; kwargs...) where {M}
+
+    kws = _3d_styles!(p; kwargs...)
+    kws = _aspect_ratio!(p::Plot; kws...)
+    kws
 end
 
-surface(x, y, f::Function; kwargs...) =
-    surface(x, y, f.(x', y); kwargs...)
-
-surface!(x, y, z; kwargs...) =
-    surface!(current_plot[], x, y, z; kwargs...)
-
-surface!(x, y, f::Function; kwargs...) =
-    surface!(current_plot[], x, y, f.(x', y); kwargs...)
-
-function surface!(p::Plot, x, y, z;
-                  eye = nothing, # (x=1.35, y=1.35, z=..)
-                  center = nothing,
-                  up = nothing,
-                  zcontour = false,
-                  aspect_ratio=nothing,
-                  kwargs...)
-
-    x, y, z = _adjust_matrix.((x,y,z))
-    c = Config(;x,y,z,type="surface")
-    _merge!(c; kwargs...)
-
-    # configuration options? colors?
-    if zcontour
-        c.contours.z = Config(show=true, usecolormap=true,
-                              project=Config(;z=true))
-    end
-
-    # camera controls
-    _camera_position!(p.layout.scene.camera; center, up, eye)
-
-    if !isnothing(aspect_ratio)
-        if aspect_ratio == :equal
-            p.layout.scene.aspectmode = "data"
-            p.layout.scene.aspectratio = Config(x=1, y=1, z=1)
-        end
-    end
-
-    push!(p.data, c)
-    p
-end
-
+## ----
 """
     wireframe(x, y, z; kwargs...)
     wireframe(x, y, f::Function; kwargs...)
@@ -147,27 +123,19 @@ surface(xs, ys, f)
 wireframe!(xs, ys, f)
 ```
 """
-function wireframe(x, y, z; kwargs...)
-    p, kwargs = _new_plot(; kwargs...)
-    wireframe!(p, x, y, z; kwargs...)
+function wireframe(args...; kwargs...)
+    p, kws = _new_plot(; kwargs...)
+    wireframe!(p, args...; kwargs...)
 end
+wireframe!(args...; kwargs...) = plot!(args...; seriestype=:wireframe, kwargs...)
 
-wireframe(x, y, f::Function; kwargs...) =
-    wireframe(x, y, f.(x', y); kwargs...)
+function  _bivariate_scalar_styles!(t::Val{:surface}, ::Val{:wireframe}, p; kwargs...)
+    kws = _3d_styles!(p; kwargs...)
 
-wireframe!(x, y, z; kwargs...) =
-    wireframe!(current_plot[], x, y, z; kwargs...)
+    c = p.data[end]
+    c.hidesurface = true
+    c.contours.x.show = true
+    c.contours.y.show = true
 
-wireframe!(x, y, f::Function; kwargs...) =
-    wireframe!(current_plot[], x, y, f.(x', y); kwargs...)
-
-function wireframe!(p::Plot, x, y, z; kwargs...)
-    surface!(p, x, y, z; kwargs...)
-    # surface plot with modifications
-    d = p.data[end]
-    d.hidesurface = true
-    d.contours.x.show = true
-    d.contours.y.show = true
-
-    p
+    kws
 end

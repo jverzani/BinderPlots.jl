@@ -1,33 +1,3 @@
-
-
-## ----
-
-# function annotate!(p::Plot, x, y, txt;
-#                    color= nothing,
-#                    family = nothing,
-#                    pointsize = nothing,
-#                    halign = nothing,
-#                    valign = nothing,
-#                    rotation = nothing,
-#                    kwargs...)
-
-#     cfg = Config(; x, y, text=txt, mode="text", type="scatter")
-
-#     textposition = _something(strip(join(something.((halign, valign), ""), " ")))
-#     _merge!(cfg; textposition)
-#     _textstyle!(cfg.textfont; color, family, pointsize, rotation,  kwargs...)
-
-#     push!(p.data, cfg)
-#     p
-# end
-
-# annotate!(p::Plot, anns::Tuple; kwargs...) = annotate!(p, unzip(anns)...; kwargs...)
-# annotate!(p::Plot, anns::Vector; kwargs...) = annotate!(p, unzip(anns)...; kwargs...)
-# annotate!(x, y, txt; kwargs...) = annotate!(current_plot[], x, y, txt; kwargs...)
-# annotate!(anns::Tuple; kwargs...) = annotate!(current_plot[], anns; kwargs...)
-# annotate!(anns::Vector; kwargs...) = annotate!(current_plot[], anns; kwargs...)
-
-
 """
     annotate!([p::Plot], x, y, txt; [color], [family], [pointsize], [halign], [valign])
     annotate!([p::Plot], anns::Tuple;  kwargs...)
@@ -57,7 +27,7 @@ function annotate!(p::Plot, x, y, txt;
     rotation = [t.font.rotation for t in tfs]
     color = [t.font.color for t in tfs]
 
-    cfg = Config(; x, y, text=_txt, mode="text", type="scatter", textposition)
+    cfg = Config(; x, y, z=nothing, text=_txt, mode="text", type="scatter", textposition)
     _textstyle!(cfg.textfont; color, family, pointsize, rotation, kwargs...)
 
     push!(p.data, cfg)

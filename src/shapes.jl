@@ -207,7 +207,7 @@ function poly!(p::Plot,points;
         push!(x, first(x))
         push!(y, first(y))
     end
-    cfg = Config(;x,y,type="line", color=color, fill="toself")
+    cfg = Config(; x, y, type="line", color=color, fill="toself")
     kws = _linestyle!(cfg.line; kwargs...)
     kws = _fillstyle!(cfg; kws...)
     _merge!(cfg; kws...)
