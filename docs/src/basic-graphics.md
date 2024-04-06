@@ -28,7 +28,7 @@ This is only partially the case with `BinderPlots`.
 This is only partially the case with `BinderPlots`, though the more direct calling methods are suggested.
 
 
-Altogehter, most basic graphics created through `Plots` can be produced with `BinderPlots`, but the showcase of [examples](https://github.com/JuliaPlots/Plots.jl/blob/master/src/examples.jl), which utilize many conveniences, and mostly not runnable as is.
+Altogether, most basic graphics created through `Plots` can be produced with `BinderPlots`, but the showcase of [examples](https://github.com/JuliaPlots/Plots.jl/blob/master/src/examples.jl), which utilize many conveniences, and mostly not runnable as is.
 
 
 ## Supported plotting functions
