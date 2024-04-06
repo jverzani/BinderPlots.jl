@@ -693,25 +693,28 @@ _legend_positions =
 
 
 function _legend_magic!(p, legend)
-    cfg = p.layout.legend
+
+    lyt = p.layout
+    leg = p.layout.legend
     for a ∈ legend
         if isa(a, Tuple)
             x, y = a
-            cfg.x = x; cfg.y=y
+            leg.x = x; leg.y=y
         elseif isa(a, Font)
-            cfg.font.family = a.family
-            cfg.font.size = a.pointsize
-            cfg.font.color = a.color
+            font = leg.font
+            font.family = a.family
+            font.size = a.pointsize
+            font.color = a.color
         elseif isa(a, Bool)
-            cfg.showlegend=a
+           lyt.showlegend=a
         elseif isa(a, Symbol)
             if haskey(_legend_positions, a)
                 x,y = _legend_positions[a]
-                cfg.x = x; cfg.y=y
+                leg.x = x; leg.y=y
             elseif a == :reversed
-                cfg.traceorder = :reversed
+                leg.traceorder = :reversed
             else
-                cfg.bgcolor = a
+                leg.bgcolor = a
             end
         end
     end
@@ -794,7 +797,11 @@ end
 
 
 function _trace_styles!(c; label=nothing,  kwargs...)
-    c.name = label
+    if !isnothing(label)
+        c.name = string(label)
+    else
+        c.showlegend=false
+    end
     kws = _linestyle!(c.line; kwargs...)
     kws = _fillstyle!(c.fill; kws...)
     kws = _markerstyle!(c.marker; kws...)
@@ -805,6 +812,7 @@ end
 function _layout_styles!(p;
                          xlims=nothing, ylims=nothing,
                          xticks=nothing, yticks=nothing, zticks=nothing,
+                         title=nothing,
                          xlabel=nothing, ylabel=nothing, zlabel=nothing,
                          xscale=nothing, yscale=nothing, zscale=nothing,
                          xaxis=nothing, yaxis=nothing, zaxis=nothing,
@@ -821,6 +829,7 @@ function _layout_styles!(p;
     zticks!(p, zticks)
 
     # labels
+    title!(p, title)
     xlabel!(p, xlabel)
     ylabel!(p, ylabel)
     zlabel!(p, zlabel)
