@@ -112,7 +112,7 @@ Use `plot(xs, ys, zs)` for line plots in 3 dimensions, which is illustrated in a
 m, n = 10, 3
 x = 1:m
 y = rand(m, n)
-plot(x, y; label=("one","two","threee"), linecolor=(:red, :green, :blue))
+plot(x, y; label=("one","two","three"), linecolor=(:red, :green, :blue))
 ```
 
 !!! note "Plotting a vector"
