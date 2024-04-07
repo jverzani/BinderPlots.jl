@@ -265,7 +265,7 @@ y0, y1 = extrema(current()).y  # get extent in `y` direction
 rect!(0, 2.5, y0, y1, fillcolor="#d3d3d3", opacity=0.2)
 rect!(2.5, 6, y0, y1, linecolor="black", fillcolor="orange", opacity=0.2)
 x1 = last(x)
-rect!(6, x1, y0, y1, fillcolor="rgb(150,150,150)", opacity=0.2)
+rect!(6, x1, y0, y1, fillcolor=rgb(150,150,150), opacity=0.2)
 
 delete!(current().layout, :width)  # hide
 delete!(current().layout, :height) # hide
@@ -317,7 +317,7 @@ Some keywords chosen to mirror `Plots.jl` are:
 |`up`				| new ``3``d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
 |`eye`				| new ``3``d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
 
-As seen in the example there are *many* ways to specify a color. These can be by name (as a string); by name (as a symbol), using HEX colors, using `rgb` (the use above passes a JavaScript command through a string). There are likely more.
+As seen in the example there are *many* ways to specify a color. These can be by name (as a string); by name (as a symbol), using HEX colors (as strings), using `rgb`. (The `rgb` function, unlike the standard `Colors.RGB`, uses values in `0` to `255` to specify the values and also can take a fourth argument for an alpha value, which is useful for filling with opacity.)
 
 Some exported names are used to adjust a plot after construction:
 

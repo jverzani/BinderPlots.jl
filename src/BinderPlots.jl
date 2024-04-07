@@ -89,7 +89,6 @@ import PlotlyLight: Plot, Config
 
 using PlotUtils
 
-
 include("utils.jl")
 include("plots-lite.jl")
 include("plot.jl")
@@ -119,7 +118,9 @@ export ★, ★!, ziptie, ziptie!
 export parallelogram, parallelogram!, circ3d, circ3d!, skirt, skirt!
 export current
 
+
 export arrows, arrows!, poly, poly!, band, band!, hspan!, vspan!, ablines!, image!
 export unzip
+export rgb, colormap
 
 end

@@ -28,13 +28,17 @@ using Test
     r(x,y) = (x, x*y, y)
     surface(unzip(xs, ys, r)...)
 
+    c1,c2 = rgb(10,10,10,1), rgb(200,200,200,1)
+    plot(rand(5,10); linecolor=range(c1, c2, 10))
+
     nothing
 
 end
 
 @testset "Magic" begin
+    col = rgb(10,20,30,0.5)
     plot(1:5, rand(5), xticks=((1:5, string.(1:5))))
-    plot(1:5, rand(5), line=(:dot, 10, 0.5))
+    plot(1:5, rand(5), line=(:dot, 10, 0.5, col))
     scatter(1:5, rand(5), marker=(:diamond, 10, 0.5,:red))
     f = font(:red, 20)
     title!(text("title", f))

@@ -738,8 +738,9 @@ function _make_magic(;
             else
                 _set(d, :linecolor, a)
             end
-        end
-        if isa(a, Number)
+        elseif isa(a, _RGB)
+            _set(d, :linecolor, a)
+        elseif isa(a, Number)
             isa(a, Integer) && _set(d, :linewidth, a)
         end
     end
@@ -751,19 +752,22 @@ function _make_magic(;
             else
                 _set(d, :markercolor, a)
             end
-        end
-        if isa(a, Number)
+        elseif isa(a, _RGB)
+            _set(d, :markercolor, a)
+        elseif isa(a, Number)
             if isa(a, Integer)
                 _set(d, :markersize, a)
             end
             # no opacity for markers
-            # plotly has  you use rgba(r,g,b,α) for transparency
+            # plotly has you use rgba(r,g,b,α) for transparency
         end
     end
 
     ## axis has x,y,z
     for a ∈ something(fill, tuple())
         if isa(a, Symbol)
+            _set(d, :fillcolor, a)
+        elseif isa(a, _RGB)
             _set(d, :fillcolor, a)
         elseif isa(a, String)
             _set(d, :fill, a) # tonexty, tozeroy, toself

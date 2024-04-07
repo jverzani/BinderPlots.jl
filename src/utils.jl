@@ -49,9 +49,10 @@ end
 
 # how many traces does the data represent
 # when there can be more than one
-ntraces(x) =  last(size(x))
+ntraces(x) =  1
 ntraces(::Nothing) = 0
 ntraces(::Tuple) = 1
+ntraces(x::AbstractMatrix) = last(size(x))
 ntraces(::AbstractVector) = 1
 ntraces(x::AbstractVector{T}) where {T <: Function} = length(x)
 ntraces(::Function) = 1
@@ -214,4 +215,67 @@ struct Font{F,PS,HA,VA,R,C}
     valign::VA
     rotation::R
     color::C
+end
+
+## Would like to use Colors.RGB[a] for colors *but*
+## it isn't clear how to get this to write correctly
+## *without* type piracy, so we make our own little one:
+
+struct _RGB
+    r::Float64
+    g::Float64
+    b::Float64
+    α::Float64
+end
+
+"""
+    rgb(r,g,b,α=1.0)
+    rgb(c::Union{RGB, RGBA}) # RGB[A] from Colors.jl
+    colormap(cname, N; kwargs...)
+
+Specify red, green, blue values between 0 and 255 (as integers). The transparency is specified by the 4th argument, a value in [0.0,1.0].
+
+The range operator can be used with color to produce a sequence, following `Colors.range` for `RGB[A]` values. (It is not lazy, so don't take `length` to be too large.)
+
+The `colormap` function returns a colormap of length 10 using `Colors.colormap`.
+
+"""
+function rgb(r::Int, g::Int, b::Int, α=1.0)
+    _RGB(r/255, g/255, b/255, clamp(α,0.0,1.0))
+end
+Recycler(x::_RGB) = Recycler((x,))
+function Base.convert(::Type{_RGB}, c::PlotUtils.Colors.RGB)
+    (; b,g,r) = c
+    _RGB(b,g,r,1.0)
+end
+function Base.convert(::Type{_RGB}, c::PlotUtils.Colors.RGBA)
+    (; b,g,r,alpha) = c
+    _RGB(b,g,r,alpha)
+end
+rgb(c::PlotUtils.Colors.RGB) = convert(_RGB, c)
+rgb(c::PlotUtils.Colors.RGBA) = convert(_RGB, c)
+
+PlotlyLight.StructTypes.StructType(::Type{_RGB}) = PlotlyLight.StructTypes.StringType()
+function Base.string(c::_RGB)
+    (;r,g,b,α) = c
+    "rgba($r,$g,$b,$α)"
+end
+
+# make a colormap
+function colormap(cname, N=100; kwargs...)
+    if !(cname ∈ ("Blues", "Greens", "Grays", "Oranges", "Purples", "Reds", "RdBu"))
+        @warn "incorrect colormap name; using RdBu"
+        cname = "RdBu"
+    end
+    cols = PlotUtils.Colors.colormap(cname, N; kwargs...)
+    convert.(_RGB, cols)
+end
+
+# not *lazy*!!
+function Base.range(start::_RGB, stop::_RGB, length::Integer)
+    (; r,g,b,α) = start
+    c1 = PlotUtils.Colors.RGBA(r,g,b,α)
+    (; r,g,b,α) = stop
+    c2 = PlotUtils.Colors.RGBA(r,g,b,α)
+    [rgb(c) for c ∈ range(c1, c2, length)]
 end
