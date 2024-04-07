@@ -77,9 +77,10 @@ end
 
 ## parametric
 function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
-               fs::NTuple{N,Function}, y, z; kwargs...) where {M,N}
+               fs::NTuple{N,Function}, y, z; npts::Integer = 251,
+               kwargs...) where {M,N}
     2 ≤ N ≤ 3 || throw(ArgumentError("parametric plots needs 2 or 3 functions"))
-    ts = range(y,z,length=251)
+    ts = range(y,z,length=npts)
     plot!(t, m, p, (f.(ts) for f ∈ fs)...; kwargs...)
 end
 

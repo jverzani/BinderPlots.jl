@@ -80,7 +80,7 @@ plot!(::Plot, args...; kwargs...) = throw(ArgumentError("No plot method defined"
 # XXX dispatch on type and mode
 # no xyz for surface type, say
 function plot!(p::Plot, x=nothing, y=nothing, z=nothing;
-              seriestype::Symbol=:lines,
+               seriestype::Symbol=:lines,
                kwargs...)
     kws = _make_magic(; kwargs...) # XXX move if you want to be able to recycle
     kws = _layout_styles!(p;  kws...) # adjust layout
@@ -497,7 +497,6 @@ function _linestyle!(cfg::Config;
                      style=nothing, ls=style, linestyle = ls, # solid, dot, dashdot,
                      lineshape = nothing,
                      kwargs...)
-
     shape = isnothing(lineshape) ? nothing :
         lineshape ∈ keys(_lineshapes) ? _lineshapes[lineshape] : lineshape
     _merge!(cfg; color=linecolor, width=linewidth, dash=linestyle,
@@ -517,13 +516,13 @@ function _markerstyle!(cfg::Config; # .marker
                        shape = nothing, markershape = shape,
                        ms=nothing, markersize  = ms,
                        mc=nothing, markercolor = mc,
-                       ma=nothing, markeralpha=ma, opacity=markeralpha,
+                       # no makr opacity; pass `rgba(r,g,b,α)` to color
+                       #ma=nothing, markeralpha=ma,opacity=markeralpha,
                        kwargs...)
     _merge!(cfg;
             symbol=markershape,
             size=markersize,
-            color=markercolor,
-            opacity)
+            color=markercolor)
     kwargs
 end
 
@@ -626,9 +625,8 @@ _align(x::Symbol, y::Symbol) = join((string(x), string(y)), " ")
 # for filled shapes
 function _fillstyle!(cfg::Config;
                      fc=nothing, fillcolor = fc, # string, symbol, RGB?
-                     fillalpha=nothing, opacity = fillalpha,
                      kwargs...)
-    _merge!(cfg; fillcolor=fillcolor, opacity)
+    _merge!(cfg; fillcolor=fillcolor)
     kwargs
 end
 
@@ -720,14 +718,10 @@ function _legend_magic!(p, legend)
     end
     nothing
 end
-
-## -----
-# merge in
-
-# styles
 # turn magic into keyword arguments
 _set(d, key, value) = (d[key] = value)
 _set(d, key, ::Nothing) = d
+
 function _make_magic(;
                      line = nothing,
                      marker = nothing,
@@ -744,10 +738,10 @@ function _make_magic(;
             else
                 _set(d, :linecolor, a)
             end
-        end
-        if isa(a, Number)
+        elseif isa(a, _RGB)
+            _set(d, :linecolor, a)
+        elseif isa(a, Number)
             isa(a, Integer) && _set(d, :linewidth, a)
-            0 < a < 1 && _set(d, :opacity, a)
         end
     end
 
@@ -758,25 +752,27 @@ function _make_magic(;
             else
                 _set(d, :markercolor, a)
             end
-        end
-        if isa(a, Number)
+        elseif isa(a, _RGB)
+            _set(d, :markercolor, a)
+        elseif isa(a, Number)
             if isa(a, Integer)
                 _set(d, :markersize, a)
-            else
-                _set(d, :opacity, a)
             end
+            # no opacity for markers
+            # plotly has you use rgba(r,g,b,α) for transparency
         end
     end
 
     ## axis has x,y,z
-
     for a ∈ something(fill, tuple())
         if isa(a, Symbol)
+            _set(d, :fillcolor, a)
+        elseif isa(a, _RGB)
             _set(d, :fillcolor, a)
         elseif isa(a, String)
             _set(d, :fill, a) # tonexty, tozeroy, toself
         elseif isa(a, Bool)
-            _set(d, :fill, a) # true false
+            a && _set(d, :fill, :toself) # true false
         elseif isa(a, Real)
             if 0 < a < 1
                 _set(d, :opacity, a)
@@ -787,7 +783,6 @@ function _make_magic(;
             end
         end
     end
-
     # covert back
     kws = merge(Dict(kwargs...), d)
     nt = NamedTuple(kws)
@@ -796,14 +791,17 @@ function _make_magic(;
 end
 
 
-function _trace_styles!(c; label=nothing,  kwargs...)
+function _trace_styles!(c; label=nothing,
+                        opacity = nothing,
+                        kwargs...)
     if !isnothing(label)
         c.name = string(label)
     else
         c.showlegend=false
     end
+    c.opacity = opacity
     kws = _linestyle!(c.line; kwargs...)
-    kws = _fillstyle!(c.fill; kws...)
+    kws = _fillstyle!(c; kws...)
     kws = _markerstyle!(c.marker; kws...)
     kws
 end
