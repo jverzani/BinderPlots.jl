@@ -26,7 +26,7 @@ using Test
     heatmap(xs, ys, f)
     surface(xs, ys, f)
     r(x,y) = (x, x*y, y)
-    surface(unzip(xs, ys, r)...)
+    surface(BinderPlots.unzip(xs, ys, r)...)
 
     c1,c2 = rgb(10,10,10,1), rgb(200,200,200,1)
     plot(rand(5,10); linecolor=range(c1, c2, 10))
