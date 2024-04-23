@@ -32,14 +32,14 @@ to_documenter(current())           # hide
 
 As with 2-dimensional lines, the arguments `linecolor`, `linewidth`, `linestyle`, and `lineshape` from `Plots` are available.
 
-Using a single function returning a point may be more natural for some usages. Below we use `unzip` to take a container of points into 3 containers for the coordinates, `x`, `y`, `z` to pass to `plot(x,y,z)` (this could also be just `plot(r.(ts))`. but that interface is not available in `Plots.jl`):
+Using a single function returning a point may be more natural for some usages. Below we use `BinderPlots.unzip` to take a container of points into 3 containers for the coordinates, `x`, `y`, `z` to pass to `plot(x,y,z)` (this could also be just `plot(r.(ts))`. but that interface is not available in `Plots.jl`):
 
 ```@example lite
 r(t) = (sin(t), cos(t), t)
 rp(t) = (cos(t), -sin(t), 1)
 
 ts = range(0, 4pi, length=251)
-plot(unzip(r.(ts))...; legend=false)
+plot(BinderPlots.unzip(r.(ts))...; legend=false)
 ts = range(0, 4pi, length=10)
 arrow!(r.(ts), rp.(ts))
 
@@ -117,14 +117,14 @@ to_documenter(current())           # hide
 
 ### Implicitly defined functions
 
-The equation ``f(x,y) = 0`` for a fixed ``x`` may have many ``y`` values for a solution. However, *locally* for most points and nice functions ``f`` there is an *implicitly* defined function ``y(x)``. This is useful, say if a tangent line is sought. The `implicit_plot` function can be used to show implicitly defined function given by ``f(x,y)=0``. It is basically a contour plot with only a ``0`` level.
+The equation ``f(x,y) = 0`` for a fixed ``x`` may have many ``y`` values for a solution. However, *locally* for most points and nice functions ``f`` there is an *implicitly* defined function ``y(x)``. This is useful, say if a tangent line is sought. The `plot_implicit` function can be used to show implicitly defined function given by ``f(x,y)=0``. It is basically a contour plot with only a ``0`` level.
 
 The implementation only asks for a range of ``x`` and ``y`` values to search over. It chooses the number of intermediate points. The ranges are specified through the arguments `xlims` and `ylims` with defaults yielding the region ``[-5,5] \times [-5,5]``.
 
 For example:
 
 ```@example lite
-implicit_plot(peaks; xlims=(-3,3), ylims=(-3,3))
+plot_implicit(peaks; xlims=(-3,3), ylims=(-3,3))
 
 
 delete!(current().layout, :width)  # hide
@@ -169,14 +169,14 @@ to_documenter(current())           # hide
 ```
 
 
-Parametric surfaces can be produced as follows, where, in this usage, `unzip` creates ``3`` matrices to pass to `surface`:
+Parametric surfaces can be produced as follows, where, in this usage, `BinderPlots.unzip` creates ``3`` matrices to pass to `surface`:
 
 ```@example lite
 r1, r2 = 2, 1/2
 r(u,v) = ((r1 + r2*cos(v))*cos(u), (r1 + r2*cos(v))*sin(u), r2*sin(v))
 us = vs = range(0, 2pi, length=25)
 
-p = surface(unzip(us, vs, r)...;
+p = surface(BinderPlots.unzip(us, vs, r)...;
 	aspect_ratio=:equal, showscale=false)
 
 delete!(current().layout, :width)  # hide

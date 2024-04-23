@@ -51,9 +51,10 @@ surface!(xs, ys, map(x -> x .- 1, z1), colorscale="Viridis", showscale=false, op
 
 (The keyword arguments above come from `Plotly`, not `Plots`.)
 
-A parameterized surface can be displayed. Below the `unzip` function returns 3 matrices specifying the surface described by the vector-valued function `r`.
+A parameterized surface can be displayed. Below the unexported `unzip` function returns 3 matrices specifying the surface described by the vector-valued function `r`.
 
 ```
+import BinderPlots: unzip
 r1, r2 = 2, 1/2
 r(u,v) = ((r1 + r2*cos(v))*cos(u), (r1 + r2*cos(v))*sin(u), r2*sin(v))
 us = vs = range(0, 2pi, length=25)

@@ -764,18 +764,24 @@ function _make_magic(;
     end
 
     ## axis has x,y,z
+    fillcolor = nothing
+    fillalpha = nothing
     for a ∈ something(fill, tuple())
         if isa(a, Symbol)
-            _set(d, :fillcolor, a)
+            fillcolor = a
         elseif isa(a, _RGB)
-            _set(d, :fillcolor, a)
+            fillcolor = a
         elseif isa(a, String)
-            _set(d, :fill, a) # tonexty, tozeroy, toself
+            if a ∈ ("tonexty", "tozeroy", "toself")
+                _set(d, :fill, a) # tonexty, tozeroy, toself
+            else
+                fillcolor = a
+            end
         elseif isa(a, Bool)
             a && _set(d, :fill, :toself) # true false
         elseif isa(a, Real)
             if 0 < a < 1
-                _set(d, :opacity, a)
+                fillalpha =a
             elseif iszero(a)
                 _set(d, :fill, "tozeroy")
             elseif isa(a, Integer)
@@ -783,6 +789,11 @@ function _make_magic(;
             end
         end
     end
+    if isa(fillcolor, Union{String,Symbol}) && !isnothing(fillalpha)
+        fillcolor = _RGB(PlotUtils.Colors.color_names[string(fillcolor)]..., fillalpha)
+    end
+    _set(d, :fillcolor, fillcolor)
+
     # covert back
     kws = merge(Dict(kwargs...), d)
     nt = NamedTuple(kws)

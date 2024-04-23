@@ -8,6 +8,10 @@ SeriesType(::Val{:heatmap}) = (:heatmap, :heatmap)
 ContourTypes = Union{Val{:contour}, Val{:heatmap},
                      Val{:surface}, Val{:wireframe}}
 
+# PLots for making polygons
+Shape(x, y) = zip(x, y)
+Shape(x) = x
+
 function plot!(t::T, m::M, p::Plot, x, y, z;
                kwargs...) where {T <: ContourTypes, M<:ContourTypes}
 
@@ -109,26 +113,26 @@ heatmap!(args...; kwargs...) = plot!(args...; seriestype=:heatmap, kwargs...)
 ## -----
 
 """
-    implicit_plot(f; xlims=(-5,5), ylims=(-5,5), legend=false, linewidth=2, kwargs...)
-    implicit_plot!([p::Plot], f; kwargs...)
+    plot_implicit(f; xlims=(-5,5), ylims=(-5,5), legend=false, linewidth=2, kwargs...)
+    plot_implicit!([p::Plot], f; kwargs...)
 
 For `f(x,y) = ...` plot implicitly defined `y(x)` from `f(x,y(x)) = 0` over range specified by `xlims` and `ylims`.
 
 ## Example
 ```
 f(x,y) = x * y - (x^3 + x^2 + x + 1)
-implicit_plot(f)
+plot_implicit(f)
 ```
 
 (Basically just `contour` plot with `levels=0` and points detremined by extrema of `xlims` and `ylims`.)
 """
-function implicit_plot(f::Function; kwargs...)
+function plot_implicit(f::Function; kwargs...)
     p, kwargs = _new_plot(; kwargs...)
-    implicit_plot!(p, f; kwargs...)
+    plot_implicit!(p, f; kwargs...)
 end
 
-implicit_plot!(f::Function; kwargs...) = implicit_plot!(current_plot[], f; kwargs...)
-function implicit_plot!(p::Plot, f::Function;
+plot_implicit!(f::Function; kwargs...) = plot_implicit!(current_plot[], f; kwargs...)
+function plot_implicit!(p::Plot, f::Function;
                         xlims=(-5, 5), ylims=(-5, 5),
                         legend=false,
                         linewidth=2,
