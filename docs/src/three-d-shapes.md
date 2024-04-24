@@ -85,7 +85,7 @@ skirt!(p, v, f; opacity = 0.5, color=:black)
 # draw intersection of plane and surface
 r(t) = p + t * v
 ts = range(0, 1, length=100)
-xs, ys, _ = unzip(r.(ts))
+xs, ys, _ = BinderPlots.unzip(r.(ts))
 zs = f.(xs, ys)
 plot!(xs, ys, zs, linewidth=10)
 
@@ -107,7 +107,7 @@ r(t) = (sin(t), cos(t), t)
 s(t) = (sin(t+pi), cos(t+pi), t)
 ts = range(0, 4pi, length=100)
 
-ziptie(unzip(r.(ts))..., unzip(s.(ts))...;
+ziptie(BinderPlots.unzip(r.(ts))..., BinderPlots.unzip(s.(ts))...;
        color="green", opacity=.25, showscale=false)
 
 delete!(current().layout, :width)  # hide
@@ -140,8 +140,8 @@ This shape is reminiscent of a potato chip, though formed with lines drawn from 
 r(t) = (sin(t), 2cos(t), sin(2t))
 ts = range(0, 2pi, 100)
 
-★([0,0,0], unzip(r.(ts))...)
-plot!(unzip(r.(ts))..., linewidth=10)
+★([0,0,0], BinderPlots.unzip(r.(ts))...)
+plot!(BinderPlots.unzip(r.(ts))..., linewidth=10)
 
 delete!(current().layout, :width)  # hide
 delete!(current().layout, :height) # hide

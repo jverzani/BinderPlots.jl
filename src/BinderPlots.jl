@@ -74,7 +74,7 @@ The `plot` function primarily plots line plots where the specified points are co
 In addition there are these plot constructors for higher-dimensional plots
 
 * `contour`
-* `implicit_plot`
+* `plot_implicit`
 * `heatmap`
 * `surface`
 * `wireframe`
@@ -104,9 +104,10 @@ include("layout.jl")
 export Plot, Config # but not Preset, preset, plot
 
 export plot, plot!, scatter, scatter!
+export Shape
 export contour, contour!, contourf, contourf!, heatmap, heatmap!
 export surface, surface!, wireframe, wireframe!
-export implicit_plot, implicit_plot!
+export plot_implicit, plot_implicit!
 export quiver, quiver!, arrow, arrow!
 export annotate, annotate!, text, font, title!, size!, legend!
 export xlabel!, ylabel!, zlabel!
@@ -120,7 +121,7 @@ export current
 
 
 export arrows, arrows!, poly, poly!, band, band!, hspan!, vspan!, ablines!, image!
-export unzip
+#export unzip
 export rgb, colormap
 
 end

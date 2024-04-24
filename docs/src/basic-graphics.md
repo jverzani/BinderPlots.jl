@@ -253,7 +253,7 @@ For example, this shows how one could visualize the points chosen in a plot, sho
 
 ```@example lite
 f(x) = x^2 * (108 - 2x^2)/4x
-x, y = unzip(f, 0, sqrt(108/2))
+x, y = BinderPlots.unzip(f, 0, sqrt(108/2))
 plot(x, y; legend=false)
 scatter!(x, y, markersize=10)
 
@@ -272,7 +272,7 @@ delete!(current().layout, :height) # hide
 to_documenter(current())           # hide
 ```
 
-The values returned by `unzip(f, a, b)` are not uniformly chosen, rather where there is more curvature there is more sampling. For illustration purposes, this is emphasized in a few ways: using `quiver!` to add labeled arrows and `rect!` to add rectangular shapes with transparent filling.
+The values returned by `BinderPlots.unzip(f, a, b)` are not uniformly chosen, rather where there is more curvature there is more sampling. For illustration purposes, this is emphasized in a few ways: using `quiver!` to add labeled arrows and `rect!` to add rectangular shapes with transparent filling.
 
 As seen in this overblown example, there are other methods besides `plot` for other useful tasks. These include:
 

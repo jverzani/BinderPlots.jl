@@ -1,4 +1,5 @@
 using BinderPlots
+import BinderPlots: unzip
 using Test
 
 @testset "BinderPlots.jl" begin
