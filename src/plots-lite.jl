@@ -772,7 +772,9 @@ function _make_magic(;
         elseif isa(a, _RGB)
             fillcolor = a
         elseif isa(a, String)
-            if a ∈ ("tonexty", "tozeroy", "toself")
+            if a ∈ ("none", "tozerox", "tonextx",
+                    "tozeroy", "tonexty",
+                    "toself","tonext")
                 _set(d, :fill, a) # tonexty, tozeroy, toself
             else
                 fillcolor = a
