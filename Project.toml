@@ -9,9 +9,11 @@ PlotlyLight = "ca7969ec-10b3-423e-8d99-40f33abb42bf"
 
 [weakdeps]
 "CalculusWithJulia" = "a2e0e22d-7d4c-5312-9169-8b992201a882"
+"SimpleExpressions" = "deba94f7-f32a-40ad-b45e-be020a5ded2f"
 
 [extensions]
 BinderPlotsCalculusWithJuliaExt = "CalculusWithJulia"
+BinderPlotsSimpleExpressionsExt = "SimpleExpressions"
 
 [compat]
 PlotUtils = "1"
