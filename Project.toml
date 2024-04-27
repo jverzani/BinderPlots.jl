@@ -19,6 +19,7 @@ BinderPlotsSimpleExpressionsExt = "SimpleExpressions"
 PlotUtils = "1"
 PlotlyLight = "0.8"
 CalculusWithJulia = "0.2"
+SimpleExpressions = "1"
 julia = "1.9"
 
 [extras]

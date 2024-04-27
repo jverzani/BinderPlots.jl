@@ -1,14 +1,14 @@
 module BinderPlotsSimpleExpressionsExt
 
-import SimpleExpressions
-import BinderPlots
+import SimpleExpressions: SymbolicEquation
+import BinderPlots: plot!, Plot
 
 # plot method for equations
-function BinderPlots.plot!(t::Val{:scatter}, p::BinderPlots.Plot,
-               f::SimpleExpressions.SymbolicEquation, y, z;
+function plot!(t::Val{:scatter}, p::Plot,
+               f::SymbolicEquation, y, z;
                seriestype::Symbol=:lines,
                kwargs...)
-    BinderPlots.plot!(p, [f.lhs, f.rhs], y, z; seriestype, kwargs...)
+    plot!(p, [f.lhs, f.rhs], y, z; seriestype, kwargs...)
 end
 
 end
