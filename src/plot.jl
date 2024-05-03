@@ -25,7 +25,8 @@ function plot!(::Val{:scatter}, p::Plot, x=nothing, y=nothing, z=nothing;
     _,mode = SeriesType(seriestype)
     KWs = Recycler(kwargs)
     for (i, xyzₛ) ∈ enumerate(xyz(x,y,z))
-        plot!(Val(:scatter), Val(Symbol(mode)), p, xyzₛ...; KWs[i]...)
+        kws = _make_magic(; KWs[i]...)
+        plot!(Val(:scatter), Val(Symbol(mode)), p, xyzₛ...; kws...)
     end
     p
 end

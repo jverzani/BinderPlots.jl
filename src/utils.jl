@@ -132,7 +132,8 @@ end
 
 
 function Recycler(kw::Base.Pairs)
-    y = Base.Pairs((;zip(keys(kw), [BinderPlots.Recycler(kw[k]) for k in keys(kw)])...), keys(kw))
+    rs = [KWRecycler(Val(k), kw[k]) for k in keys(kw)]
+    y = Base.Pairs((;zip(keys(kw), rs)...), keys(kw))
     Recycler(y, 0)
 end
 

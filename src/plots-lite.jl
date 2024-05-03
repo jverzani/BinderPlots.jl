@@ -82,8 +82,7 @@ plot!(::Plot, args...; kwargs...) = throw(ArgumentError("No plot method defined"
 function plot!(p::Plot, x=nothing, y=nothing, z=nothing;
                seriestype::Symbol=:lines,
                kwargs...)
-    kws = _make_magic(; kwargs...) # XXX move if you want to be able to recycle
-    kws = _layout_styles!(p;  kws...) # adjust layout
+    kws = _layout_styles!(p;  kwargs...) # adjust layout
     type, mode =  SeriesType(seriestype)
     plot!(Val(type), p, x, y, z; seriestype, kws...)
 end
@@ -93,6 +92,7 @@ function plot!(t::Val{T}, p::Plot, x=nothing, y=nothing, z=nothing;
                seriestype::Symbol=:lines,
                kwargs...) where {T}
     _, mode = SeriesType(seriestype)
+    kws = _make_magic(; kwargs...) # XXX Is this needed here?
     plot!(t, Val(mode), p, x, y, z; kwargs...)
 end
 
@@ -865,3 +865,19 @@ function _layout_styles!(p;
 
     kwargs
 end
+
+struct MagicRecycler{T}
+    t::T
+    n::Int
+end
+MagicRecycler(o) = MagicRecycler(map(Recycler, o), 0)
+
+function Base.getindex(R::MagicRecycler, i::Int)
+    getindex.(R.t, i)
+end
+
+# recycle magic so that all is well in the world
+KWRecycler(::Val{T}, o) where {T} = Recycler(o) # default
+KWRecycler(::Val{:line}, o) = MagicRecycler(o)
+KWRecycler(::Val{:marker}, o) =  MagicRecycler(o)
+KWRecycler(::Val{:fill}, o) = MagicRecycler(o)
