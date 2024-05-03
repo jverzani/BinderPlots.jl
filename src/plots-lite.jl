@@ -92,8 +92,8 @@ function plot!(t::Val{T}, p::Plot, x=nothing, y=nothing, z=nothing;
                seriestype::Symbol=:lines,
                kwargs...) where {T}
     _, mode = SeriesType(seriestype)
-    kws = _make_magic(; kwargs...) # XXX Is this needed here?
-    plot!(t, Val(mode), p, x, y, z; kwargs...)
+    kws = _make_magic(; kwargs...)
+    plot!(t, Val(mode), p, x, y, z; kws...)
 end
 
 # generic usage
@@ -827,6 +827,7 @@ function _layout_styles!(p;
                          xlabel=nothing, ylabel=nothing, zlabel=nothing,
                          xscale=nothing, yscale=nothing, zscale=nothing,
                          xaxis=nothing, yaxis=nothing, zaxis=nothing,
+                         background_color=nothing, background=background_color,bg=background_color, plot_bgcolor=bg,
                          legend=nothing,
 
                          kwargs...)
@@ -858,6 +859,9 @@ function _layout_styles!(p;
 
     # layout
     legend!(p, legend)
+
+    # attributes
+    p.layout.plot_bgcolor = plot_bgcolor
 
     # don't consume
     haskey(kwargs, :aspect_ratio) &&
