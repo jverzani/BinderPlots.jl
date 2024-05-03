@@ -25,8 +25,7 @@ function plot!(::Val{:scatter}, p::Plot, x=nothing, y=nothing, z=nothing;
     _,mode = SeriesType(seriestype)
     KWs = Recycler(kwargs)
     for (i, xyzₛ) ∈ enumerate(xyz(x,y,z))
-        kws = _make_magic(; KWs[i]...)
-        plot!(Val(:scatter), Val(Symbol(mode)), p, xyzₛ...; kws...)
+        plot!(Val(:scatter), Val(Symbol(mode)), p, xyzₛ...; KWs[i]...)
     end
     p
 end
@@ -43,7 +42,8 @@ function plot!(::Val{:scatter}, m::Val{T}, p::Plot, x, y, z=nothing; kwargs...) 
                z=_replace_infinite(z),
                type,
                mode=mode)
-    kws = _trace_styles!(c; kwargs...)
+    kws = _make_magic(; kwargs...)
+    kws = _trace_styles!(c; kws...)
     _merge!(c; kws...)
 
     push!(p.data, c)
@@ -98,7 +98,24 @@ end
 ##
 function plot!(t::Val{:scatter}, p::Plot,
                f::Function, g::Function, a, b; kwargs...)
-    @show :hi
+end
+
+# Shape recipes
+function plot!(t::Val{:scatter}, m::Val{:lines}, p::Plot, x::Shape, y::Nothing, z::Nothing; kwargs...)
+    plot!(t, m, p, x.x, x.y; kwargs...)
+end
+
+
+function plot!(t::Val{:scatter}, p::Plot, x::Vector{<:Shape}, y::Nothing, z::Nothing;
+               seriestype::Symbol=:lines,
+               kwargs...)
+
+    _,mode = SeriesType(seriestype)
+    KWs = Recycler(kwargs)
+    for (i, s) ∈ enumerate(x)
+        plot!(t, Val(Symbol(mode)),p, s; KWs[i]...)
+    end
+    p
 end
 
 

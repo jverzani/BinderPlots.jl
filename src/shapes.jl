@@ -1,3 +1,34 @@
+# Plots for making polygons
+## XXX need to do this
+## use Shape
+Base.copy(s::Shape) = Shape(copy(x), copy(y))
+scale(s::Shape, a) = Shape(a .* s.x, a .* s.y)
+function rotate(s::Shape, θ)
+    x, y = s.x, s.y
+    s, c = sincos(θ)
+    Shape(c*x - s*y, s*x + c*y)
+end
+translate(s::Shape, x, y) = Shape(x .+ s.x, y .+ s.y)
+function center(s::Shape)
+    _mean(x) = sum(x)/length(x)
+    translate(s, _mean(s.x), _mean(s.y))
+end
+function invert(s::Shape, axis=:x)
+    axis == :x && return Shape(s.x, -1 .* s.y)
+    axis == :y && return Shape(-1 .* s.x, s.y)
+    axis == :xy && return Shape(-1 .* s.x, -1 .* s.y)
+    s
+end
+shear(s::Shape, k) = Shape(s.x .+ (k .* s.y), s.y)
+
+Poly(x, y) = Shape(vcat(x, first(x)), vcat(y, first(y)))
+export Poly
+
+
+
+#Shape(x, y) = zip(x, y)
+#Shape(x) = x
+# XXX
 
 # generalize shapes (line, rect, circle, ...)
 # fillcolor

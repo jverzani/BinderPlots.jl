@@ -281,3 +281,14 @@ function Base.range(start::_RGB, stop::_RGB, length::Integer)
     c2 = PlotUtils.Colors.RGBA(r,g,b,α)
     [rgb(c) for c ∈ range(c1, c2, length)]
 end
+
+## Define Shape type
+struct Shape{X, Y}
+    x::X
+    y::Y
+    function Shape(x::X,y::Y) where {X, Y}
+        length(x) == length(y) || throw(ArgumentError("Need same length objects"))
+        new{X,Y}(x,y)
+    end
+
+end

@@ -727,8 +727,11 @@ function _make_magic(;
                      marker = nothing,
                      fill = nothing,
                      kwargs...)
-    d = Dict{Symbol, Any}()
-
+#    error("asf")
+    d = Config()
+    ## lines
+    linecolor = nothing
+    linealpha = nothing
     for a ∈ something(line, tuple())
         if isa(a, Symbol)
             if a ∈ _linestyles
@@ -736,15 +739,23 @@ function _make_magic(;
             elseif a ∈ keys(_lineshapes)
                 _set(d, :lineshape, _lineshapes[a])
             else
-                _set(d, :linecolor, a)
+                linecolor = a
             end
         elseif isa(a, _RGB)
+            linecolor = a
             _set(d, :linecolor, a)
         elseif isa(a, Number)
             isa(a, Integer) && _set(d, :linewidth, a)
+            0 < a < 1 && (linealpha = a)
         end
     end
+    if isa(linecolor, Union{String,Symbol}) && !isnothing(linealpha)
+        linecolor = _RGB(PlotUtils.Colors.color_names[string(linecolor)]..., linealpha)
+    end
+    _set(d, :linecolor, linecolor)
 
+
+    ## -- markers
     for a ∈ something(marker, tuple())
         if isa(a, Symbol)
             if a ∈ _marker_shapes
@@ -764,28 +775,36 @@ function _make_magic(;
     end
 
     ## axis has x,y,z
+    fill_styles = (:none,
+                   :tozerox, :tonextx,
+                   :tozeroy, :tonexty,
+                   :toself, :tonext)
     fillcolor = nothing
     fillalpha = nothing
+    fillstyle = nothing
     for a ∈ something(fill, tuple())
         if isa(a, Symbol)
-            fillcolor = a
-        elseif isa(a, _RGB)
-            fillcolor = a
-        elseif isa(a, String)
-            if a ∈ ("none", "tozerox", "tonextx",
-                    "tozeroy", "tonexty",
-                    "toself","tonext")
-                _set(d, :fill, a) # tonexty, tozeroy, toself
+            if a ∈ fill_styles
+                fillstyle = a
             else
                 fillcolor = a
             end
+        elseif isa(a, String)
+            a′ = Symbol(a)
+            if a′ ∈ fill_styles
+                _set(d, :fill, a′)
+            else
+                fillcolor = a′
+            end
+        elseif isa(a, _RGB)
+            fillcolor = a
         elseif isa(a, Bool)
             a && _set(d, :fill, :toself) # true false
         elseif isa(a, Real)
             if 0 < a < 1
                 fillalpha =a
             elseif iszero(a)
-                _set(d, :fill, "tozeroy")
+                fillstyle = :tozeroy
             elseif isa(a, Integer)
                 @warn "Fill to a non-zero y value is not implemented"
             end
@@ -795,6 +814,7 @@ function _make_magic(;
         fillcolor = _RGB(PlotUtils.Colors.color_names[string(fillcolor)]..., fillalpha)
     end
     _set(d, :fillcolor, fillcolor)
+    !isnothing(fillcolor) && _set(d, :fill, something(fillstyle, :toself))
 
     # covert back
     kws = merge(Dict(kwargs...), d)
@@ -882,6 +902,6 @@ end
 
 # recycle magic so that all is well in the world
 KWRecycler(::Val{T}, o) where {T} = Recycler(o) # default
-KWRecycler(::Val{:line}, o) = MagicRecycler(o)
+KWRecycler(::Val{:line}, o) = (@show o;MagicRecycler(o))
 KWRecycler(::Val{:marker}, o) =  MagicRecycler(o)
-KWRecycler(::Val{:fill}, o) = MagicRecycler(o)
+KWRecycler(::Val{:fill}, o) = (@show o; MagicRecycler(o))
