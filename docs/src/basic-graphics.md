@@ -225,7 +225,7 @@ There are a few simple shapes, including lines:
 
 * `hline!(y; xmin=0,xmax=1)` draws a horizontal line at elevation `y` across the computed axis, or adjusted via `xmin` and `xmax`.  The `extrema` function computes the axis sizes. If `y` is a container, multiple lines are drawn.
 * `vline(x)`  draws a vertical line at  `x` across the computed axis, or adjusted via `ymin` and `ymax`. The `extrema` function computes the axis sizes. If `x` is a container, multiple lines are drawn.
-* `ablines!(intercept, slope)` for drawing lines `a + bx` in the current frame.
+* `abline!(intercept, slope)` for drawing lines `a + bx` in the current frame.
 
 The following create regions which can be filled.  Shapes have an interior and exterior boundary. The exterior line has attributes that can be adjusted with `linecolor`, `linewidth`, and `linestyle`.
 
@@ -280,7 +280,7 @@ As seen in this overblown example, there are other methods besides `plot` for ot
 
 * `quiver!` is used to add arrows to a plot. These can optionally have their tails labeled, so this method can be repurposed to add annotations.  The `quiver` command allows for text rotation. Also `arrow` and `arrows` for different interfaces for drawing arrows. The `annotate!` function is used to add annotations at a given point. There are keyword arguments to adjust the text size, color, font-family, etc.
 
-* `rect!` is used to make a rectangle. There are also `hspan!` and `vspan!`. For lines, there are `hline!` and `vline!` to draw horizontal or vertical lines across the extent of the plotting region. There is also `ablines!` to draw lines specified in intercept-slope form across the extent of the plotting region. Other regions can be draws. For example, `circle!` to draw a circle, and, more generally, `poly` can be used to draw a polygonal region.
+* `rect!` is used to make a rectangle. There are also `hspan!` and `vspan!`. For lines, there are `hline!` and `vline!` to draw horizontal or vertical lines across the extent of the plotting region. There is also `abline!` to draw lines specified in intercept-slope form across the extent of the plotting region. Other regions can be draws. For example, `circle!` to draw a circle, and, more generally, `poly` can be used to draw a polygonal region.
 
 
 

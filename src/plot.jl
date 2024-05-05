@@ -102,7 +102,12 @@ end
 
 # Shape recipes
 function plot!(t::Val{:scatter}, m::Val{:lines}, p::Plot, x::Shape, y::Nothing, z::Nothing; kwargs...)
-    plot!(t, m, p, x.x, x.y; kwargs...)
+    xs, ys = x.x, x.y
+    if (first(xs) != last(xs)) || (first(ys) != last(ys))
+        push!(xs, first(xs))
+        push!(ys, first(ys))
+    end
+    plot!(t, m, p, xs, ys; kwargs...)
 end
 
 

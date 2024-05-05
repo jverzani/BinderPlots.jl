@@ -1,3 +1,4 @@
+# utils and types
 function _merge!(c::Config; kwargs...)
     for kv ∈ kwargs
         k,v = kv
@@ -283,12 +284,26 @@ function Base.range(start::_RGB, stop::_RGB, length::Integer)
 end
 
 ## Define Shape type
+## see shape.jl for methods
+"""
+    Shape(x, y)
+    Shape(vertices)
+
+Construct a *polygon* to be plotted
+"""
 struct Shape{X, Y}
     x::X
     y::Y
     function Shape(x::X,y::Y) where {X, Y}
         length(x) == length(y) || throw(ArgumentError("Need same length objects"))
-        new{X,Y}(x,y)
+        x′, y′ = float(x), float(y)
+        X′, Y′ = typeof(x′), typeof(y′)
+        new{X′,Y′}(x′, y′)
     end
-
 end
+
+function Shape(xy)
+    Shape(unzip(xy)...)
+end
+
+Base.copy(s::Shape) = Shape(copy(s.x), copy(s.y))

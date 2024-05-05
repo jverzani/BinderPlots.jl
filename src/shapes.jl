@@ -1,35 +1,142 @@
 # Plots for making polygons
-## XXX need to do this
 ## use Shape
-Base.copy(s::Shape) = Shape(copy(x), copy(y))
-scale(s::Shape, a) = Shape(a .* s.x, a .* s.y)
-function rotate(s::Shape, θ)
-    x, y = s.x, s.y
-    s, c = sincos(θ)
-    Shape(c*x - s*y, s*x + c*y)
+## lots of this lifted from Plots.jl (components.jl)
+## in Plots several pre-defined shapes
+
+# Some shape types
+# :square, :circle, :diamond, :star
+function Shape(s::Symbol, args...)
+    Shape(Val(s), args...)
 end
-translate(s::Shape, x, y) = Shape(x .+ s.x, y .+ s.y)
-function center(s::Shape)
-    _mean(x) = sum(x)/length(x)
-    translate(s, _mean(s.x), _mean(s.y))
+
+Shape(::Val{:unitsquare}, args...) = Shape([0,1,1,0],[0,0,1,1])
+function Shape(::Val{:ngon}, n, args...)
+    θs = range(0, 2pi, n+1)
+    Shape(sin.(θs), cos.(θs))
 end
-function invert(s::Shape, axis=:x)
-    axis == :x && return Shape(s.x, -1 .* s.y)
-    axis == :y && return Shape(-1 .* s.x, s.y)
-    axis == :xy && return Shape(-1 .* s.x, -1 .* s.y)
+Shape(::Val{:circle}, args...)   = Shape(Val(:ngon), 100)
+Shape(::Val{:triangle}, args...) = Shape(Val(:ngon),3)
+Shape(::Val{:square}, args...) = Shape(Val(:ngon),4)
+Shape(::Val{:pentagon}, args...) = Shape(Val(:ngon),5)
+Shape(::Val{:hexagon}, args...)  = Shape(Val(:ngon),5)
+Shape(::Val{:heptogon}, args...) = Shape(Val(:ngon),7)
+Shape(::Val{:octogon}, args...)  = Shape(Val(:ngon),8)
+
+
+function Shape(::Val{:circle}, args...)
+    θs = range(0, 2pi, 100)
+    Shape(cos.(θs), sin.(θs))
+end
+
+
+
+Shape(::Val{:diamond}, r=1/2) = Shape([r,0,-r,0],[0,1,-1,0])
+
+function Shape(::Val{:star}, n=5, r = 1/4, args...)
+    θs = range(0, 2pi, 2n+1)
+    xs = zeros(Float64, 2n)
+    ys = zeros(Float64, 2n)
+    for i ∈ 1:n
+        j = 2i
+        ys[j-1], xs[j-1] = sincos(θs[j-1])
+        ys[j], xs[j] = r .* sincos(θs[j])
+    end
+    s = Shape(xs, ys)
+    k = mod(n, 4)
+    # stand up straight
+    k == 1 && rotate!(s,  pi / (2n))
+    k == 2 && rotate!(s,  pi / n)
+    k == 3 && rotate!(s, -pi / (2n))
     s
 end
-shear(s::Shape, k) = Shape(s.x .+ (k .* s.y), s.y)
+Shape(::Val{:star4}, args...) = Shape(Val(:star), 4)
+Shape(::Val{:star5}, args...) = Shape(Val(:star), 5)
+Shape(::Val{:star6}, args...) = Shape(Val(:star), 6)
+Shape(::Val{:star7}, args...) = Shape(Val(:star), 7)
+Shape(::Val{:star8}, args...) = Shape(Val(:star), 8)
 
-Poly(x, y) = Shape(vcat(x, first(x)), vcat(y, first(y)))
-export Poly
 
 
+"""
+    scale(s::Shape, x, y=x)
+    scale!(s::Shape, x, y=x)
 
-#Shape(x, y) = zip(x, y)
-#Shape(x) = x
-# XXX
+Scale in x and y direction
+"""
+scale(s::Shape, x, y = x) =  scale!(copy(s), x, y)
+function scale!(s::Shape, x, y=x)
+    s.x .*= x
+    s.y .*= y
+    s
+end
 
+"""
+    rotate(s::Shape, θ, c=center(s))
+    rotate!(s::Shape, θ, c=center(s))
+
+Rotate shape about its center ccw by angle θ
+"""
+rotate(s::Shape, θ, c=center(s)) = rotate!(copy(s), θ, c)
+function rotate!(s::Shape, θ, c=center(s))
+    (;x, y) = s
+    for i in eachindex(x)
+        xi = rotate_x(x[i], y[i], θ, c...)
+        yi = rotate_y(x[i], y[i], θ, c...)
+        x[i], y[i] = xi, yi
+    end
+    s
+end
+rotate_x(x,y,θ,cx,cy) = ((x - cx) * cos(θ) - (y - cy) * sin(θ) + cx)
+rotate_y(x,y,θ,cx,cy) = ((y - cy) * cos(θ) + (x - cx) * sin(θ) + cy)
+
+"""
+    translate(s::Shape, x, y=x)
+    translate!(s::Shape, x, y=x)
+
+Shift shape over by x, up by y
+"""
+translate(s::Shape, x, y=x) = translate!(copy(s), x, y)
+function translate!(s::Shape, x, y=x)
+    s.x .+= x
+    s.y .+= y
+    s
+end
+
+function invert!(s::Shape, axis::Symbol)
+    (; x, y) = s
+    axis == :xy && return invert!(invert!(s,:x),:y)
+    axis == :x && (y .*= -1)
+    axis == :y && (x .*= -1)
+    s
+end
+shear(s::Shape, k) = shear!(copy(s), k)
+function shear!(s::Shape, k)
+    (;x, y) = s
+    x .+= (k .* y)
+    s
+end
+
+# uses the centroid calculation from https://en.wikipedia.org/wiki/Centroid#Centroid_of_polygon (cf. Plots.jl)
+"return the centroid of a Shape"
+function center(s::Shape)
+    (; x, y) = s
+    n = length(x)
+    A, Cx, Cy = 0, 0, 0
+    for i in 1:n
+        ip1 = i == n ? 1 : i + 1
+        A += x[i] * y[ip1] - x[ip1] * y[i]
+    end
+    A *= 0.5
+    for i in 1:n
+        ip1 = i == n ? 1 : i + 1
+        m = (x[i] * y[ip1] - x[ip1] * y[i])
+        Cx += (x[i] + x[ip1]) * m
+        Cy += (y[i] + y[ip1]) * m
+    end
+    Cx / 6A, Cy / 6A
+end
+
+# shapes in Plotly use `layout` not `data`
 # generalize shapes (line, rect, circle, ...)
 # fillcolor
 # line.color
@@ -39,7 +146,8 @@ function _shape(type, x0, x1, y0, y1;
 
 
     c = Config(; type, x0, x1, y0, y1)
-    kws = _linestyle!(c.line; kwargs...)
+    kws = _make_magic(;kwargs...)
+    kws = _linestyle!(c.line; kws...)
     kws = _fillstyle!(c; kws...)
     _merge!(c; kws...)
     c
@@ -56,14 +164,15 @@ end
 
 function _add_shapes!(p::Plot, ps; kwargs...)
     if isa(ps, Config)
-        _add_shape!(p, ps)
+        _add_shape!(p, ps; kwargs...)
     else
-        for s ∈ ps
+        for (i, s) ∈ enumerate(ps)
             _add_shape!(p, s)
         end
     end
 end
 
+_identity(xs...) = xs
 
 """
     vline!(x; ymin=0, ymax=1.0; kwargs...)
@@ -89,10 +198,13 @@ vline!(x; kwargs...) = vline!(current_plot[], x; kwargs...)
 function vline!(p::Plot, x; ymin = 0.0, ymax = 1.0, kwargs...)
     a, b = extrema(p).y
     Δ = b - a
-    λ = (x,m,M) -> _shape("line", x, x, a + m*Δ, a + M*Δ; mode="Line", kwargs...)
-    ps = λ.(x, ymin, ymax)
 
-    _add_shapes!(p, ps)
+    xxyy = _identity.(x, x, a .+ Δ .* ymin, a .+ Δ .* ymax)
+    KWs = Recycler(kwargs)
+    for (i, xᵢ) ∈ enumerate(x)
+        _add_shape!(p, _shape("line", xxyy[i]...;
+                              mode="Line", KWs[i]...))
+    end
 
     p
 end
@@ -110,41 +222,46 @@ hline!(x; kwargs...) = hline!(current_plot[], x; kwargs...)
 function hline!(p::Plot, y; xmin = 0.0, xmax = 1.0, kwargs...)
     a, b = extrema(p).x
     Δ = b - a
-    λ = (y,m,M) -> _shape("line", a + m*Δ, a + M*Δ, y, y; mode="line",kwargs...)
-    ps = λ.(y,xmin, xmax)
 
-    _add_shapes!(p, ps)
+    xxyy = _identity.(a .+ Δ .* xmin, a .+ Δ .* xmax, y, y)
+    KWs = Recycler(kwargs)
+    for (i, yᵢ) ∈ enumerate(y)
+        _add_shape!(p, _shape("line",xxyy[i]...;
+                              mode="Line", KWs[i]...))
+    end
+
     p
 end
 
 """
-    ablines!([p::Plot], intercept, slope; kwargs...)
+    abline!([p::Plot], intercept, slope; kwargs...)
 
 Draw line `y = a + bx` over current viewing window, as determined by
 `extrema(p)`.
 """
-ablines!(intercept, slope; kwargs...) = ablines!(current_plot[], intercept, slope; kwargs...)
-function ablines!(p::Plot, intercept, slope;
+abline!(intercept, slope; kwargs...) = abline!(current_plot[], intercept, slope; kwargs...)
+function abline!(p::Plot, intercept, slope;
                   kwargs...)
     xa, xb = extrema(p).x
     ya, yb = extrema(p).y
 
     _line = (a, b) -> begin
         if iszero(b)
-            return  _shape("line", xa, xb, a, a;
-                         mode = "line", kwargs...)
+            return (xa, xb, a, a)
         end
         # line is a + bx in region [xa, xb] × [ya, yb]
         l = x -> a + b * x
         x0 = l(xa) >= ya ? xa : (ya - a)/b
         x1 = l(xb) <= yb ? xb : (yb - a)/b
         y0, y1 = extrema((l(x0), l(x1)))
-        return _shape("line", x0, x1, y0, y1;
-                      mode="line", kwargs...)
-
+        return (x0, x1, y0, y1)
+    end
+    KWs = Recycler(kwargs)
+    for (i, xxyy) ∈ enumerate(_line.(intercept, slope))
+        _add_shape!(p, _shape("line",xxyy...;
+                              mode="Line", KWs[i]...))
     end
 
-    _add_shapes!(p, _line.(intercept, slope))
     p
 end
 
@@ -162,7 +279,11 @@ rect!(p, 2,3,-1,1; linecolor=:gray, fillcolor=:red, opacity=0.2)
 ```
 """
 function rect!(p::Plot, x0, x1, y0, y1; kwargs...)
-    _add_shape!(p, _shape("rect", x0, x1, y0, y1; kwargs...))
+    KWs = Recycler(kwargs)
+    xxyyₛ = _identity.(x0, x1, y0, y1)
+    for (i, xxyy) ∈ enumerate(xxyyₛ)
+        _add_shape!(p, _shape("rect", xxyy...; KWs[i]...))
+    end
 end
 rect!(x0, x1, y0, y1; kwargs...) = rect!(current_plot[], x0, x1, y0, y1; kwargs...)
 
@@ -176,10 +297,13 @@ hspan!(ys,YS; kwargs...) = hspan!(current_plot[], ys, YS; kwargs...)
 function hspan!(p::Plot, ys, YS; xmin=0.0, xmax=1.0, kwargs...)
     a, b = extrema(p).x
     Δ = b - a
-    λ = (m,M,y0,y1) -> _shape("rect", a + m*Δ, a + M*Δ, y0, y1; kwargs...)
-    ps = λ.(xmin, xmax, ys, YS)
 
-    _add_shapes!(p, ps)
+    xxyy = _identity.(a .+ Δ .* xmin, a .+ Δ .* xmax, ys, Ys)
+    KWs = Recycler(kwargs)
+    for (i, yᵢ) ∈ enumerate(y)
+        _add_shape!(p, _shape("rect",xxyy[i]...;
+                              mode="Line", KWs[i]...))
+    end
 
     p
 end
@@ -202,10 +326,13 @@ vspan!(xs, XS; kwargs...) = vspan!(current_plot[], xs, XS; kwargs...)
 function vspan!(p::Plot, xs, XS; ymin=0.0, ymax=1.0, kwargs...)
     a, b = extrema(p).y
     Δ = b - a
-    λ = (x0,x1,m,M) -> _shape("rect", x0,x1,a + m*Δ, a + M*Δ; kwargs...)
-    ps = λ.(xs, XS, ymin, ymax)
 
-    _add_shapes!(p, ps)
+    xxyy = _identity.(xs, XS, a .+ Δ .* ymin, a .+ Δ .* ymax)
+    KWs = Recycler(kwargs)
+    for (i, yᵢ) ∈ enumerate(y)
+        _add_shape!(p, _shape("rect",xxyy[i]...;
+                              mode="Line", KWs[i]...))
+    end
 
     p
 end
@@ -216,6 +343,7 @@ end
     poly!([p::Plot], points; kwargs...)
 
 Plot polygon described by `points`, a container of `x-y` or `x-y-z` values.
+Alternative to creating `Shape` instance.
 
 Example
 
@@ -257,7 +385,12 @@ circle!(p, 2,3,-1,1; line=(color=:gray,), fillcolor=:red, opacity=0.2)
 ```
 """
 function circle!(p::Plot, x0, x1, y0, y1; kwargs...)
-    _add_shape!(p, _shape("circle", x0, x1, y0, y1; kwargs...))
+    KWs = Recycler(kwargs)
+    xxyyₛ = _identity.(x0, x1, y0, y1)
+    for (i, xxyy) ∈ enumerate(xxyyₛ)
+        _add_shape!(p, _shape("circle", xxyy...; KWs[i]...))
+    end
+    p
 end
 circle!(x0, x1, y0, y1; kwargs...) =
     circle!(current_plot[], x0, x1, y0, y1; kwargs...)

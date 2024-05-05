@@ -549,6 +549,10 @@ function _textstyle!(cfg::Config;
     kwargs
 end
 
+
+function _shapestyle!(cfg; kwargs...)
+    _merge!(cfg, Config(kwargs...))
+end
 # https://docs.juliaplots.org/latest/attributes/#magic-arguments
 """
     font(args...)
@@ -902,6 +906,6 @@ end
 
 # recycle magic so that all is well in the world
 KWRecycler(::Val{T}, o) where {T} = Recycler(o) # default
-KWRecycler(::Val{:line}, o) = (@show o;MagicRecycler(o))
+KWRecycler(::Val{:line}, o) = MagicRecycler(o)
 KWRecycler(::Val{:marker}, o) =  MagicRecycler(o)
-KWRecycler(::Val{:fill}, o) = (@show o; MagicRecycler(o))
+KWRecycler(::Val{:fill}, o) = MagicRecycler(o)
