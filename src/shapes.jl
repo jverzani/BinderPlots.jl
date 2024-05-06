@@ -176,8 +176,9 @@ function _add_shapes!(p::Plot, ps; kwargs...)
 end
 
 # _identity Broadcast to an iterable
-_identity(xs::Real...) = (xs,)
-_identity(xs...) = xs
+_identity(x0::Real,x1::Real,x2::Real,x3::Real) = ((x0,x1,x2,x3),)
+_identity(xs...) = __identity.(xs...)
+__identity(xs...) = xs
 
 """
     vline!(x; ymin=0, ymax=1.0; kwargs...)
@@ -204,7 +205,9 @@ function vline!(p::Plot, x; ymin = 0.0, ymax = 1.0, kwargs...)
     a, b = extrema(p).y
     Δ = b - a
 
-    xxyy = _identity.(x, x, a .+ Δ .* ymin, a .+ Δ .* ymax)
+    @show x, x,  a .+ Δ .* ymin, a .+ Δ .* ymax
+    xxyy = _identity(x, x, a .+ Δ .* ymin, a .+ Δ .* ymax)
+
     KWs = Recycler(kwargs)
     for (i, xᵢ) ∈ enumerate(x)
         _add_shape!(p, _shape("line", xxyy[i]...;
@@ -228,7 +231,7 @@ function hline!(p::Plot, y; xmin = 0.0, xmax = 1.0, kwargs...)
     a, b = extrema(p).x
     Δ = b - a
 
-    xxyy = _identity.(a .+ Δ .* xmin, a .+ Δ .* xmax, y, y)
+    xxyy = _identity(a .+ Δ .* xmin, a .+ Δ .* xmax, y, y)
     KWs = Recycler(kwargs)
     for (i, yᵢ) ∈ enumerate(y)
         _add_shape!(p, _shape("line",xxyy[i]...;
@@ -285,7 +288,7 @@ rect!(p, 2,3,-1,1; linecolor=:gray, fillcolor=:red, opacity=0.2)
 """
 function rect!(p::Plot, x0, x1, y0, y1; kwargs...)
     KWs = Recycler(kwargs)
-    xxyyₛ = _identity.(x0, x1, y0, y1)
+    xxyyₛ = _identity(x0, x1, y0, y1)
     for (i, xxyy) ∈ enumerate(xxyyₛ)
         _add_shape!(p, _shape("rect", xxyy...; KWs[i]...))
     end
@@ -303,7 +306,7 @@ function hspan!(p::Plot, ys, YS; xmin=0.0, xmax=1.0, kwargs...)
     a, b = extrema(p).x
     Δ = b - a
 
-    xxyy = _identity.(a .+ Δ .* xmin, a .+ Δ .* xmax, ys, Ys)
+    xxyy = _identity(a .+ Δ .* xmin, a .+ Δ .* xmax, ys, Ys)
     KWs = Recycler(kwargs)
     for (i, yᵢ) ∈ enumerate(y)
         _add_shape!(p, _shape("rect",xxyy[i]...;
@@ -332,7 +335,7 @@ function vspan!(p::Plot, xs, XS; ymin=0.0, ymax=1.0, kwargs...)
     a, b = extrema(p).y
     Δ = b - a
 
-    xxyy = _identity.(xs, XS, a .+ Δ .* ymin, a .+ Δ .* ymax)
+    xxyy = _identity(xs, XS, a .+ Δ .* ymin, a .+ Δ .* ymax)
     KWs = Recycler(kwargs)
     for (i, yᵢ) ∈ enumerate(y)
         _add_shape!(p, _shape("rect",xxyy[i]...;
@@ -391,7 +394,7 @@ circle!(p, 2,3,-1,1; line=(color=:gray,), fillcolor=:red, opacity=0.2)
 """
 function circle!(p::Plot, x0, x1, y0, y1; kwargs...)
     KWs = Recycler(kwargs)
-    xxyyₛ = _identity.(x0, x1, y0, y1)
+    xxyyₛ = _identity(x0, x1, y0, y1)
     for (i, xxyy) ∈ enumerate(xxyyₛ)
         _add_shape!(p, _shape("circle", xxyy...; KWs[i]...))
     end
