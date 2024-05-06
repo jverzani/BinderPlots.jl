@@ -141,7 +141,7 @@ f(x,y) = x * y - (x^3 + x^2 + x + 1)
 plot_implicit(f)
 ```
 
-(Basically just `contour` plot with `levels=0` and points detremined by extrema of `xlims` and `ylims`.)
+(Basically just `contour` plot with `levels=0` and points determined by extrema of `xlims` and `ylims`.)
 """
 function plot_implicit(f::Function; kwargs...)
     p, kwargs = _new_plot(; kwargs...)

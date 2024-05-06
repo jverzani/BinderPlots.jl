@@ -196,7 +196,7 @@ Add a grid to a plot:
 ```
 p = plot(x -> x^2, 0, 1; aspect_ratio=:equal)
 vline!(0:.1:1, linecolor=:red,  opacity=0.25, linewidth=5)
-hline!(0:.1:1, linecolor=:blue, opacity=0.75)
+hline!(0:.1:1, line=(:blue, 0.75))
 ```
 
 """
