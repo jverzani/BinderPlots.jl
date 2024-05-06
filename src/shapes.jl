@@ -22,16 +22,9 @@ Shape(::Val{:hexagon}, args...)  = Shape(Val(:ngon),5)
 Shape(::Val{:heptogon}, args...) = Shape(Val(:ngon),7)
 Shape(::Val{:octogon}, args...)  = Shape(Val(:ngon),8)
 
-
-function Shape(::Val{:circle}, args...)
-    θs = range(0, 2pi, 100)
-    Shape(cos.(θs), sin.(θs))
-end
-
-
-
 Shape(::Val{:diamond}, r=1/2) = Shape([r,0,-r,0],[0,1,-1,0])
-
+shape(::Val{:hline}) = Shape([-1,1],[0,0])
+shape(::Val{:vline}) = Shape([0,0], [-1,1])
 function Shape(::Val{:star}, n=5, r = 1/4, args...)
     θs = range(0, 2pi, 2n+1)
     xs = zeros(Float64, 2n)
@@ -172,6 +165,8 @@ function _add_shapes!(p::Plot, ps; kwargs...)
     end
 end
 
+# _identity Broadcast to an iterable
+_identity(xs::Real...) = (xs,)
 _identity(xs...) = xs
 
 """

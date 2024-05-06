@@ -17,6 +17,7 @@
 # scatter type
 # this step recycles arguments and x,y,z values
 SeriesType(::Val{:lines}) =  (:scatter, :lines)
+SeriesType(::Val{:sticks}) =  (:scatter, :sticks)
 SeriesType(::Val{:path3d}) = (:scatter, :lines)
 
 function plot!(::Val{:scatter}, p::Plot, x=nothing, y=nothing, z=nothing;
@@ -98,6 +99,21 @@ end
 ##
 function plot!(t::Val{:scatter}, p::Plot,
                f::Function, g::Function, a, b; kwargs...)
+end
+
+# sticks
+function plot!(t::Val{:scatter}, m::Val{:sticks}, p::Plot, x, y, z::Nothing; kwargs...)
+    n, T = length(x), eltype(x)
+    xs = Float64[]
+    ys = Float64[]
+    for (xᵢ, yᵢ) ∈ zip(x,y)
+        @show xᵢ
+        append!(xs, [xᵢ,xᵢ, NaN])
+        append!(ys, [0, yᵢ, yᵢ])
+    end
+    plot!(t, Val(:lines), p,xs, ys, nothing; kwargs...)
+    plot!(t, Val(:markers), p, x, y, nothing; kwargs...)
+    p
 end
 
 # Shape recipes

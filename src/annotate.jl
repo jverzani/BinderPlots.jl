@@ -38,7 +38,7 @@ annotate!(x, y, txt; kwargs...) = annotate!(current_plot[], x, y, txt; kwargs...
 annotate!(anns::Tuple; kwargs...) = annotate!(current_plot[], anns; kwargs...)
 annotate!(anns::Vector; kwargs...) = annotate!(current_plot[], anns; kwargs...)
 
-annotate!(p::Plot, anns::Tuple; kwargs...) = annotate!(p, collect(anns)...; kwargs...)
+annotate!(p::Plot, anns::Tuple; kwargs...) = annotate!(p, collect(anns); kwargs...)
 
 # use magic to create `text` objects
 function annotate!(p::Plot, anns::Vector; kwargs...)

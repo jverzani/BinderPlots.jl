@@ -80,12 +80,17 @@ plot!(::Plot, args...; kwargs...) = throw(ArgumentError("No plot method defined"
 # XXX dispatch on type and mode
 # no xyz for surface type, say
 function plot!(p::Plot, x=nothing, y=nothing, z=nothing;
-               seriestype::Symbol=:lines,
+               seriestype= :lines,
                kwargs...)
     kws = _layout_styles!(p;  kwargs...) # adjust layout
-    type, mode =  SeriesType(seriestype)
-    plot!(Val(type), p, x, y, z; seriestype, kws...)
+    types = isa(seriestype, Symbol) ? (seriestype,) : tuple(seriestype...)
+    for seriestype in types
+        type, mode =  SeriesType(seriestype)
+        plot!(Val(type), p, x, y, z; seriestype, kws...)
+    end
+    p
 end
+
 
 # basic dispatch to type, then type/mode
 function plot!(t::Val{T}, p::Plot, x=nothing, y=nothing, z=nothing;
