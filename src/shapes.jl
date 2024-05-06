@@ -205,7 +205,6 @@ function vline!(p::Plot, x; ymin = 0.0, ymax = 1.0, kwargs...)
     a, b = extrema(p).y
     Δ = b - a
 
-    @show x, x,  a .+ Δ .* ymin, a .+ Δ .* ymax
     xxyy = _identity(x, x, a .+ Δ .* ymin, a .+ Δ .* ymax)
 
     KWs = Recycler(kwargs)
