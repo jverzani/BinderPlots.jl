@@ -136,7 +136,7 @@ end
 
     # use x/y/z to indicate calling pattern below
 
-    # matrix// each column a series agains 1:size(M,1)
+    # matrix// each column a series against 1:size(M,1)
     plot(M)
     @test nseries() == size(M,2)
 
