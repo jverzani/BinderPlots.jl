@@ -1,5 +1,10 @@
 # This is the identifier of the type of visualization for this series. Choose from [:none, :line, :path, :steppre, :stepmid, :steppost, :sticks, :scatter, :heatmap, :hexbin, :barbins, :barhist, :histogram, :scatterbins, :scatterhist, :stepbins, :stephist, :bins2d, :histogram2d, :histogram3d, :density, :bar, :hline, :vline, :contour, :pie, :shape, :image, :path3d, :scatter3d, :surface, :wireframe, :contour3d, :volume, :mesh3d] or any series recipes which are defined.
 
+"""
+    SeriesType(x::Symbol)
+
+Return a type and mode for `plotly` based on a Plots.jl series type.
+"""
 SeriesType(x::Symbol) = SeriesType(Val(x))
 
 # this is all it takes to make
@@ -634,8 +639,12 @@ _align(x::Symbol, y::Symbol) = join((string(x), string(y)), " ")
 # for filled shapes
 function _fillstyle!(cfg::Config;
                      fc=nothing, fillcolor = fc, # string, symbol, RGB?
+                     fillrange=nothing, fill=fillrange,
                      kwargs...)
-    _merge!(cfg; fillcolor=fillcolor)
+    if !isnothing(fillcolor) && isnothing(fill)
+        fill = :toself
+    end
+    _merge!(cfg; fill, fillcolor)
     kwargs
 end
 
@@ -787,7 +796,7 @@ function _make_magic(;
     fill_styles = (:none,
                    :tozerox, :tonextx,
                    :tozeroy, :tonexty,
-                   :toself, :tonext)
+                   :toself,  :tonext)
     fillcolor = nothing
     fillalpha = nothing
     fillstyle = nothing

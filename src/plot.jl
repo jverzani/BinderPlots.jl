@@ -51,9 +51,15 @@ function plot!(::Val{:scatter}, m::Val{T}, p::Plot, x, y, z=nothing; kwargs...) 
     nothing
 end
 
+# plot vector by adding x
+function plot!(t::Val{:scatter}, m::Val{M}, p::Plot, x::AbstractVector{<:Real}, y::Nothing, z::Nothing; kwargs...) where {M}
+    plot!(t, m, p, 1:length(x),x; kwargs...)
+end
+
+
 # plot matrix by padding ut
 function plot!(t::Val{:scatter}, p::Plot,
-               x::AbstractMatrix, ::Nothing, ::Nothing; kwargs...)
+               x::AbstractMatrix{<:Real}, ::Nothing, ::Nothing; kwargs...)
     m, n = size(x)
     plot!(t, p, 1:m, x, nothing; kwargs...)
 end
@@ -96,9 +102,16 @@ function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
     throw(ArgumentError("parametric plots needs 2 or 3 functions"))
 end
 
-##
-function plot!(t::Val{:scatter}, p::Plot,
-               f::Function, g::Function, a, b; kwargs...)
+## # should just error
+function plot!(p::Plot,
+               f::Function, g::Function, as...)
+    @warn "use a tuple, `(f,g)`, to specify a parametric plot"
+    plot!(p, (f,g), as...; kwargs...)
+end
+function plot!(p::Plot,
+               f::Function, g::Function, h::Function , as...)
+    @warn "use a tuple, `(f,g,h)`, to specify a parametric plot"
+    plot!(p, (f,g,h), as...; kwargs...)
 end
 
 # sticks

@@ -13,19 +13,20 @@ The `PlotlyLight` interface is essentially the `JavaScript` interface for `Plotl
 
 * In Plots.jl, every column is a series, a set of related points which form lines, surfaces, or other plotting primitives.
 
-`Plotly` refers to series as traces. This style is only partially supported in `BinderPlots`, though multiple layers are suggested. (E.g. plot each column of a matrix.)
+`Plotly` refers to series as traces. This style is only partially supported in `BinderPlots`. Using multiple layers is suggested, but matrices can be used to specify multiple series.
 
 * In `Plots.jl` for keyword arguments many aliases are used, allowing for shorter calling patterns for experienced users.
 
-This is only partially the case with `BinderPlots`.
+Many, but not all, of the aliases are available. (The shorter ones are not, as they are as cryptic as magic arguments and more work to type.)
 
 * In `Plots.jl` some arguments encompass magic [arguments](https://docs.juliaplots.org/latest/attributes/#magic-arguments) for setting many related arguments at the same time.
 
-This is only partially the case with `BinderPlots`.
+`BinderPlots` allows for magic arguments
+
 
 * In `Plots.jl` the available plot types are specified through `seriestype` and there are shorthands to produce different methods (e.g., `scatter` is a shorthand for the seriestype `:scatter`.
 
-This is only partially the case with `BinderPlots`, though the more direct calling methods are suggested.
+This is only partially the case with `BinderPlots`, as not all plot types have a shorthand defined.
 
 
 Altogether, most basic graphics created through `Plots` can be produced with `BinderPlots`, but the showcase of [examples](https://github.com/JuliaPlots/Plots.jl/blob/master/src/examples.jl), which utilize many conveniences, and mostly not runnable as is.
@@ -115,9 +116,6 @@ y = rand(m, n)
 plot(x, y; label=("one","two","three"), linecolor=(:red, :green, :blue))
 ```
 
-!!! note "Plotting a vector"
-    The `Plots.jl` interface has a recipe for `plot(x::Vector)` which will plot `x` against the values `1:length(x)` **unless** `x` is a vector of tuples, in which case it will plot as points (as above). This is **not** supported. If only a vector for `x` is specified, it is assumed to contain a vector of points; if not an error for `unzip` will be thrown. If only a **matrix** is passed for x then each column is plotted against `1:size(x)[1]`. (In the last example `plot(y;...)` would produce the same figure as `plot(x, y; ...)`.)
-
 
 
 ### `plot!`
@@ -149,7 +147,7 @@ The `Plots` keyword `line` arguments are recycled. For more control, using `plot
 Two dimensional parametric plots show the trace of ``(f(t), g(t))`` for ``t`` in ``[a,b]``. These are easily created by `plot(x,y)` where the `x` and `y` values are produced by broadcasting, say, such as `f.(ts)` where `ts = range(a,b,n)`.
 
 !!! note "Not supported"
-    The `Plots.jl` convenience signature is `plot(f::Function, g::Function, a, b)`. This is not supported. Rather, pass a tuple of functions, as in `plot((f,g), a, b)`.
+    The `Plots.jl` convenience signature is `plot(f::Function, g::Function, a, b)`. This is supported but with a warning indicating it is best to pass a tuple of functions, as in `plot((f,g), a, b)`.
 
 ### `plot(::Array{<:Plot,N})`
 
@@ -179,7 +177,8 @@ to_documenter(current())           # hide
 The keyword arguments defined within this package are processed; the rest passed onto the data configuration of Plotly. The bar plot required a specification of the layout configuration.
 
 !!! note "seriestype"
-    The `seriestype` argument refers to a plotly `type` and `mode` which could be specified directly. For example, `plot(x,y; type="scatter", mode="markers+lines", ...) would produce a scatter plot along with lines connecting the points, a task otherwise done by combinign `plot` with `scatter!` (introduced next).
+    The `seriestype` argument refers to a plotly `type` and `mode` which could be specified directly. For example, `plot(x,y; type="scatter", mode="markers+lines", ...)` would produce a scatter plot along with lines connecting the points.
+This task can be done by either combining  `plot` with `scatter!` (introduced next) *or* passing `seriestype=[:lines, :scatter]`.
 
 ### `scatter(xs, ys, [zs])` or `scatter(pts)`
 
@@ -221,22 +220,26 @@ For labels and annotations, the call `text(str, args...)` can be used to specify
 
 ### Shapes
 
-There are a few simple shapes, including lines:
+The `Shape` constructor can be used to specify a polygon, as with `Shape(xs, ys)`. There are a few built-in shapes available by specifying symbol (e.g. `Shape(:diamond)` or `Shape(:unitsquare)`.
 
-* `hline!(y; xmin=0,xmax=1)` draws a horizontal line at elevation `y` across the computed axis, or adjusted via `xmin` and `xmax`.  The `extrema` function computes the axis sizes. If `y` is a container, multiple lines are drawn.
-* `vline(x)`  draws a vertical line at  `x` across the computed axis, or adjusted via `ymin` and `ymax`. The `extrema` function computes the axis sizes. If `x` is a container, multiple lines are drawn.
-* `abline!(intercept, slope)` for drawing lines `a + bx` in the current frame.
+These `Shape` instances can be manipulated by `translate`, `rotate`, `scale`, `shear`, and their mutating versions. As well there is `invert!` and `center!`.
+
+These need to be qualified, or can be imported with this command:
+
+```{julia}
+import BinderPlots: translate, translate!, rotate, rotate!, scale, scale!, shear, shear!, invert!, center!
+```
+
 
 The following create regions which can be filled.  Shapes have an interior and exterior boundary. The exterior line has attributes that can be adjusted with `linecolor`, `linewidth`, and `linestyle`.
 
 The following `Plots.jl` fill attributes are supported:
 
-* `fillcolor`
-* `fill` (one of `0`, `"tonexty"`, `"tozerox"`)
+* `fillcolor` a color, use `rgb` to specify a color with alpha level, e.g. `rgb(:green, 0.25)` (this is like `Plots.plot_color`, but more general as `rgb` also takes RGB values in the range `0` to `225`.
 
-The `plotly` `opacity` argument can adjust the interior color's transparency level.
+* `fillrange` one of `:none`, `:tozerox`, `:tonextx`, `:tozeroy` (or `0`), `:tonexty`, `:toself`, `:tonext`. The default for `Shape` instances is `:toself`.
 
-Plots that create 2d-regions are:
+Other plotting commands that create 2d-regions are:
 
 * `rect!(x0, x1, y0, y1)` draws a rectangle between `(x0,y0)` and `(x1,y1)`.
 * `hspan!(ys,YS; xmin=0.0, xmax=1.0)` draws horizontal rectangle(s) with bottom and top vertices specified by `ys` and `YS`.
@@ -245,6 +248,14 @@ Plots that create 2d-regions are:
 * `poly!(points; kwargs...)` where points is a container of ``(x,y)`` or ``(x,y,z)`` coordinates.
 * `band!(lower, upper, args...; kwargs...)` draws a ribbon or band between `lower` and `upper`. These are either containers of `(x,y)` points or functions, in which case `args...` is read as `a,b,n=251` to specify a range of values to plot over. The function can be scalar valued or parameterizations of a space curve in ``2`` or ``3`` dimensions. The `ribbon` argument of `Plots` is not supported.
 
+
+In addition, there are a few simple non-polygonal shapes, including lines:
+
+* `hline!(y; xmin=0,xmax=1)` draws a horizontal line at elevation `y` across the computed axis, or adjusted via `xmin` and `xmax`.  The `extrema` function computes the axis sizes. If `y` is a container, multiple lines are drawn.
+* `vline(x)`  draws a vertical line at  `x` across the computed axis, or adjusted via `ymin` and `ymax`. The `extrema` function computes the axis sizes. If `x` is a container, multiple lines are drawn.
+* `abline!(intercept, slope)` for drawing lines `a + bx` in the current frame.
+
+(There are also `Shape(:hline)` and `Shape(:vline)` that can be used, though typically would require some translation and scaling.)
 
 ----
 
@@ -308,6 +319,7 @@ Some keywords chosen to mirror `Plots.jl` are:
 |`markercolor`		| `scatter`, `scatter!` | set with color; alias `mc` |
 |`marker`           | `plot`, `plot!` | set with tuple of magic marker arguments |
 |`fillcolor`        | shapes                | interior color of a 2D shape; alias `fc` |
+|`fillrange`        | shapes                | how much to fill |
 |`fill`             | shapes                | set with magic fill arguments |
 |`color`			| `annotate!` | set with color argument of `text`  |
 |`family`			| `annotate!` | set with string (font family) |

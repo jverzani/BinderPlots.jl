@@ -234,6 +234,7 @@ end
 """
     rgb(r,g,b,α=1.0)
     rgb(c::Union{RGB, RGBA}) # RGB[A] from Colors.jl
+    rgb(::Symbol, α)
     colormap(cname, N; kwargs...)
 
 Specify red, green, blue values between 0 and 255 (as integers). The transparency is specified by the 4th argument, a value in [0.0,1.0].
@@ -257,6 +258,7 @@ function Base.convert(::Type{_RGB}, c::PlotUtils.Colors.RGBA)
 end
 rgb(c::PlotUtils.Colors.RGB) = convert(_RGB, c)
 rgb(c::PlotUtils.Colors.RGBA) = convert(_RGB, c)
+rgb(c::Symbol, α=1.0) = _RGB(PlotUtils.Colors.color_names[string(c)]..., α)
 
 PlotlyLight.StructTypes.StructType(::Type{_RGB}) = PlotlyLight.StructTypes.StringType()
 function Base.string(c::_RGB)

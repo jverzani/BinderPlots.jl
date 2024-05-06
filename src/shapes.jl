@@ -10,21 +10,26 @@ function Shape(s::Symbol, args...)
 end
 
 Shape(::Val{:unitsquare}, args...) = Shape([0,1,1,0],[0,0,1,1])
-function Shape(::Val{:ngon}, n, args...)
-    θs = range(0, 2pi, n+1)
+
+# unit circle shapes
+function Shape(::Val{:ngon}, n, offset=0, args...)
+    θs = range(offset*pi + 0, offset*pi + 2pi, n+1)
     Shape(sin.(θs), cos.(θs))
 end
+partialcircle(start_θ, end_θ, n = 20, r = 1) =
+    [(r * cos(u), r * sin(u)) for u in range(start_θ, stop = end_θ, length = n)]
 Shape(::Val{:circle}, args...)   = Shape(Val(:ngon), 100)
 Shape(::Val{:triangle}, args...) = Shape(Val(:ngon),3)
-Shape(::Val{:square}, args...) = Shape(Val(:ngon),4)
+Shape(::Val{:diamond}, args...) = Shape(Val(:ngon),4)
+Shape(::Val{:rect}, args...) = Shape(Val(:ngon),4,1/4)
 Shape(::Val{:pentagon}, args...) = Shape(Val(:ngon),5)
 Shape(::Val{:hexagon}, args...)  = Shape(Val(:ngon),5)
 Shape(::Val{:heptogon}, args...) = Shape(Val(:ngon),7)
 Shape(::Val{:octogon}, args...)  = Shape(Val(:ngon),8)
 
-Shape(::Val{:diamond}, r=1/2) = Shape([r,0,-r,0],[0,1,-1,0])
-shape(::Val{:hline}) = Shape([-1,1],[0,0])
-shape(::Val{:vline}) = Shape([0,0], [-1,1])
+Shape(::Val{:hline}) = Shape([-1,1],[0,0])
+Shape(::Val{:vline}) = Shape([0,0], [-1,1])
+
 function Shape(::Val{:star}, n=5, r = 1/4, args...)
     θs = range(0, 2pi, 2n+1)
     xs = zeros(Float64, 2n)
@@ -127,6 +132,11 @@ function center(s::Shape)
         Cy += (y[i] + y[ip1]) * m
     end
     Cx / 6A, Cy / 6A
+end
+
+function center!(s::Shape)
+    a,b = center(s)
+    translate!(s, -a, -b)
 end
 
 # shapes in Plotly use `layout` not `data`

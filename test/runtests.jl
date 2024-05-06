@@ -173,11 +173,8 @@ end
 
     # vector//
     # Plots.jl will plot as a 1-column matrix so plot(1:n, v)
-    # not so here where it is assumed v is a vector of point
-    # so plot(v) -> plot(unzip(v)...)
-    # except for these methods
-    # vector// See below for special cases
-    @test_throws MethodError plot(xs)
+    # vector{<:Real}//
+    @test nseries(plot(xs)) == 1
 
     # /Vector{<:Function/[scalar]/[scalar] isa Vector{<:Function}
     plot(fs, a, b) # no plot(v) w/o plot(v,a,b) or plot(v, (a,b))
@@ -208,5 +205,19 @@ end
 
     plot(tuple(gs...), a, b)
     @test nseries() == 1
+
+    # cf. https://docs.juliaplots.org/latest/input_data/
+    # we don't bother with being so forgiving here
+    x1, x2 = [1, 0],  [2, 3]    # vectors
+    y1, y2 = [4, 5],  [6, 7]    # vectors
+    m1, m2 = [x1 y1], [x2 y2]   # 2x2 matrices
+
+
+    # array of matrices -> 4 series, plots each matrix column, x assumed to be integer count
+    @test_throws ArgumentError nseries(plot([m1, m2])) == 4
+    # array of array of arrays -> 4 series, plots each individual array, x assumed to be integer count
+    @test_throws MethodError nseries(plot([[x1,y1], [x2,y2]])) == 4
+    # array of tuples of arrays -> 2 series, plots each tuple as new series
+    @test_throws MethodError nseries(plot([(x1,y1), (x2,y2)]) ) == 2
 
 end
