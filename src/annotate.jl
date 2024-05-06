@@ -17,7 +17,7 @@ The `x`, `y`, `txt` values can be specified as 3 iterables or tuple of tuples.
 function annotate!(p::Plot, x, y, txt;
                    kwargs...)
 
-    # txt may be string or 'text' objects
+    # txt maybe string or 'text' objects
     # convert string to text object then ...
     tfs = [text(tᵢ) for tᵢ ∈ txt]
     _txt = [t.str for t in tfs]
@@ -34,11 +34,20 @@ function annotate!(p::Plot, x, y, txt;
     p
 end
 
-annotate!(p::Plot, anns::Tuple; kwargs...) = annotate!(p, unzip(anns)...; kwargs...)
-annotate!(p::Plot, anns::Vector; kwargs...) = annotate!(p, unzip(anns)...; kwargs...)
 annotate!(x, y, txt; kwargs...) = annotate!(current_plot[], x, y, txt; kwargs...)
 annotate!(anns::Tuple; kwargs...) = annotate!(current_plot[], anns; kwargs...)
 annotate!(anns::Vector; kwargs...) = annotate!(current_plot[], anns; kwargs...)
+
+annotate!(p::Plot, anns::Tuple; kwargs...) = annotate!(p, collect(anns); kwargs...)
+
+# use magic to create `text` objects
+function annotate!(p::Plot, anns::Vector; kwargs...)
+    x = [a[1] for a in anns]
+    y = [a[2] for a in anns]
+    txt = [text(a[3:end]...) for a in anns]
+    annotate!(p, x, y, txt; kwargs...)
+end
+
 
 ## ----
 

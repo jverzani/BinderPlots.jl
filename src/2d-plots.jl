@@ -8,9 +8,26 @@ SeriesType(::Val{:heatmap}) = (:heatmap, :heatmap)
 ContourTypes = Union{Val{:contour}, Val{:heatmap},
                      Val{:surface}, Val{:wireframe}}
 
-# PLots for making polygons
-Shape(x, y) = zip(x, y)
-Shape(x) = x
+# create a blank canvas with a give size, etc.
+function blank_canvas(;
+                      xlim=nothing, xlims=xlim,
+                      ylim=nothing, ylims=ylim,
+                      aspect_ratio=:equal,
+                      border=:none, legend=false,
+                      kwargs...)
+    p = plot(; xlims, ylims,
+             aspect_ratio,
+             border, legend,
+             kwargs...)
+    for a ∈ (p.layout.xaxis, p.layout.yaxis)
+        _axisstyle!(a,
+                    showticklabels =false,
+                    showgrid = false,
+                    zeroline = false)
+    end
+    p
+
+end
 
 function plot!(t::T, m::M, p::Plot, x, y, z;
                kwargs...) where {T <: ContourTypes, M<:ContourTypes}

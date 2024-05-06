@@ -1,5 +1,10 @@
 # This is the identifier of the type of visualization for this series. Choose from [:none, :line, :path, :steppre, :stepmid, :steppost, :sticks, :scatter, :heatmap, :hexbin, :barbins, :barhist, :histogram, :scatterbins, :scatterhist, :stepbins, :stephist, :bins2d, :histogram2d, :histogram3d, :density, :bar, :hline, :vline, :contour, :pie, :shape, :image, :path3d, :scatter3d, :surface, :wireframe, :contour3d, :volume, :mesh3d] or any series recipes which are defined.
 
+"""
+    SeriesType(x::Symbol)
+
+Return a type and mode for `plotly` based on a Plots.jl series type.
+"""
 SeriesType(x::Symbol) = SeriesType(Val(x))
 
 # this is all it takes to make
@@ -80,20 +85,25 @@ plot!(::Plot, args...; kwargs...) = throw(ArgumentError("No plot method defined"
 # XXX dispatch on type and mode
 # no xyz for surface type, say
 function plot!(p::Plot, x=nothing, y=nothing, z=nothing;
-               seriestype::Symbol=:lines,
+               seriestype= :lines,
                kwargs...)
-    kws = _make_magic(; kwargs...) # XXX move if you want to be able to recycle
-    kws = _layout_styles!(p;  kws...) # adjust layout
-    type, mode =  SeriesType(seriestype)
-    plot!(Val(type), p, x, y, z; seriestype, kws...)
+    kws = _layout_styles!(p;  kwargs...) # adjust layout
+    types = isa(seriestype, Symbol) ? (seriestype,) : tuple(seriestype...)
+    for seriestype in types
+        type, mode =  SeriesType(seriestype)
+        plot!(Val(type), p, x, y, z; seriestype, kws...)
+    end
+    p
 end
+
 
 # basic dispatch to type, then type/mode
 function plot!(t::Val{T}, p::Plot, x=nothing, y=nothing, z=nothing;
                seriestype::Symbol=:lines,
                kwargs...) where {T}
     _, mode = SeriesType(seriestype)
-    plot!(t, Val(mode), p, x, y, z; kwargs...)
+    kws = _make_magic(; kwargs...)
+    plot!(t, Val(mode), p, x, y, z; kws...)
 end
 
 # generic usage
@@ -549,6 +559,10 @@ function _textstyle!(cfg::Config;
     kwargs
 end
 
+
+function _shapestyle!(cfg; kwargs...)
+    _merge!(cfg, Config(kwargs...))
+end
 # https://docs.juliaplots.org/latest/attributes/#magic-arguments
 """
     font(args...)
@@ -625,8 +639,12 @@ _align(x::Symbol, y::Symbol) = join((string(x), string(y)), " ")
 # for filled shapes
 function _fillstyle!(cfg::Config;
                      fc=nothing, fillcolor = fc, # string, symbol, RGB?
+                     fillrange=nothing, fill=fillrange,
                      kwargs...)
-    _merge!(cfg; fillcolor=fillcolor)
+    if !isnothing(fillcolor) && isnothing(fill)
+        fill = :toself
+    end
+    _merge!(cfg; fill, fillcolor)
     kwargs
 end
 
@@ -727,8 +745,11 @@ function _make_magic(;
                      marker = nothing,
                      fill = nothing,
                      kwargs...)
-    d = Dict{Symbol, Any}()
-
+#    error("asf")
+    d = Config()
+    ## lines
+    linecolor = nothing
+    linealpha = nothing
     for a ∈ something(line, tuple())
         if isa(a, Symbol)
             if a ∈ _linestyles
@@ -736,15 +757,23 @@ function _make_magic(;
             elseif a ∈ keys(_lineshapes)
                 _set(d, :lineshape, _lineshapes[a])
             else
-                _set(d, :linecolor, a)
+                linecolor = a
             end
         elseif isa(a, _RGB)
+            linecolor = a
             _set(d, :linecolor, a)
         elseif isa(a, Number)
             isa(a, Integer) && _set(d, :linewidth, a)
+            0 < a < 1 && (linealpha = a)
         end
     end
+    if isa(linecolor, Union{String,Symbol}) && !isnothing(linealpha)
+        linecolor = _RGB(PlotUtils.Colors.color_names[string(linecolor)]..., linealpha)
+    end
+    _set(d, :linecolor, linecolor)
 
+
+    ## -- markers
     for a ∈ something(marker, tuple())
         if isa(a, Symbol)
             if a ∈ _marker_shapes
@@ -764,28 +793,36 @@ function _make_magic(;
     end
 
     ## axis has x,y,z
+    fill_styles = (:none,
+                   :tozerox, :tonextx,
+                   :tozeroy, :tonexty,
+                   :toself,  :tonext)
     fillcolor = nothing
     fillalpha = nothing
+    fillstyle = nothing
     for a ∈ something(fill, tuple())
         if isa(a, Symbol)
-            fillcolor = a
-        elseif isa(a, _RGB)
-            fillcolor = a
-        elseif isa(a, String)
-            if a ∈ ("none", "tozerox", "tonextx",
-                    "tozeroy", "tonexty",
-                    "toself","tonext")
-                _set(d, :fill, a) # tonexty, tozeroy, toself
+            if a ∈ fill_styles
+                fillstyle = a
             else
                 fillcolor = a
             end
+        elseif isa(a, String)
+            a′ = Symbol(a)
+            if a′ ∈ fill_styles
+                _set(d, :fill, a′)
+            else
+                fillcolor = a′
+            end
+        elseif isa(a, _RGB)
+            fillcolor = a
         elseif isa(a, Bool)
             a && _set(d, :fill, :toself) # true false
         elseif isa(a, Real)
             if 0 < a < 1
                 fillalpha =a
             elseif iszero(a)
-                _set(d, :fill, "tozeroy")
+                fillstyle = :tozeroy
             elseif isa(a, Integer)
                 @warn "Fill to a non-zero y value is not implemented"
             end
@@ -795,6 +832,7 @@ function _make_magic(;
         fillcolor = _RGB(PlotUtils.Colors.color_names[string(fillcolor)]..., fillalpha)
     end
     _set(d, :fillcolor, fillcolor)
+    !isnothing(fillcolor) && _set(d, :fill, something(fillstyle, :toself))
 
     # covert back
     kws = merge(Dict(kwargs...), d)
@@ -827,6 +865,7 @@ function _layout_styles!(p;
                          xlabel=nothing, ylabel=nothing, zlabel=nothing,
                          xscale=nothing, yscale=nothing, zscale=nothing,
                          xaxis=nothing, yaxis=nothing, zaxis=nothing,
+                         background_color=nothing, background=background_color,bg=background_color, plot_bgcolor=bg,
                          legend=nothing,
 
                          kwargs...)
@@ -859,9 +898,28 @@ function _layout_styles!(p;
     # layout
     legend!(p, legend)
 
+    # attributes
+    p.layout.plot_bgcolor = plot_bgcolor
+
     # don't consume
     haskey(kwargs, :aspect_ratio) &&
         kwargs[:aspect_ratio] == :equal && (p.layout.yaxis.scaleanchor="x")
 
     kwargs
 end
+
+struct MagicRecycler{T}
+    t::T
+    n::Int
+end
+MagicRecycler(o) = MagicRecycler(map(Recycler, o), 0)
+
+function Base.getindex(R::MagicRecycler, i::Int)
+    getindex.(R.t, i)
+end
+
+# recycle magic so that all is well in the world
+KWRecycler(::Val{T}, o) where {T} = Recycler(o) # default
+KWRecycler(::Val{:line}, o) = MagicRecycler(o)
+KWRecycler(::Val{:marker}, o) =  MagicRecycler(o)
+KWRecycler(::Val{:fill}, o) = MagicRecycler(o)

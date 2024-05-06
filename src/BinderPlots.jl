@@ -105,6 +105,7 @@ export Plot, Config # but not Preset, preset, plot
 
 export plot, plot!, scatter, scatter!
 export Shape
+#export Poly, rotate, translate, shear  # <<- not such a good idea?
 export contour, contour!, contourf, contourf!, heatmap, heatmap!
 export surface, surface!, wireframe, wireframe!
 export plot_implicit, plot_implicit!
@@ -120,7 +121,7 @@ export parallelogram, parallelogram!, circ3d, circ3d!, skirt, skirt!
 export current
 
 
-export arrows, arrows!, poly, poly!, band, band!, hspan!, vspan!, ablines!, image!
+export arrows, arrows!, poly, poly!, band, band!, hspan!, vspan!, abline!, image!
 #export unzip
 export rgb, colormap
 

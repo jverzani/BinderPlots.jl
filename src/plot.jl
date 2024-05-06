@@ -17,6 +17,7 @@
 # scatter type
 # this step recycles arguments and x,y,z values
 SeriesType(::Val{:lines}) =  (:scatter, :lines)
+SeriesType(::Val{:sticks}) =  (:scatter, :sticks)
 SeriesType(::Val{:path3d}) = (:scatter, :lines)
 
 function plot!(::Val{:scatter}, p::Plot, x=nothing, y=nothing, z=nothing;
@@ -42,16 +43,23 @@ function plot!(::Val{:scatter}, m::Val{T}, p::Plot, x, y, z=nothing; kwargs...) 
                z=_replace_infinite(z),
                type,
                mode=mode)
-    kws = _trace_styles!(c; kwargs...)
+    kws = _make_magic(; kwargs...)
+    kws = _trace_styles!(c; kws...)
     _merge!(c; kws...)
 
     push!(p.data, c)
     nothing
 end
 
+# plot vector by adding x
+function plot!(t::Val{:scatter}, m::Val{M}, p::Plot, x::AbstractVector{<:Real}, y::Nothing, z::Nothing; kwargs...) where {M}
+    plot!(t, m, p, 1:length(x),x; kwargs...)
+end
+
+
 # plot matrix by padding ut
 function plot!(t::Val{:scatter}, p::Plot,
-               x::AbstractMatrix, ::Nothing, ::Nothing; kwargs...)
+               x::AbstractMatrix{<:Real}, ::Nothing, ::Nothing; kwargs...)
     m, n = size(x)
     plot!(t, p, 1:m, x, nothing; kwargs...)
 end
@@ -94,10 +102,54 @@ function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
     throw(ArgumentError("parametric plots needs 2 or 3 functions"))
 end
 
-##
-function plot!(t::Val{:scatter}, p::Plot,
-               f::Function, g::Function, a, b; kwargs...)
-    @show :hi
+## # should just error
+function plot!(p::Plot,
+               f::Function, g::Function, as...)
+    @warn "use a tuple, `(f,g)`, to specify a parametric plot"
+    plot!(p, (f,g), as...; kwargs...)
+end
+function plot!(p::Plot,
+               f::Function, g::Function, h::Function , as...)
+    @warn "use a tuple, `(f,g,h)`, to specify a parametric plot"
+    plot!(p, (f,g,h), as...; kwargs...)
+end
+
+# sticks
+function plot!(t::Val{:scatter}, m::Val{:sticks}, p::Plot, x, y, z::Nothing; kwargs...)
+    n, T = length(x), eltype(x)
+    xs = Float64[]
+    ys = Float64[]
+    for (xᵢ, yᵢ) ∈ zip(x,y)
+        @show xᵢ
+        append!(xs, [xᵢ,xᵢ, NaN])
+        append!(ys, [0, yᵢ, yᵢ])
+    end
+    plot!(t, Val(:lines), p,xs, ys, nothing; kwargs...)
+    plot!(t, Val(:markers), p, x, y, nothing; kwargs...)
+    p
+end
+
+# Shape recipes
+function plot!(t::Val{:scatter}, m::Val{:lines}, p::Plot, x::Shape, y::Nothing, z::Nothing; kwargs...)
+    xs, ys = x.x, x.y
+    if (first(xs) != last(xs)) || (first(ys) != last(ys))
+        push!(xs, first(xs))
+        push!(ys, first(ys))
+    end
+    plot!(t, m, p, xs, ys; kwargs...)
+end
+
+
+function plot!(t::Val{:scatter}, p::Plot, x::Vector{<:Shape}, y::Nothing, z::Nothing;
+               seriestype::Symbol=:lines,
+               kwargs...)
+
+    _,mode = SeriesType(seriestype)
+    KWs = Recycler(kwargs)
+    for (i, s) ∈ enumerate(x)
+        plot!(t, Val(Symbol(mode)),p, s; KWs[i]...)
+    end
+    p
 end
 
 

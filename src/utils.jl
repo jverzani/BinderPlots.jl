@@ -1,3 +1,4 @@
+# utils and types
 function _merge!(c::Config; kwargs...)
     for kv ∈ kwargs
         k,v = kv
@@ -132,7 +133,8 @@ end
 
 
 function Recycler(kw::Base.Pairs)
-    y = Base.Pairs((;zip(keys(kw), [BinderPlots.Recycler(kw[k]) for k in keys(kw)])...), keys(kw))
+    rs = [KWRecycler(Val(k), kw[k]) for k in keys(kw)]
+    y = Base.Pairs((;zip(keys(kw), rs)...), keys(kw))
     Recycler(y, 0)
 end
 
@@ -232,6 +234,7 @@ end
 """
     rgb(r,g,b,α=1.0)
     rgb(c::Union{RGB, RGBA}) # RGB[A] from Colors.jl
+    rgb(::Symbol, α)
     colormap(cname, N; kwargs...)
 
 Specify red, green, blue values between 0 and 255 (as integers). The transparency is specified by the 4th argument, a value in [0.0,1.0].
@@ -255,6 +258,7 @@ function Base.convert(::Type{_RGB}, c::PlotUtils.Colors.RGBA)
 end
 rgb(c::PlotUtils.Colors.RGB) = convert(_RGB, c)
 rgb(c::PlotUtils.Colors.RGBA) = convert(_RGB, c)
+rgb(c::Symbol, α=1.0) = _RGB(PlotUtils.Colors.color_names[string(c)]..., α)
 
 PlotlyLight.StructTypes.StructType(::Type{_RGB}) = PlotlyLight.StructTypes.StringType()
 function Base.string(c::_RGB)
@@ -280,3 +284,28 @@ function Base.range(start::_RGB, stop::_RGB, length::Integer)
     c2 = PlotUtils.Colors.RGBA(r,g,b,α)
     [rgb(c) for c ∈ range(c1, c2, length)]
 end
+
+## Define Shape type
+## see shape.jl for methods
+"""
+    Shape(x, y)
+    Shape(vertices)
+
+Construct a *polygon* to be plotted
+"""
+struct Shape{X, Y}
+    x::X
+    y::Y
+    function Shape(x::X,y::Y) where {X, Y}
+        length(x) == length(y) || throw(ArgumentError("Need same length objects"))
+        x′, y′ = float(x), float(y)
+        X′, Y′ = typeof(x′), typeof(y′)
+        new{X′,Y′}(x′, y′)
+    end
+end
+
+function Shape(xy)
+    Shape(unzip(xy)...)
+end
+
+Base.copy(s::Shape) = Shape(copy(s.x), copy(s.y))

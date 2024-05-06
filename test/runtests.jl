@@ -1,5 +1,5 @@
 using BinderPlots
-import BinderPlots: unzip
+import BinderPlots: unzip, translate
 using Test
 
 @testset "BinderPlots.jl" begin
@@ -46,7 +46,16 @@ end
 end
 
 @testset "shapes" begin
-    # shapes are definitely idiosyncratic
+    # Shape is of a polygon
+    square = Shape([(0, 0), (1, 0), (1, 1), (0, 1)])
+    usquare = Shape(:unitsquare) # test names
+    @test square.x == usquare.x  #
+    @test BinderPlots.rotate(square, 2pi).x ≈ square.x  # test rotation
+    @test BinderPlots.center(square) == (1/2, 1/2)      # test center
+    @test BinderPlots.center(BinderPlots.translate(square, 1, 2)) == (1 + 1/2, 2 + 1/2)  # test translate
+
+
+    # Other shapes are definitely idiosyncratic
     # 2d
     let
         p = plot()
@@ -108,5 +117,107 @@ end
         xs, ys, zs = unzip(r.(ts))
         skirt(xs, ys, zs, f)
     end
+
+end
+
+
+# test of every column is series
+@testset "number of series" begin
+    nseries(p::Plot=current()) = length(p.data)
+
+    # plot(x,y,z)
+    xs = 1:4
+    ys = [4,2,3,1]
+    zs = [1,3,5,7]
+    M = [1 2; 3 4; 5 6;7 8]
+    a, b = 0, 2pi
+    fs = [sin, cos]
+    gs = [sin, cos, exp]
+
+    # use x/y/z to indicate calling pattern below
+
+    # matrix// each column a series against 1:size(M,1)
+    plot(M)
+    @test nseries() == size(M,2)
+
+    # vector/vector/
+    plot(xs, ys)
+    @test nseries() == 1
+
+    # vector/vector/vector
+    plot(xs, ys, zs)
+    @test nseries() == 1
+
+    # vector/matrix/ -- each column a series
+    plot(xs,M)
+    @test nseries() == size(M, 2)
+
+    # vector/matrix/matrix -- each column a series
+    plot(xs,M,M)
+    @test nseries() == size(M, 2)
+
+    # matrix/matrix/ -- each column paired off
+    plot(M, M)
+    @test nseries() == size(M, 2)
+
+    # matrix/matrix/matrx -- each column paired off
+    plot(M,M,M)
+    @test nseries() == size(M, 2)
+
+    #/Function/[scalar]/[scalar]
+    plot(first(fs), a, b)
+    @test nseries() == 1
+
+    plot(first(fs), (a, b))
+    @test nseries() == 1
+
+    # vector//
+    # Plots.jl will plot as a 1-column matrix so plot(1:n, v)
+    # vector{<:Real}//
+    @test nseries(plot(xs)) == 1
+
+    # /Vector{<:Function/[scalar]/[scalar] isa Vector{<:Function}
+    plot(fs, a, b) # no plot(v) w/o plot(v,a,b) or plot(v, (a,b))
+    @test nseries() == length(fs)
+
+    n = nseries()
+    plot!(fs)
+    @test nseries() ==  n + length(fs)
+
+    plot(gs, a, b) # no plot(v) w/o plot(v,a,b) or plot(v, (a,b))
+    @test nseries() == length(gs)
+
+    n = nseries()
+    plot!(gs)
+    @test nseries() ==  n + length(gs)
+
+
+    # Vector{<:Shape}// plots each shape
+    s = Shape(:star, 5)
+    ss = [translate(s, k, k) for k in 0:5]
+    plot(ss)
+    @test nseries() == length(ss)
+
+    ##
+    # tuple(f,g)// parametric plot like above, `plot` needs a,b or (a,b)
+    plot(tuple(fs...), a, b)
+    @test nseries() == 1
+
+    plot(tuple(gs...), a, b)
+    @test nseries() == 1
+
+    # cf. https://docs.juliaplots.org/latest/input_data/
+    # we don't bother with being so forgiving here
+    x1, x2 = [1, 0],  [2, 3]    # vectors
+    y1, y2 = [4, 5],  [6, 7]    # vectors
+    m1, m2 = [x1 y1], [x2 y2]   # 2x2 matrices
+
+
+    # array of matrices -> 4 series, plots each matrix column, x assumed to be integer count
+    @test_throws ArgumentError nseries(plot([m1, m2])) == 4
+    # array of array of arrays -> 4 series, plots each individual array, x assumed to be integer count
+    @test_throws MethodError nseries(plot([[x1,y1], [x2,y2]])) == 4
+    # array of tuples of arrays -> 2 series, plots each tuple as new series
+    @test_throws MethodError nseries(plot([(x1,y1), (x2,y2)]) ) == 2
 
 end
