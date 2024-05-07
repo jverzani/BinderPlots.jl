@@ -774,23 +774,30 @@ function _make_magic(;
 
 
     ## -- markers
+    markercolor = nothing
+    markeralpha = nothing
     for a ∈ something(marker, tuple())
         if isa(a, Symbol)
             if a ∈ _marker_shapes
                 _set(d, :markershape, replace(string(a), "_" => "-"))
             else
-                _set(d, :markercolor, a)
+                markercolor = a
+                #_set(d, :markercolor, a)
             end
         elseif isa(a, _RGB)
-            _set(d, :markercolor, a)
+            markercolor = a
+            #_set(d, :markercolor, a)
         elseif isa(a, Number)
             if isa(a, Integer)
                 _set(d, :markersize, a)
             end
-            # no opacity for markers
-            # plotly has you use rgba(r,g,b,α) for transparency
+            0 < a < 1 && (markeralpha = a)
         end
     end
+    if isa(markercolor, Union{String,Symbol}) && !isnothing(markeralpha)
+        markercolor = _RGB(PlotUtils.Colors.color_names[string(markercolor)]..., markeralpha)
+    end
+    _set(d, :markercolor, markercolor)
 
     ## axis has x,y,z
     fill_styles = (:none,

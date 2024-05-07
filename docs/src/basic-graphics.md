@@ -340,3 +340,57 @@ Some exported names are used to adjust a plot after construction:
 
 !!! note "Subject to change"
     There are some names for keyword arguments that should be changed.
+
+### "Magic" arguments
+
+The `Plots.jl` design leverages data types to "magically" fill in keyword arguments. Much of this is implemented within `BinderPlots`.
+
+#### Series arguments
+
+The special keyword arguments `line`, `marker`, and `fill` are iterated over to fill in keyword arguments. For example, passing `line=(5, (:red,:blue),, 0.25, :dash)` will:
+
+Draw the line for any odd number series with `linewidth=5`; color `rgb(:red, 0.25)`; and line style `:dash`. Even numbered series (when present) will have color `rgb(:blue, 0.25)` and the modified line width and style, as the values are recycled when there are multiple series specified.
+
+
+The container passed to `line` has the following mappings:
+
+* symbols and strings are matched against the linestyles, then the lineshapes. When there is no match, they are assumed to be colors.
+* `rgb` values are passed to the `linecolor` attributed
+* a number which is an integer specifies the line width; a number in `(0,1)` is taken as a transparency argument and passed to `linealpha`.
+
+
+The container passed to `marker` has the following mappings:
+
+* symbols are matched against known marker shapes; if there is no match then the symbol is assumed to be a color
+* size, color, and transparency are as for `line`
+
+The container passed to `fill` has the following mappings:
+
+* symbols are matched against fill styles; if there is no match it is assumed to be `fillcolor`.
+* a `true` indicates the fill style should be `toself`
+* a number in `(0,1)` indicates a transparency level
+* a `0` sets fill style = `:tozeroy`. (Other integers are not available, as in `Plots.jl`)
+
+#### Other uses of magic arguments
+
+The `font` function. The `font` function (which can be called directly or indirectly through `text` or `annotate!`) has the following magic arguments defined:
+
+* strings are assumed to indicate font families
+* integers specify point sizes
+* non integers (e.g. `pi/4`) indicate rotation
+* symbols are checked for alignment (e.g., `:top`, `:bottom`, etc.); if no match, they are assumed to be a color specification.
+
+The `[xyz]axis` arguments have:
+
+* `Font` values apply to the tick fonts
+* Symbols are checked for scale indicators `(:log, :linear, :log2m :log10, :flip, :invert, :inverted)`
+* tuples are assumed to indicate a range if length 2, otherwise a collection of tick placements.
+* Boolean values indicate if the grid should be shown for that axis
+* strings and `Text` values are applied to the axis label.
+
+The `legend` argument can be a boolean or a container. When a container the valus are magically transformed with:
+
+* tuples indicate the placement position
+* fonts indicate the font in the legend
+* Boolean values indicate whether to show or hide the legend
+* symbols are checked for correspondence with a legend position; if the symbol is `:reverse`, otherwise the symbol is assumed to be a color specification.
