@@ -388,7 +388,7 @@ The `[xyz]axis` arguments have:
 * Boolean values indicate if the grid should be shown for that axis
 * strings and `Text` values are applied to the axis label.
 
-The `legend` argument can be a boolean or a container. When a container the valus are magically transformed with:
+The `legend` argument can be a boolean or a container. When a container the values are magically transformed with:
 
 * tuples indicate the placement position
 * fonts indicate the font in the legend
