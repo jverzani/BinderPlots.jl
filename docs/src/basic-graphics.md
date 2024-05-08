@@ -294,7 +294,9 @@ As seen in this overblown example, there are other methods besides `plot` for ot
 * `rect!` is used to make a rectangle. There are also `hspan!` and `vspan!`. For lines, there are `hline!` and `vline!` to draw horizontal or vertical lines across the extent of the plotting region. There is also `abline!` to draw lines specified in intercept-slope form across the extent of the plotting region. Other regions can be draws. For example, `circle!` to draw a circle, and, more generally, `poly` can be used to draw a polygonal region.
 
 
+## Attributes
 
+Attributes of a plot are modified through keyword arguments. The `Plots.jl` interface allows many aliases and has magic argument. No attempt to cover all of these is made.
 
 ### Keyword arguments
 
@@ -325,9 +327,9 @@ Some keywords chosen to mirror `Plots.jl` are:
 |`family`			| `annotate!` | set with string (font family) |
 |`pointsize`		| `annotate!` | set with integer |
 |`rotation`        	| `annotate!` | set with angle, degrees, real  |
-|`center`		   	| new ``3``d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
-|`up`				| new ``3``d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
-|`eye`				| new ``3``d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
+|`center`		   	| new `3`d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
+|`up`				| new `3`d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
+|`eye`				| new `3`d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
 
 As seen in the example there are *many* ways to specify a color. These can be by name (as a string); by name (as a symbol), using HEX colors (as strings), using `rgb`. (The `rgb` function, unlike the standard `Colors.RGB`, uses values in `0` to `255` to specify the values and also can take a fourth argument for an alpha value, which is useful for filling with opacity.)
 
@@ -394,3 +396,110 @@ The `legend` argument can be a boolean or a container. When a container the valu
 * fonts indicate the font in the legend
 * Boolean values indicate whether to show or hide the legend
 * symbols are checked for correspondence with a legend position; if the symbol is `:reverse`, otherwise the symbol is assumed to be a color specification.
+
+
+## Example
+
+This example is from the section on "Input Data" from the `Plots.jl` documentation. It use shapes and other objects to draw a Batman scene. We recreate it here to illustrate some small but significant differences between `Plots.jl` and `BinderPlots`. The comments with superscripts are where differences are needed:
+
+```@example lite
+using BinderPlots
+import BinderPlots: translate, stroke, BezierCurve #¹
+
+const Plots = BinderPlots
+RGB(a,b,c) = rgb(round.(Int, 255 .* (a,b,c))...) #²
+const plot_color = rgb
+
+function make_batman()
+    p = [(0, 0), (0.5, 0.2), (1, 0), (1, 2),  (0.3, 1.2), (0.2, 2), (0, 1.7)]
+    s = [(0.2, 1), (0.4, 1), (2, 0), (0.5, -0.6), (0, 0), (0, -0.15)]
+    m = [(p[i] .+ p[i + 1]) ./ 2 .+ s[i] for i in 1:length(p) - 1]
+
+    pts = similar(m, 0)
+    for (i, mi) in enumerate(m)
+        append!(
+            pts,
+            map(BezierCurve([p[i], m[i], p[i + 1]]), range(0, 1, length = 30))
+        )
+    end
+    x, y = Plots.unzip(Tuple.(pts))
+    Shape(vcat(x, -reverse(x)), vcat(y, reverse(y)))
+end
+
+# background and limits
+plt = plot(
+    bg = :black,
+    xlim = (0.1, 0.9),
+    ylim = (0.2, 1.5),
+    framestyle = :none,
+    size = (400, 400),
+    legend = false,
+)
+
+xaxis!(plt; showticklabels = false, showgrid = false, zeroline = false) #³
+yaxis!(plt; showticklabels = false, showgrid = false, zeroline = false) #³
+
+
+
+# create an ellipse in the sky
+pts = Plots.partialcircle(0, 2π, 100, 0.1)
+x, y = Plots.unzip(pts)
+x = 1.5x .+ 0.7
+y .+= 1.3
+pts = collect(zip(x, y))
+
+# beam
+beam = Shape([(0.3, 0.0), pts[95], pts[50], (0.3, 0.0)])
+plot!(beam, fillcolor = plot_color(:yellow, 0.3))
+
+# spotlight
+# plot!(Shape(x, y), c = :yellow)  #⁴ no seriescolor argument
+plot!(Shape(x, y), fc = :yellow)
+
+# buildings
+rect(w, h, x, y) = Shape(x .+ [0, w, w, 0, 0], y .+ [0, 0, h, h, 0])
+gray(pct) = RGB(pct, pct, pct)
+function windowrange(dim, denom)
+    range(0, 1, length = max(3, round(Int, dim/denom)))[2:end - 1]
+end
+
+for k in 1:50
+    local w, h, x, y = 0.1rand() + 0.05, 0.8rand() + 0.3, rand(), 0.0
+    shape = rect(w, h, x, y)
+    graypct = 0.3rand() + 0.3
+    plot!(shape, fc = gray(graypct))  #⁴
+
+    # windows
+    I = windowrange(w, 0.015)
+    J = windowrange(h, 0.04)
+    local pts = vec([(Float64(x + w * i), Float64(y + h * j)) for i in I, j in J])
+
+    local inds = [rand() < 0.2 for i in 1:length(pts)]         #⁵
+    scatter!(pts[inds], marker=(stroke(0), :rect, :yellow))
+    scatter!(pts[.!inds], marker=(stroke(0), :rect, :black))
+
+#    windowcolors = Symbol[rand() < 0.2 ? :yellow : :black for i in 1:length(pts)]
+#    scatter!(pts, marker = (stroke(0), :rect, windowcolors))
+
+
+end
+plt
+
+batman = Plots.scale(make_batman(), 0.07, 0.07, (0, 0))
+batman = translate(batman, 0.7, 1.23)
+plot!(batman, fillcolor = :black)
+
+to_documenter(current())           # hide
+```
+
+To remark on the differences:
+
+1) The `translate` and `scale` methods for `Shape` instances and the `BezierCurve` constructor (lifted directly for `Plots.jl`) are not exported.
+
+2) the use of `RGB` from `Colors.jl` is not supported in `PlotlyLight` and hence `BinderPlots`. The `rgb` function is a replacement which also replaces the `plot_color` function used above to add an alpha transparency to a color specified by a symbol.
+
+3) The illustrated use of `xaxis!` and `yaxis!` is needed to make a blank canvas. There is also an unexported `blank_canvas` function to avoid this detail.
+
+4) There is no support for the `seriescolor` argument (with the `c` alias). Rather the fill color is needed to be specified in this line.
+
+5) The `Plots.jl` interface allows individual points in a scatter plot to have colors specified; the `BinderPlots` interface specifies these colors at the series level, so two series are needed to paint the windows black or yellow.

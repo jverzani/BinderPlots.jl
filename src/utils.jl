@@ -48,6 +48,8 @@ struct XYZ{X,Y,Z}
     n::Integer
 end
 
+
+
 # how many traces does the data represent
 # when there can be more than one
 ntraces(x) =  1
@@ -120,10 +122,16 @@ struct Recycler{T}
     itr::T
     n::Int
 end
+
+_ndims(x) = ndims(x)
+
 Recycler(x) =  Recycler(x, length(x))
 Recycler(::Nothing) =  Recycler([nothing],1)
 Recycler(x::Symbol) = Recycler((x,))
 Recycler(x::AbstractString) = Recycler((x,))
+Recycler(x::PlotUtils.Colors.RGB) = Recycler((x,))
+
+
 
 function Base.getindex(R::Recycler, i::Int)
     q, r = divrem(i, R.n)
@@ -248,6 +256,7 @@ function rgb(r::Int, g::Int, b::Int, α=1.0)
     _RGB(r/255, g/255, b/255, clamp(α,0.0,1.0))
 end
 Recycler(x::_RGB) = Recycler((x,))
+
 function Base.convert(::Type{_RGB}, c::PlotUtils.Colors.RGB)
     (; b,g,r) = c
     _RGB(b,g,r,1.0)
@@ -259,6 +268,12 @@ end
 rgb(c::PlotUtils.Colors.RGB) = convert(_RGB, c)
 rgb(c::PlotUtils.Colors.RGBA) = convert(_RGB, c)
 rgb(c::Symbol, α=1.0) = _RGB(PlotUtils.Colors.color_names[string(c)]..., α)
+rgb(c::Symbol, ::Nothing) = _RGB(PlotUtils.Colors.color_names[string(c)]..., 1.0)
+rgb(c::AbstractString, α=1.0) = startswith(c, r"#|rgb") ? c : rgb(Symbol(c), α)
+rgb(c::AbstractString, ::Nothing) = startswith(c, r"#|rgb") ? c : rgb(Symbol(c), nothing)
+rgb(r::_RGB, α=1.0) = RGB(r.r,r.g,r.b,α)
+rgb(r::_RGB, ::Nothing) = r
+rgb(::Nothing, ::Nothing) = nothing
 
 PlotlyLight.StructTypes.StructType(::Type{_RGB}) = PlotlyLight.StructTypes.StringType()
 function Base.string(c::_RGB)
@@ -284,6 +299,26 @@ function Base.range(start::_RGB, stop::_RGB, length::Integer)
     c2 = PlotUtils.Colors.RGBA(r,g,b,α)
     [rgb(c) for c ∈ range(c1, c2, length)]
 end
+
+"""
+    create a BezierCurve for plotting
+
+From Plots.jl
+"""
+mutable struct BezierCurve{T<:Tuple}
+    control_points::Vector{T}
+end
+
+function (bc::BezierCurve)(t::Real)
+    p = (0.0, 0.0)
+    n = length(bc.control_points) - 1
+    for i in 0:n
+        p = p .+ bc.control_points[i + 1] .* binomial(n, i) .* (1 - t)^(n - i) .* t^i
+    end
+    p
+end
+
+
 
 ## Define Shape type
 ## see shape.jl for methods

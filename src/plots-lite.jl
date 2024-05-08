@@ -457,7 +457,7 @@ function size!(p::Plot, s)
     height = get(s, :height, nothing)
     size!(p; width, height)
 end
-
+size!(p::Plot, s::Tuple{Int64, Int64}) = size!(p; width=first(s), height=last(s))
 
 
 "`xlims!(p, lims)` set `x` limits of plot"
@@ -496,26 +496,66 @@ scroll_zoom!(x::Bool) = scroll_zoom!(current_plot[], x)
 
 ## ---- configuration
 # These gather specific values for lines, marker and text style
+# match Plots stroke
+struct Stroke
+    width
+    color
+    alpha
+    style
+end
+Recycler(x::Stroke) = Recycler((x,))
+function stroke(args...; alpha = nothing)
+    width = 1
+    color = :black
+    style = :solid
+
+    for arg in args
+        T = typeof(arg)
+
+        # if arg in _allStyles
+        if  arg ∈ (:dash, :dashdot, :dot, :solid, :auto)
+            style = arg
+        elseif T <: _RGB
+            color = arg
+        elseif T <: Symbol || T <: AbstractString
+            color = arg
+        elseif 0 < arg < 1
+            alpha = arg
+        elseif isa(arg, Real)
+            width = arg
+        else
+            @warn "Unused stroke arg: $arg ($(typeof(arg)))"
+        end
+    end
+
+    Stroke(width, color, alpha, style)
+end
+
+
 
 # linecolor - color
+# linealpha - float
 # linewidth - integer
 # linestyle: solic, dot, dashdot, ...
 # lineshape: linear, hv, vh, hvh, vhv, spline; or keys of _lineshapes
 function _linestyle!(cfg::Config;
                      lc=nothing, linecolor = lc, # string, symbol, RGB?
+                     linealpha=nothing,
                      lw=nothing, width=lw, linewidth = width, # pixels
                      style=nothing, ls=style, linestyle = ls, # solid, dot, dashdot,
                      lineshape = nothing,
                      kwargs...)
     shape = isnothing(lineshape) ? nothing :
         lineshape ∈ keys(_lineshapes) ? _lineshapes[lineshape] : lineshape
-    _merge!(cfg; color=linecolor, width=linewidth, dash=linestyle,
+    color = rgb(linecolor, linealpha)
+
+    _merge!(cfg; color=color, width=linewidth, dash=linestyle,
             shape)
     kwargs
 end
 
 # magic
-_linestyles = (:dash, :dashdot, :dot, :sold, :auto)
+_linestyles = (:dash, :dashdot, :dot, :solid, :auto)
 _lineshapes = (path=:linear, spline=:spline,
               steppre=:vh, steppost=:hv)
 # [:path :steppre :steppost :sticks :scatter]
@@ -639,10 +679,12 @@ _align(x::Symbol, y::Symbol) = join((string(x), string(y)), " ")
 # for filled shapes
 function _fillstyle!(cfg::Config;
                      fc=nothing, fillcolor = fc, # string, symbol, RGB?
+                     fillalpha =  nothing,
                      fillrange=nothing, fill=fillrange,
                      kwargs...)
-    if !isnothing(fillcolor) && isnothing(fill)
-        fill = :toself
+    if !isnothing(fillcolor)
+        fillcolor = rgb(fillcolor, fillalpha)
+        isnothing(fill) && (fill = :toself)
     end
     _merge!(cfg; fill, fillcolor)
     kwargs
@@ -751,7 +793,12 @@ function _make_magic(;
     linecolor = nothing
     linealpha = nothing
     for a ∈ something(line, tuple())
-        if isa(a, Symbol)
+        T = typeof(a)
+        if T <: Stroke
+            _set(d, :linewidth, a.width)
+            _set(d, :linecolor, rgb(a.color, a.alpha))
+            _set(d, :linestyle, a.style)
+        elseif T <: Symbol
             if a ∈ _linestyles
                 _set(d, :linestyle, a)
             elseif a ∈ keys(_lineshapes)
@@ -759,11 +806,11 @@ function _make_magic(;
             else
                 linecolor = a
             end
-        elseif isa(a, _RGB)
+        elseif T <: _RGB
             linecolor = a
             _set(d, :linecolor, a)
-        elseif isa(a, Number)
-            isa(a, Integer) && _set(d, :linewidth, a)
+        elseif T <:  Number
+            T <: Integer && _set(d, :linewidth, a)
             0 < a < 1 && (linealpha = a)
         end
     end
@@ -808,24 +855,25 @@ function _make_magic(;
     fillalpha = nothing
     fillstyle = nothing
     for a ∈ something(fill, tuple())
-        if isa(a, Symbol)
+        T = typeof(a)
+        if T <: Symbol
             if a ∈ fill_styles
                 fillstyle = a
             else
                 fillcolor = a
             end
-        elseif isa(a, String)
+        elseif T <: AbstractString
             a′ = Symbol(a)
             if a′ ∈ fill_styles
                 _set(d, :fill, a′)
             else
                 fillcolor = a′
             end
-        elseif isa(a, _RGB)
+        elseif T <: _RGB
             fillcolor = a
-        elseif isa(a, Bool)
+        elseif T <: Bool
             a && _set(d, :fill, :toself) # true false
-        elseif isa(a, Real)
+        elseif T <: Real
             if 0 < a < 1
                 fillalpha =a
             elseif iszero(a)
@@ -833,6 +881,10 @@ function _make_magic(;
             elseif isa(a, Integer)
                 @warn "Fill to a non-zero y value is not implemented"
             end
+        elseif T <: Stroke
+            _set(d, :fillwidth, a.width)
+            _set(d, :fillcolor, rgb(a.color, a.alpha))
+            a.style ∈ fill_styles && _set(d, :fillstyle, a.style)
         end
     end
     if isa(fillcolor, Union{String,Symbol}) && !isnothing(fillalpha)
@@ -873,6 +925,7 @@ function _layout_styles!(p;
                          xscale=nothing, yscale=nothing, zscale=nothing,
                          xaxis=nothing, yaxis=nothing, zaxis=nothing,
                          background_color=nothing, background=background_color,bg=background_color, plot_bgcolor=bg,
+                         framestyle=nothing, border=framestyle,
                          legend=nothing,
 
                          kwargs...)
@@ -907,6 +960,7 @@ function _layout_styles!(p;
 
     # attributes
     p.layout.plot_bgcolor = plot_bgcolor
+    p.layout.border = border
 
     # don't consume
     haskey(kwargs, :aspect_ratio) &&

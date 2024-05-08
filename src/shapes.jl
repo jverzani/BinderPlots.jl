@@ -61,10 +61,14 @@ Shape(::Val{:star8}, args...) = Shape(Val(:star), 8)
 
 Scale in x and y direction
 """
-scale(s::Shape, x, y = x) =  scale!(copy(s), x, y)
-function scale!(s::Shape, x, y=x)
-    s.x .*= x
-    s.y .*= y
+scale(s::Shape, x, y = x, c = center(s)) =  scale!(copy(s), x, y, c)
+function scale!(s::Shape, x, y=x,c=center(s))
+    sx, sy = s.x, s.y
+    cx, cy = c
+    for i in eachindex(sx)
+        sx[i] = (sx[i] - cx) * x + cx
+        sy[i] = (sy[i] - cy) * y + cy
+    end
     s
 end
 
