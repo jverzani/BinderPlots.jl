@@ -15,16 +15,15 @@ function blank_canvas(;
                       aspect_ratio=:equal,
                       border=:none, legend=false,
                       kwargs...)
+
     p = plot(; xlims, ylims,
              aspect_ratio,
              border, legend,
              kwargs...)
-    for a ∈ (p.layout.xaxis, p.layout.yaxis)
-        _axisstyle!(a,
-                    showticklabels =false,
-                    showgrid = false,
-                    zeroline = false)
-    end
+
+    xaxis!(p; showticklabels = false, showgrid = false, zeroline = false) #³
+    yaxis!(p; showticklabels = false, showgrid = false, zeroline = false) #³
+
     p
 
 end
