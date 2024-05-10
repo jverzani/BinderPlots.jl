@@ -504,8 +504,7 @@ the `BinderPlots` interface which specifies these colors at the series level. In
 
 ```
 inds = [rand() < 0.2 for i in 1:length(pts)]
-scatter!(pts[inds], marker=(stroke(0), :square, :yellow))
-scatter!(pts[.!inds], marker=(stroke(0), :square, :black))
+scatter!(BinderPlots.Series(pts[inds], pts[.!inds]), marker=(stroke(0), :square, (:yellow,:black)))
 ```
 
 Also, the shape `:square` is used, not `:rect`, as in the original, for this is not a supported shape in `Plotly`.

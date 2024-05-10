@@ -20,7 +20,7 @@ function _join!(xs, delim="")
 end
 
 # helper
-_adjust_matrix(m::Matrix) = collect(eachrow(m))
+_adjust_matrix(m::AbstractMatrix) = collect(eachrow(m))
 _adjust_matrix(x::Any) = x
 
 # from some.jl
@@ -48,7 +48,22 @@ struct XYZ{X,Y,Z}
     n::Integer
 end
 
+"""
+    Series(xs₁, xs₂, …)
 
+Struct to indicate traces in a series.
+Can be used in place of matrix to combine mismatched sizes, e.g.
+
+```
+scatter(BinderPlots.Series(1:3, 1:5), markersize=(20,10))
+```
+
+Not exported.
+"""
+struct Series
+    ss
+    Series(as...) = new(as)
+end
 
 # how many traces does the data represent
 # when there can be more than one
@@ -60,13 +75,15 @@ ntraces(::AbstractVector) = 1
 ntraces(x::AbstractVector{T}) where {T <: Function} = length(x)
 ntraces(::Function) = 1
 ntraces(::Number) = 1
+ntraces(x::Series) = length(x.ss)
 
 # use Tables.
-_eachcol(x::Matrix) = [x[:,i] for i in 1:size(x)[2]]
+_eachcol(x::AbstractMatrix) = [x[:,i] for i in 1:size(x)[2]]
 _eachcol(x::Vector) = (x,)
 _eachcol(x::Vector{T}) where {T <: Function} = x
 _eachcol(x::Tuple) = (x,)
 _eachcol(x::AbstractRange) = (x,)
+_eachcol(x::Series) = x.ss
 _eachcol(::Nothing) = nothing
 _eachcol(x) = (x,)
 
