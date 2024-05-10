@@ -474,12 +474,9 @@ for k in 1:50
     J = windowrange(h, 0.04)
     local pts = vec([(Float64(x + w * i), Float64(y + h * j)) for i in I, j in J])
 
-    local inds = [rand() < 0.2 for i in 1:length(pts)]         #⁵
-    scatter!(pts[inds], marker=(stroke(0), :rect, :yellow))
-    scatter!(pts[.!inds], marker=(stroke(0), :rect, :black))
-
-#    windowcolors = Symbol[rand() < 0.2 ? :yellow : :black for i in 1:length(pts)]
-#    scatter!(pts, marker = (stroke(0), :rect, windowcolors))
+    windowcolors = Symbol[rand() < 0.2 ? :yellow : :black for i in 1:length(pts)]
+	local xs, ys = BinderPlots.unzip(pts)
+	scatter!(xs', ys', marker = (stroke(0), :square, windowcolors)) #⁵
 
 
 end
@@ -502,4 +499,12 @@ To remark on the differences:
 
 4) There is no support for the `seriescolor` argument (with the `c` alias). Rather the fill color is needed to be specified in this line.
 
-5) The `Plots.jl` interface allows individual points in a scatter plot to have colors specified; the `BinderPlots` interface specifies these colors at the series level, so two series are needed to paint the windows black or yellow.
+5) The `Plots.jl` interface allows individual points in a scatter plot to have colors specified, so `scatter!(pts, ...)` works, where the values specified to `marker` are recycled. However, this is not the case with
+the `BinderPlots` interface which specifies these colors at the series level. In the above, taking the adjoint of the `x`- and `y`-values creates an abstract matrix, and then each column is taken as specifying a different series. Alternatively, two series could be used to paint the windows black or yellow. For example:
+
+```
+inds = [rand() < 0.2 for i in 1:length(pts)]
+scatter!(BinderPlots.Series(pts[inds], pts[.!inds]), marker=(stroke(0), :square, (:yellow,:black)))
+```
+
+Also, the shape `:square` is used, not `:rect`, as in the original, for this is not a supported shape in `Plotly`.
