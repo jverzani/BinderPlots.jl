@@ -63,7 +63,7 @@ end
 function plot!(t::Val{:scatter}, p::Plot,
                x::AbstractMatrix{<:Real}, ::Nothing, ::Nothing; kwargs...)
     m, n = size(x)
-    plot!(t, p, axes(m, 1), x, nothing; kwargs...)
+    plot!(t, p, axes(x, 1), x, nothing; kwargs...)
 end
 
 
