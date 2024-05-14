@@ -291,7 +291,7 @@ rgb(c::Symbol, α=1.0) = _RGB(PlotUtils.Colors.color_names[string(c)]..., α)
 rgb(c::Symbol, ::Nothing) = _RGB(PlotUtils.Colors.color_names[string(c)]..., 1.0)
 rgb(c::AbstractString, α=1.0) = startswith(c, r"#|rgb") ? c * string(round(Int, 255*α), base=16) : rgb(Symbol(c), α)
 rgb(c::AbstractString, ::Nothing) = startswith(c, r"#|rgb") ? c : rgb(Symbol(c), nothing)
-rgb(r::_RGB, α=1.0) = RGB(r.r,r.g,r.b,α)
+rgb(r::_RGB, α=1.0) = _RGB(r.r,r.g,r.b,α)
 rgb(r::_RGB, ::Nothing) = r
 rgb(::Nothing, ::Nothing) = nothing
 
