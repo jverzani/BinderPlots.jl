@@ -35,7 +35,8 @@ _allowmissing(x::AbstractArray{T}) where {T} = convert(AbstractArray{Union{T, Mi
 # utils
 _replace_infinite(f::Function) = f
 _replace_infinite(::Nothing) = nothing
-_replace_infinite(y) = [isfinite(yᵢ) ? yᵢ : nothing for yᵢ ∈ y]
+_replace_infinite(::Missing) = nothing
+_replace_infinite(y) = [!ismissing(yᵢ) && isfinite(yᵢ) ? yᵢ : nothing for yᵢ ∈ y]
 
 # pick out symbol
 _valtype(::Val{T}) where {T} = T
@@ -76,6 +77,7 @@ ntraces(x::AbstractVector{T}) where {T <: Function} = length(x)
 ntraces(::Function) = 1
 ntraces(::Number) = 1
 ntraces(x::Series) = length(x.ss)
+ntraces(x::Vector{Vector{T}}) where {T <: Real} = length(x)
 
 # use Tables.
 _eachcol(x::AbstractMatrix) = [x[:,i] for i in 1:size(x)[2]]
@@ -85,6 +87,7 @@ _eachcol(x::Tuple) = (x,)
 _eachcol(x::AbstractRange) = (x,)
 _eachcol(x::Series) = x.ss
 _eachcol(::Nothing) = nothing
+_eachcol(x::Vector{Vector{T}}) where {T<:Real} = [xᵢ for xᵢ ∈ x]
 _eachcol(x) = (x,)
 
 # make a reccyler for x,y,z values
@@ -286,9 +289,9 @@ rgb(c::PlotUtils.Colors.RGB) = convert(_RGB, c)
 rgb(c::PlotUtils.Colors.RGBA) = convert(_RGB, c)
 rgb(c::Symbol, α=1.0) = _RGB(PlotUtils.Colors.color_names[string(c)]..., α)
 rgb(c::Symbol, ::Nothing) = _RGB(PlotUtils.Colors.color_names[string(c)]..., 1.0)
-rgb(c::AbstractString, α=1.0) = startswith(c, r"#|rgb") ? c : rgb(Symbol(c), α)
+rgb(c::AbstractString, α=1.0) = startswith(c, r"#|rgb") ? c * string(round(Int, 255*α), base=16) : rgb(Symbol(c), α)
 rgb(c::AbstractString, ::Nothing) = startswith(c, r"#|rgb") ? c : rgb(Symbol(c), nothing)
-rgb(r::_RGB, α=1.0) = RGB(r.r,r.g,r.b,α)
+rgb(r::_RGB, α=1.0) = _RGB(r.r,r.g,r.b,α)
 rgb(r::_RGB, ::Nothing) = r
 rgb(::Nothing, ::Nothing) = nothing
 

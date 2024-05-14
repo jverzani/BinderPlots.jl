@@ -513,7 +513,7 @@ function stroke(args...; alpha = nothing)
         T = typeof(arg)
 
         # if arg in _allStyles
-        if  arg ∈ (:dash, :dashdot, :dot, :solid, :auto)
+        if  arg ∈ (:dash, :dashdot, :dot, :solid, :auto, :dashdotdot)
             style = arg
         elseif T <: _RGB
             color = arg
@@ -538,24 +538,36 @@ end
 # linewidth - integer
 # linestyle: solic, dot, dashdot, ...
 # lineshape: linear, hv, vh, hvh, vhv, spline; or keys of _lineshapes
-function _linestyle!(cfg::Config;
+function _linestyle!(c::Config;
                      lc=nothing, linecolor = lc, # string, symbol, RGB?
                      linealpha=nothing,
                      lw=nothing, width=lw, linewidth = width, # pixels
                      style=nothing, ls=style, linestyle = ls, # solid, dot, dashdot,
                      lineshape = nothing,
                      kwargs...)
+
+    cfg = c.line # pass in config object, not line part
+
     shape = isnothing(lineshape) ? nothing :
         lineshape ∈ keys(_lineshapes) ? _lineshapes[lineshape] : lineshape
-    color = rgb(linecolor, linealpha)
 
-    _merge!(cfg; color=color, width=linewidth, dash=linestyle,
-            shape)
+    color = linecolor
+
+    if !isnothing(linealpha)
+        if !isnothing(color)
+            color = rgb(linecolor, linealpha)
+        else
+            _merge!(c; opacity=linealpha) # opacity is not line, but c
+        end
+    end
+
+    _merge!(cfg; color=color, width=linewidth, dash=linestyle, shape)
+
     kwargs
 end
 
 # magic
-_linestyles = (:dash, :dashdot, :dot, :solid, :auto)
+_linestyles = (:dash, :dashdot, :dashdotdot, :dot, :solid, :auto)
 _lineshapes = (path=:linear, spline=:spline,
               steppre=:vh, steppost=:hv)
 # [:path :steppre :steppost :sticks :scatter]
@@ -566,9 +578,18 @@ function _markerstyle!(cfg::Config; # .marker
                        shape = nothing, markershape = shape,
                        ms=nothing, markersize  = ms,
                        mc=nothing, markercolor = mc,
+                       malpha=nothing, markeralpha = malpha,
                        # no makr opacity; pass `rgba(r,g,b,α)` to color
                        #ma=nothing, markeralpha=ma,opacity=markeralpha,
                        kwargs...)
+    if !isnothing(markeralpha)
+        if !isnothing(markercolor)
+            markercolor = rgb(markercolor, markeralpha)
+        else
+            _merge!(cfg; opacity=markeralpha)
+        end
+    end
+
     _merge!(cfg;
             symbol=markershape,
             size=markersize,
@@ -578,7 +599,8 @@ end
 
 # magic arguments
 # use :nm_attribute not nm-attribute
-_marker_shapes = (:circle, :circle_open, :circle_dot, :circle_open_dot, :square, :square_open, :square_dot, :square_open_dot, :diamond, :diamond_open, :diamond_dot, :diamond_open_dot, :cross, :cross_open, :cross_dot, :cross_open_dot, :x, :x_open, :x_dot, :x_open_dot, :triangle_up, :triangle_up_open, :triangle_up_dot, :triangle_up_open_dot, :triangle_down, :triangle_down_open, :triangle_down_dot, :triangle_down_open_dot, :triangle_left, :triangle_left_open, :triangle_left_dot, :triangle_left_open_dot, :triangle_right, :triangle_right_open, :triangle_right_dot, :triangle_right_open_dot, :triangle_ne, :triangle_ne_open, :triangle_ne_dot, :triangle_ne_open_dot, :triangle_se, :triangle_se_open, :triangle_se_dot, :triangle_se_open_dot, :triangle_sw, :triangle_sw_open, :triangle_sw_dot, :triangle_sw_open_dot, :triangle_nw, :triangle_nw_open, :triangle_nw_dot, :triangle_nw_open_dot, :pentagon, :pentagon_open, :pentagon_dot, :pentagon_open_dot, :hexagon, :hexagon_open, :hexagon_dot, :hexagon_open_dot, :hexagon2, :hexagon2_open, :hexagon2_dot, :hexagon2_open_dot, :octagon, :octagon_open, :octagon_dot, :octagon_open_dot, :star, :star_open, :star_dot, :star_open_dot, :hexagram, :hexagram_open, :hexagram_dot, :hexagram_open_dot, :star_triangle_up, :star_triangle_up_open, :star_triangle_up_dot, :star_triangle_up_open_dot, :star_triangle_down, :star_triangle_down_open, :star_triangle_down_dot, :star_triangle_down_open_dot, :star_square, :star_square_open, :star_square_dot, :star_square_open_dot, :star_diamond, :star_diamond_open, :star_diamond_dot, :star_diamond_open_dot, :diamond_tall, :diamond_tall_open, :diamond_tall_dot, :diamond_tall_open_dot, :diamond_wide, :diamond_wide_open, :diamond_wide_dot, :diamond_wide_open_dot, :hourglass, :hourglass_open, :bowtie, :bowtie_open, :circle_cross, :circle_cross_open, :circle_x, :circle_x_open, :square_cross, :square_cross_open, :square_x, :square_x_open, :diamond_cross, :diamond_cross_open, :diamond_x, :diamond_x_open, :cross_thin, :cross_thin_open, :x_thin, :x_thin_open, :asterisk, :asterisk_open, :hash, :hash_open, :hash_dot, :hash_open_dot, :y_up, :y_up_open, :y_down, :y_down_open, :y_left, :y_left_open, :y_right, :y_right_open, :line_ew, :line_ew_open, :line_ns, :line_ns_open, :line_ne, :line_ne_open, :line_nw, :line_nw_open, :arrow_up, :arrow_up_open, :arrow_down, :arrow_down_open, :arrow_left, :arrow_left_open, :arrow_right, :arrow_right_open, :arrow_bar_up, :arrow_bar_up_open, :arrow_bar_down, :arrow_bar_down_open, :arrow_bar_left, :arrow_bar_left_open, :arrow_bar_right, :arrow_bar_right_open, :arrow, :arrow_open, :arrow_wide, :arrow_wide_open)
+_marker_shapes = (:circle, :circle_open, :circle_dot, :circle_open_dot, :square, :square_open, :square_dot, :square_open_dot, :diamond, :diamond_open, :diamond_dot, :diamond_open_dot, :cross, :cross_open, :cross_dot, :cross_open_dot, :x, :x_open, :x_dot, :x_open_dot, :triangle_up, :triangle_up_open, :triangle_up_dot, :triangle_up_open_dot, :triangle_down, :triangle_down_open, :triangle_down_dot, :triangle_down_open_dot, :triangle_left, :triangle_left_open, :triangle_left_dot, :triangle_left_open_dot, :triangle_right, :triangle_right_open, :triangle_right_dot, :triangle_right_open_dot, :triangle_ne, :triangle_ne_open, :triangle_ne_dot, :triangle_ne_open_dot, :triangle_se, :triangle_se_open, :triangle_se_dot, :triangle_se_open_dot, :triangle_sw, :triangle_sw_open, :triangle_sw_dot, :triangle_sw_open_dot, :triangle_nw, :triangle_nw_open, :triangle_nw_dot, :triangle_nw_open_dot, :pentagon, :pentagon_open, :pentagon_dot, :pentagon_open_dot, :hexagon, :hexagon_open, :hexagon_dot, :hexagon_open_dot, :hexagon2, :hexagon2_open, :hexagon2_dot, :hexagon2_open_dot, :octagon, :octagon_open, :octagon_dot, :octagon_open_dot, :star, :star_open, :star_dot, :star_open_dot, :hexagram, :hexagram_open, :hexagram_dot, :hexagram_open_dot, :star_triangle_up, :star_triangle_up_open, :star_triangle_up_dot, :star_triangle_up_open_dot, :star_triangle_down, :star_triangle_down_open, :star_triangle_down_dot, :star_triangle_down_open_dot, :star_square, :star_square_open, :star_square_dot, :star_square_open_dot, :star_diamond, :star_diamond_open, :star_diamond_dot, :star_diamond_open_dot, :diamond_tall, :diamond_tall_open, :diamond_tall_dot, :diamond_tall_open_dot, :diamond_wide, :diamond_wide_open, :diamond_wide_dot, :diamond_wide_open_dot, :hourglass, :hourglass_open, :bowtie, :bowtie_open, :circle_cross, :circle_cross_open, :circle_x, :circle_x_open, :square_cross, :square_cross_open, :square_x, :square_x_open, :diamond_cross, :diamond_cross_open, :diamond_x, :diamond_x_open, :cross_thin, :cross_thin_open, :x_thin, :x_thin_open, :asterisk, :asterisk_open, :hash, :hash_open, :hash_dot, :hash_open_dot, :y_up, :y_up_open, :y_down, :y_down_open, :y_left, :y_left_open, :y_right, :y_right_open, :line_ew, :line_ew_open, :line_ns, :line_ns_open, :line_ne, :line_ne_open, :line_nw, :line_nw_open, :arrow_up, :arrow_up_open, :arrow_down, :arrow_down_open, :arrow_left, :arrow_left_open, :arrow_right, :arrow_right_open, :arrow_bar_up, :arrow_bar_up_open, :arrow_bar_down, :arrow_bar_down_open, :arrow_bar_left, :arrow_bar_left_open, :arrow_bar_right, :arrow_bar_right_open, :arrow, :arrow_open, :arrow_wide, :arrow_wide_open,
+                )
 ## ---
 function _textstyle!(cfg::Config;
                      family    = nothing,
@@ -814,8 +836,12 @@ function _make_magic(;
             0 < a < 1 && (linealpha = a)
         end
     end
-    if isa(linecolor, Union{String,Symbol}) && !isnothing(linealpha)
-        linecolor = _RGB(PlotUtils.Colors.color_names[string(linecolor)]..., linealpha)
+    if !isnothing(linealpha)
+        if isa(linecolor, Union{String,Symbol})
+            linecolor = rgb(linecolor, linealpha)
+        else
+            _set(d, :opacity, linealpha)
+        end
     end
     _set(d, :linecolor, linecolor)
 
@@ -841,8 +867,12 @@ function _make_magic(;
             0 < a < 1 && (markeralpha = a)
         end
     end
-    if isa(markercolor, Union{String,Symbol}) && !isnothing(markeralpha)
-        markercolor = _RGB(PlotUtils.Colors.color_names[string(markercolor)]..., markeralpha)
+    if  !isnothing(markeralpha)
+        if isa(markercolor, Union{String,Symbol})
+            markercolor = rgb(markercolor, markeralpha)
+        else
+            _set(d, :opacity, markeralpha)
+        end
     end
     _set(d, :markercolor, markercolor)
 
@@ -867,7 +897,7 @@ function _make_magic(;
             if a′ ∈ fill_styles
                 _set(d, :fill, a′)
             else
-                fillcolor = a′
+                fillcolor = a
             end
         elseif T <: _RGB
             fillcolor = a
@@ -882,13 +912,14 @@ function _make_magic(;
                 @warn "Fill to a non-zero y value is not implemented"
             end
         elseif T <: Stroke
-            _set(d, :fillwidth, a.width)
-            _set(d, :fillcolor, rgb(a.color, a.alpha))
-            a.style ∈ fill_styles && _set(d, :fillstyle, a.style)
+            # adjust line properties
+            _set(d, :linewidth, a.width)
+            !isnothing(a.color) && _set(d,:linecolor, rgb(a.color, a.alpha))
+            a.style ∈ _linestyles && _set(d, :linestyle, a.style)
         end
     end
     if isa(fillcolor, Union{String,Symbol}) && !isnothing(fillalpha)
-        fillcolor = _RGB(PlotUtils.Colors.color_names[string(fillcolor)]..., fillalpha)
+        fillcolor = rgb(fillcolor, fillalpha)
     end
     _set(d, :fillcolor, fillcolor)
     !isnothing(fillcolor) && _set(d, :fill, something(fillstyle, :toself))
@@ -900,6 +931,22 @@ function _make_magic(;
 
 end
 
+function _series_styles(cfg;
+                        c=nothing, color=c, seriescolor=color,
+                        alpha = nothing, opacity=alpha, seriesalpha=opacity,
+                        kwargs...)
+    kws = kwargs
+    if !isnothing(seriescolor)
+        kws = (kws..., linecolor=seriescolor,
+               markercolor=seriescolor) #not fillcolor
+    end
+    if !isnothing(seriesalpha)
+        kws = (kws..., linealpha=seriesalpha,
+               markeralpha=seriesalpha,
+               fillalpha = seriesalpha)
+    end
+    kws
+end
 
 function _trace_styles!(c; label=nothing,
                         opacity = nothing,
@@ -910,7 +957,7 @@ function _trace_styles!(c; label=nothing,
         c.showlegend=false
     end
     c.opacity = opacity
-    kws = _linestyle!(c.line; kwargs...)
+    kws = _linestyle!(c; kwargs...)
     kws = _fillstyle!(c; kws...)
     kws = _markerstyle!(c.marker; kws...)
     kws
@@ -959,7 +1006,9 @@ function _layout_styles!(p;
     legend!(p, legend)
 
     # attributes
-    p.layout.plot_bgcolor = plot_bgcolor
+    if !isnothing(plot_bgcolor)
+        p.layout.plot_bgcolor = plot_bgcolor
+    end
     p.layout.border = border
 
     # don't consume
@@ -974,6 +1023,9 @@ struct MagicRecycler{T}
     n::Int
 end
 MagicRecycler(o) = MagicRecycler(map(Recycler, o), 0)
+MagicRecycler(o::Real) = MagicRecycler((o,), 0) # annoying special case
+MagicRecycler(o::Symbol) = MagicRecycler((o,), 0) # annoying special case
+MagicRecycler(o::String) = MagicRecycler((o,), 0) # annoying special case
 
 function Base.getindex(R::MagicRecycler, i::Int)
     getindex.(R.t, i)
