@@ -55,7 +55,7 @@ end
 
 # plot vector by adding x
 function plot!(t::Val{:scatter}, m::Val{M}, p::Plot, x::AbstractVector{<:Real}, y::Nothing, z::Nothing; kwargs...) where {M}
-    plot!(t, m, p, eachindex(x),x; kwargs...)
+    plot!(t, m, p, axes(x,1),x; kwargs...)
 end
 
 
@@ -155,7 +155,7 @@ end
 
 # XXX
 function plot!(t::Val{:scatter}, m::Val{M}, p::Plot, x::AbstractVector{T}, y::Nothing, z::Nothing; kwargs...) where {M,T<:Union{Missing,Real}}
-    plot!(t, m, p, eachindex(x), x; kwargs...)
+    plot!(t, m, p, axes(x,1), x; kwargs...)
 end
 
 function plot!(t::Val{:scatter}, m::Val{M}, p::Plot, x::AbstractVector{T}, y::Nothing, z::Nothing; kwargs...) where {M, T <: Complex}
