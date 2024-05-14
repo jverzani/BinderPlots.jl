@@ -13,7 +13,7 @@ The `PlotlyLight` interface is essentially the `JavaScript` interface for `Plotl
 
 * In Plots.jl, every column is a series, a set of related points which form lines, surfaces, or other plotting primitives.
 
-`Plotly` refers to series as traces. This style is only partially supported in `BinderPlots`. Using multiple layers is suggested, but matrices can be used to specify multiple series.
+`Plotly` refers to series as traces. This style is mostly supported in `BinderPlots`. Using multiple layers is suggested, but matrices can be used to specify multiple series.
 
 * In `Plots.jl` for keyword arguments many aliases are used, allowing for shorter calling patterns for experienced users.
 
@@ -29,7 +29,7 @@ Many, but not all, of the aliases are available. (The shorter ones are not, as t
 This is only partially the case with `BinderPlots`, as not all plot types have a shorthand defined.
 
 
-Altogether, most basic graphics created through `Plots` can be produced with `BinderPlots`, but the showcase of [examples](https://github.com/JuliaPlots/Plots.jl/blob/master/src/examples.jl), which utilize many conveniences, and mostly not runnable as is.
+Altogether, most basic graphics created through `Plots` can be produced with `BinderPlots`, but the showcase of [examples](https://github.com/JuliaPlots/Plots.jl/blob/master/src/examples.jl), which utilize many conveniences, often have little issues preventing them from being fully runnable.
 
 
 ## Supported plotting functions
@@ -65,19 +65,16 @@ The interval may be specified using two numbers or with a container, in which ca
 
 For line plots, as created by this usage, the supported key words include
 
-* `linecolor` to specify the color of the line
+* `linecolor` to specify the color of the line; `linealpha` for the transparency
 * `linewidth` to adjust width in pixels
 * `linestyle` to adjust how line is drawn
-* `legend` to indicate if no legend should be given. Otherwise, `label` can be used to name the entry for given trace.
+*  `label` can be used to name the entry for given trace, unless `legend=false` has been specified
 
 !!! note
     All plotting functions in `BinderPlots` return an instance of `PlotlyLight.Plot`. These objects can be directly modified and re-displayed. The `show` method creates the graphic for viewing. The `current` function returns the last newly created plot.
 
-!!! note "Twice may be a charm"
-    For the first plot, the plotting command may need to be re-run if the underlying JavasScript libraries are loaded out of order. This may be the case with the `Jupyter` environment.
 
-
-### `plot(xs, ys, [zs])` and `plot(pts)`
+### `plot(xs, ys, [zs])` or `plot(pts)`
 
 The points to plot may be specified directly.
 
@@ -99,7 +96,7 @@ delete!(current().layout, :height) # hide
 to_documenter(current())           # hide
 ```
 
-At times it is more convenient to generate pairs of points. In the above example, `g` returns ``(x,y)`` pairs. Containers of points can be plotted directly, as just shown.
+At times it is more convenient to generate pairs of points. In the above example, `g` returns ``(x,y)`` pairs. Tuples and other non-vector containers of points can be plotted directly, as just shown.
 
 The `plot(xs, ys)` function simply connects the points
 ``(x_1,y_1), (x_2,y_2), \dots``  sequentially with lines in a dot-to-dot manner (the `lineshape` argument can modify this). If values in `y` are non finite, then a break in the dot-to-dot graph is made.
@@ -107,16 +104,19 @@ The `plot(xs, ys)` function simply connects the points
 Use `plot(xs, ys, zs)` for line plots in 3 dimensions, which is illustrated in a different section.
 
 
-*If* one or more `x` or `y` (or `z`) is a matrix, then each *column* will be treated as specifying a trace. In this case, most keyword arguments will be cycled over (except for the magic ones like `line`, `markers`, and `fill`). For example:
+*If* one or more `x` or `y` (or `z`) is a matrix, then each *column* will be treated as specifying a trace. In this case, most keyword arguments will be cycled over including the magic arguments. For example:
 
 ```@example lite
 m, n = 10, 3
 x = 1:m
 y = rand(m, n)
 plot(x, y; label=("one","two","three"), linecolor=(:red, :green, :blue))
+
+to_documenter(current())           # hide
 ```
 
-
+!!! note
+    It is a bit subtle but a vector of vectors is treated as holding multiple series; whereas a vector of tuples (or other containers) is treated as a collection of points.
 
 ### `plot!`
 
@@ -146,10 +146,10 @@ The `Plots` keyword `line` arguments are recycled. For more control, using `plot
 
 Two dimensional parametric plots show the trace of ``(f(t), g(t))`` for ``t`` in ``[a,b]``. These are easily created by `plot(x,y)` where the `x` and `y` values are produced by broadcasting, say, such as `f.(ts)` where `ts = range(a,b,n)`.
 
-!!! note "Not supported"
+!!! note "Not encouraged"
     The `Plots.jl` convenience signature is `plot(f::Function, g::Function, a, b)`. This is supported but with a warning indicating it is best to pass a tuple of functions, as in `plot((f,g), a, b)`.
 
-### `plot(::Array{<:Plot,N})`
+### `plot(::Array{<:Plot,N})` or `plot(::Plot...)`
 
 Arrange an array of plot objects into a regular layout for display.
 
@@ -169,7 +169,7 @@ p4 = plot(animals, [10,20,30]; seriestype=:bar, label="Zoo 1")
 plot!(p4, animals, [5,6,8];    seriestype=:bar, label="Zoo 2")
 p4.layout.barmode="group";
 
-plot([p1 p2; p3 p4])   # lost labels are a bug
+plot([p1 p2; p3 p4])   # lost labels are a bug; only shows 1 plot in docs
 
 to_documenter(current())           # hide
 ```
@@ -191,9 +191,9 @@ The following `Plots.jl` marker attributes are supported:
 
 * `markershape` to set the shape
 * `markersize` to set the marker size
-* `markercolor` to adjust the color
+* `markercolor` to adjust the color; `markeralpha` for its transparency level
 
-A specification like `marker=(:diamond, 20, :blue)` will set the 3 attributes above with matching by type.
+A specification like `marker=(:diamond, 20, :blue, 0.75)` will set the four attributes above with matching by type. (The set of marker shapes is extensive, but this package does not allow the aliases used by `Plots.jl`. Eg, `:d` for `:diamond` or `:hex` for `:hexagon`.)
 
 
 ### Text and arrows
@@ -239,20 +239,24 @@ The following `Plots.jl` fill attributes are supported:
 
 * `fillrange` one of `:none`, `:tozerox`, `:tonextx`, `:tozeroy` (or `0`), `:tonexty`, `:toself`, `:tonext`. The default for `Shape` instances is `:toself`.
 
+!!! note
+    Unlike `Plots.jl` `Shape` instances can not be used directly as marker shapes.
+
 Other plotting commands that create 2d-regions are:
 
 * `rect!(x0, x1, y0, y1)` draws a rectangle between `(x0,y0)` and `(x1,y1)`.
-* `hspan!(ys,YS; xmin=0.0, xmax=1.0)` draws horizontal rectangle(s) with bottom and top vertices specified by `ys` and `YS`.
-* `vspan!(xs,XS; ymin=0.0, ymax=1.0)` draws vertical rectangle(s) with left and right vertices specified by `xs` and `XS`.
+* `hspan!(ys, YS; xmin=0.0, xmax=1.0)` draws horizontal rectangle(s) with bottom and top vertices specified by `ys` and `YS`. (A different calling style than `Plots.jl`.)
+* `vspan!(xs, XS; ymin=0.0, ymax=1.0)` draws vertical rectangle(s) with left and right vertices specified by `xs` and `XS`.
 * `circle!(x0, x1, y0, y1)` draws a "circular" shape in the rectangle given by `(x0, y0)` and `(x1, y1)`.
-* `poly!(points; kwargs...)` where points is a container of ``(x,y)`` or ``(x,y,z)`` coordinates.
+* `poly!(points; kwargs...)` where points is a container of ``(x,y)`` or ``(x,y,z)`` coordinates. Alternate to `Shape`.
 * `band!(lower, upper, args...; kwargs...)` draws a ribbon or band between `lower` and `upper`. These are either containers of `(x,y)` points or functions, in which case `args...` is read as `a,b,n=251` to specify a range of values to plot over. The function can be scalar valued or parameterizations of a space curve in ``2`` or ``3`` dimensions. The `ribbon` argument of `Plots` is not supported.
 
+There are just mutating versions of the above.
 
-In addition, there are a few simple non-polygonal shapes, including lines:
+In addition, there are a few, simple, non-polygonal shapes, including lines:
 
-* `hline!(y; xmin=0,xmax=1)` draws a horizontal line at elevation `y` across the computed axis, or adjusted via `xmin` and `xmax`.  The `extrema` function computes the axis sizes. If `y` is a container, multiple lines are drawn.
-* `vline(x)`  draws a vertical line at  `x` across the computed axis, or adjusted via `ymin` and `ymax`. The `extrema` function computes the axis sizes. If `x` is a container, multiple lines are drawn.
+* `hline!(y; xmin=0.0, xmax=1.0)` draws a horizontal line at elevation `y` across the computed axis, or adjusted via `xmin` and `xmax`.  The `extrema` function computes the axis sizes. If `y` is a container, multiple lines are drawn.
+* `vline(x; ymin=0.0, ymax=1.0)`  draws a vertical line at  `x` across the computed axis, or adjusted via `ymin` and `ymax`. The `extrema` function computes the axis sizes. If `x` is a container, multiple lines are drawn.
 * `abline!(intercept, slope)` for drawing lines `a + bx` in the current frame.
 
 (There are also `Shape(:hline)` and `Shape(:vline)` that can be used, though typically would require some translation and scaling.)
@@ -273,8 +277,8 @@ quiver!([2,4.3,6],[10,50,10], ["sparse","concentrated","sparse"],
 
 # add rectangles to emphasize plot regions
 y0, y1 = extrema(current()).y  # get extent in `y` direction
-rect!(0, 2.5, y0, y1, fillcolor="#d3d3d3", opacity=0.2)
-rect!(2.5, 6, y0, y1, linecolor="black", fillcolor="orange", opacity=0.2)
+rect!(0, 2.5, y0, y1, fillcolor="#d3d3d3", fillalpha=0.2)
+rect!(2.5, 6, y0, y1, linecolor="black", fill=("orange", 0.2))
 x1 = last(x)
 rect!(6, x1, y0, y1, fillcolor=rgb(150,150,150), opacity=0.2)
 
@@ -331,7 +335,7 @@ Some keywords chosen to mirror `Plots.jl` are:
 |`up`				| new `3`d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
 |`eye`				| new `3`d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
 
-As seen in the example there are *many* ways to specify a color. These can be by name (as a string); by name (as a symbol), using HEX colors (as strings), using `rgb`. (The `rgb` function, unlike the standard `Colors.RGB`, uses values in `0` to `255` to specify the values and also can take a fourth argument for an alpha value, which is useful for filling with opacity.)
+As seen in the example there are *many* ways to specify a color. These can be by name (as a symbol or as a string),  using HEX colors (as strings), using `rgb`. (The `rgb` function, unlike the standard `Colors.RGB`, uses values in `0` to `255` to specify the values and also can take a fourth argument for an alpha value, which is useful for filling with opacity.)
 
 Some exported names are used to adjust a plot after construction:
 
@@ -349,26 +353,24 @@ The `Plots.jl` design leverages data types to "magically" fill in keyword argume
 
 #### Series arguments
 
-The special keyword arguments `line`, `marker`, and `fill` are iterated over to fill in keyword arguments. For example, passing `line=(5, (:red,:blue),, 0.25, :dash)` will:
-
-Draw the line for any odd number series with `linewidth=5`; color `rgb(:red, 0.25)`; and line style `:dash`. Even numbered series (when present) will have color `rgb(:blue, 0.25)` and the modified line width and style, as the values are recycled when there are multiple series specified.
+The special keyword arguments `line`, `marker`, and `fill` are iterated over to fill in keyword arguments. For example, passing `line=(5, (:red, :blue), 0.25, :dash)` will: Draw the line for any odd number series with `linewidth=5`; color `rgb(:red, 0.25)`; and line style `:dash`. Even numbered series (when present) will have color `rgb(:blue, 0.25)` and the modified line width and style, as the values are recycled when there are multiple series specified.
 
 
 The container passed to `line` has the following mappings:
 
-* symbols and strings are matched against the linestyles, then the lineshapes. When there is no match, they are assumed to be colors.
+* symbols and strings are matched against the linestyles, then the lineshapes; if there is no match, they are assumed to specify a color
 * `rgb` values are passed to the `linecolor` attributed
 * a number which is an integer specifies the line width; a number in `(0,1)` is taken as a transparency argument and passed to `linealpha`.
 
 
 The container passed to `marker` has the following mappings:
 
-* symbols are matched against known marker shapes; if there is no match then the symbol is assumed to be a color
+* symbols are matched against known marker shapes; if there is no match then the symbol is assumed to specify a color
 * size, color, and transparency are as for `line`
 
 The container passed to `fill` has the following mappings:
 
-* symbols are matched against fill styles; if there is no match it is assumed to be `fillcolor`.
+* symbols are matched against fill styles; if there is no match the the symbol is assumed to specify a color
 * a `true` indicates the fill style should be `toself`
 * a number in `(0,1)` indicates a transparency level
 * a `0` sets fill style = `:tozeroy`. (Other integers are not available, as in `Plots.jl`)
@@ -382,20 +384,20 @@ The `font` function. The `font` function (which can be called directly or indire
 * non integers (e.g. `pi/4`) indicate rotation
 * symbols are checked for alignment (e.g., `:top`, `:bottom`, etc.); if no match, they are assumed to be a color specification.
 
-The `[xyz]axis` arguments have:
-
-* `Font` values apply to the tick fonts
-* Symbols are checked for scale indicators `(:log, :linear, :log2m :log10, :flip, :invert, :inverted)`
-* tuples are assumed to indicate a range if length 2, otherwise a collection of tick placements.
-* Boolean values indicate if the grid should be shown for that axis
-* strings and `Text` values are applied to the axis label.
-
 The `legend` argument can be a boolean or a container. When a container the values are magically transformed with:
 
 * tuples indicate the placement position
 * fonts indicate the font in the legend
 * Boolean values indicate whether to show or hide the legend
 * symbols are checked for correspondence with a legend position; if the symbol is `:reverse`, otherwise the symbol is assumed to be a color specification.
+
+The `[xyz]axis!` function arguments have:
+
+* `Font` values apply to the tick fonts
+* Symbols are checked for scale indicators `(:log, :linear, :log2m :log10, :flip, :invert, :inverted)`
+* tuples are assumed to indicate a range if length 2, otherwise a collection of tick placements.
+* Boolean values indicate if the grid should be shown for that axis
+* strings and `Text` values are applied to the axis label.
 
 
 ## Example
@@ -475,8 +477,8 @@ for k in 1:50
     local pts = vec([(Float64(x + w * i), Float64(y + h * j)) for i in I, j in J])
 
     windowcolors = Symbol[rand() < 0.2 ? :yellow : :black for i in 1:length(pts)]
-	local xs, ys = BinderPlots.unzip(pts)
-	scatter!(xs', ys', marker = (stroke(0), :square, windowcolors)) #⁵
+    local xs, ys = BinderPlots.unzip(pts)
+    scatter!(xs', ys', marker = (stroke(0), :square, windowcolors)) #⁵
 
 
 end
@@ -508,3 +510,97 @@ scatter!(BinderPlots.Series(pts[inds], pts[.!inds]), marker=(stroke(0), :square,
 ```
 
 Also, the shape `:square` is used, not `:rect`, as in the original, for this is not a supported shape in `Plotly`.
+
+## Currently unsupported
+
+The last example highlighted a few differences between `Plots.jl` and less featureful `BinderPlots.jl`. In addition to a less relaxed method for data specification, a few other important differences are summarized in the following (with order given by failing examples from the `examples.jl` file):
+
+* Some markers are not supported, and if passed as a magic argument will be identified as a color (e.g., `:hex`,`:d`, `:rect`, ...)
+
+* Several shorthands are not defined (e.g. `histogram`, `histogram2d`, `bar`, `OHLC`, `pie`, `boxplot`, `violin`, `spy`, `portfoliocomposition`, `areaplot`, `curves`)
+
+The `seriestype` might be defined. If not, defining a method for `SeriesType`, like `SeriesType(::Val{:histogram}) = (:histogram, :histogram)` where the return lists a `type` and a `mode` value for `plotly`, may work.
+
+* The `@layout` macro is not supported
+
+The only grid layout is to put the plots into an array, one plot per cell. For side-by-side plots, `plot(p1, p2, ...)` is supported.
+
+* Color palettes are not supported, e.g the `palette` argument
+
+A PR would be welcome.
+
+* Shapes can not be used as custom  markers
+
+`Plots.jl` allows custom shapes as markers. This is not supported, though can be mimicked, as in the following:
+
+```@example lite
+s = Shape(:star6)
+BinderPlots.scale!(s, 1/20) # shape is roughly unit circle size
+xs, ys = rand(50), rand(50)
+
+BinderPlots.blank_canvas(xlims=(0,1), ylims=(0,1),
+    aspect_ratio=:equal)
+plot!([BinderPlots.translate(s, x, y) for (x,y) in zip(xs,ys)],
+             fill=(:yellow, clamp.(rand(50), 0.5, 1), BinderPlots.stroke(:black)),
+			 bg=:black)
+
+
+to_documenter(current())           # hide
+```
+
+* There is no `@df` macro, no `group` argument
+
+* The `projection` keyword is not supported for polar maps
+
+* `PlotsMeasures` are not supported
+
+* Animations are not supported
+
+* magic grid arguments are not supported
+
+* The `ribbon` argument is not supported
+
+The `band` function may be a substitute
+
+* The `lens` feature is not supported
+
+* The `default` function is not supported
+
+* linked axes are not supported
+
+* `Mesh3d` support is lacking
+
+* `seriestype` is slightly different
+
+In `Plots.jl` it can modify how a line is drawn, using `linestyle` for that instead.
+
+* guides are not supported
+
+* flipping of axes is note supported
+
+* `hspan!` and `vspan!` have different calling styles; there are no `hspan` or `vspan` methods
+
+* There are no annotations at discrete locations, only at points
+
+* `proj_type` is not supported; `camera` is idiosyncratic
+
+* Bezier curves are a bit more cumbersome than calling `curves`
+
+The `curves` function might be replicated by:
+
+```@example lite
+function curves(x, y; kwargs...)
+   BC = BinderPlots.BezierCurve(tuple.(x,y))
+   plot(t -> BC(t), 0, 1; kwargs...)
+   scatter!(BC.control_points, marker=(12, 0.75))
+end
+curves(1:4, [1,1,2,4]; title="Bezier Curve")
+
+to_documenter(current())           # hide
+```
+
+* There is no hatching for fill style
+
+* Shared axes (`twinx`) are not supported
+
+* legend positioning is different

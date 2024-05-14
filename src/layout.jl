@@ -8,6 +8,7 @@ function plot(ps::Array{<:Plot, N}; kwargs...) where {N}
     grid_layout(ps; kwargs...)
 end
 
+plot(p::Plot, q::Plot, ps::Plot...; kwargs...) =  plot(hcat(p, q, ps...); kwargs...)
 
 """
     grid_layout(ps::Array{<:Plot})

@@ -17,6 +17,7 @@
 # scatter type
 # this step recycles arguments and x,y,z values
 SeriesType(::Val{:lines}) =  (:scatter, :lines)
+SeriesType(::Val{:path}) =  (:scatter, :lines) # is this correct?
 SeriesType(::Val{:sticks}) =  (:scatter, :sticks)
 SeriesType(::Val{:path3d}) = (:scatter, :lines)
 
@@ -44,6 +45,7 @@ function plot!(::Val{:scatter}, m::Val{T}, p::Plot, x, y, z=nothing; kwargs...) 
                type,
                mode=mode)
     kws = _make_magic(; kwargs...)
+    kws = _series_styles(c; kws...)
     kws = _trace_styles!(c; kws...)
     _merge!(c; kws...)
 
@@ -53,7 +55,7 @@ end
 
 # plot vector by adding x
 function plot!(t::Val{:scatter}, m::Val{M}, p::Plot, x::AbstractVector{<:Real}, y::Nothing, z::Nothing; kwargs...) where {M}
-    plot!(t, m, p, 1:length(x),x; kwargs...)
+    plot!(t, m, p, eachindex(x),x; kwargs...)
 end
 
 
@@ -61,7 +63,7 @@ end
 function plot!(t::Val{:scatter}, p::Plot,
                x::AbstractMatrix{<:Real}, ::Nothing, ::Nothing; kwargs...)
     m, n = size(x)
-    plot!(t, p, 1:m, x, nothing; kwargs...)
+    plot!(t, p, axes(m, 1), x, nothing; kwargs...)
 end
 
 
@@ -104,7 +106,7 @@ end
 
 ## # should just error
 function plot!(p::Plot,
-               f::Function, g::Function, as...)
+               f::Function, g::Function, as...; kwargs...)
     @warn "use a tuple, `(f,g)`, to specify a parametric plot"
     plot!(p, (f,g), as...; kwargs...)
 end
@@ -120,7 +122,6 @@ function plot!(t::Val{:scatter}, m::Val{:sticks}, p::Plot, x, y, z::Nothing; kwa
     xs = Float64[]
     ys = Float64[]
     for (xᵢ, yᵢ) ∈ zip(x,y)
-        @show xᵢ
         append!(xs, [xᵢ,xᵢ, NaN])
         append!(ys, [0, yᵢ, yᵢ])
     end
@@ -140,7 +141,7 @@ function plot!(t::Val{:scatter}, m::Val{:lines}, p::Plot, x::Shape, y::Nothing, 
 end
 
 
-function plot!(t::Val{:scatter}, p::Plot, x::Vector{<:Shape}, y::Nothing, z::Nothing;
+function plot!(t::Val{:scatter}, p::Plot, x::AbstractVector{<:Shape}, y::Nothing, z::Nothing;
                seriestype::Symbol=:lines,
                kwargs...)
 
@@ -152,6 +153,14 @@ function plot!(t::Val{:scatter}, p::Plot, x::Vector{<:Shape}, y::Nothing, z::Not
     p
 end
 
+# XXX
+function plot!(t::Val{:scatter}, m::Val{M}, p::Plot, x::AbstractVector{T}, y::Nothing, z::Nothing; kwargs...) where {M,T<:Union{Missing,Real}}
+    plot!(t, m, p, eachindex(x), x; kwargs...)
+end
+
+function plot!(t::Val{:scatter}, m::Val{M}, p::Plot, x::AbstractVector{T}, y::Nothing, z::Nothing; kwargs...) where {M, T <: Complex}
+    plot!(t, m, p, real(x), imag(x); kwargs...)
+end
 
 
 # Recipe for pts style

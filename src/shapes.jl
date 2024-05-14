@@ -8,6 +8,7 @@
 function Shape(s::Symbol, args...)
     Shape(Val(s), args...)
 end
+Base.extrema(s::Shape) = (x=extrema(s.x), y=extrema(s.y))
 
 Shape(::Val{:unitsquare}, args...) = Shape([0,1,1,0],[0,0,1,1])
 
