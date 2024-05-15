@@ -110,7 +110,8 @@ export contour, contour!, contourf, contourf!, heatmap, heatmap!
 export surface, surface!, wireframe, wireframe!
 export plot_implicit, plot_implicit!
 export quiver, quiver!, arrow, arrow!
-export annotate, annotate!, text, font, title!, size!, legend!
+export annotate, annotate!, title!, size!, legend!
+export text, font, stroke
 export xlabel!, ylabel!, zlabel!
 export xlims!, ylims!, zlims!
 export xticks!, yticks!, zticks!
@@ -122,7 +123,6 @@ export current
 
 
 export arrows, arrows!, poly, poly!, band, band!, hspan!, vspan!, abline!, image!
-#export unzip
 export rgb, colormap
 
 end

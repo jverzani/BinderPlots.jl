@@ -349,7 +349,9 @@ Some exported names are used to adjust a plot after construction:
 
 ### "Magic" arguments
 
-The `Plots.jl` design leverages data types to "magically" fill in keyword arguments. Much of this is implemented within `BinderPlots`.
+The designer of `Plots.jl` cleverly recognized that many argument types comes in groups. For example, lines, markers, and filling all have a color and an alpha transparency. Each may have a different style or shape. Each may have a different scale. Moreover, scales are described by integers, styles described by symbols or strings, colors by symbols or strings and transparencies by a number in $(0,1)$. As `Julia` can readily dispatch on value types, an expression like `(:red, 0.25, 12)` can be  parsed to identify a color, an alpha level and a scale. From here, it was a smart move to use a keyword to identify these values with different attributes, like lines, markers, and fill.
+
+The `Plots.jl` design leverages data types to "magically" fill in keyword arguments. Much of this is implemented within `BinderPlots`, as described next.
 
 #### Series arguments
 
@@ -359,25 +361,27 @@ The special keyword arguments `line`, `marker`, and `fill` are iterated over to 
 The container passed to `line` has the following mappings:
 
 * symbols and strings are matched against the linestyles, then the lineshapes; if there is no match, they are assumed to specify a color
+* a number in `(0,1)` is taken as a transparency argument and passed to `linealpha`.
+* an integer specifies the scale for line width
 * `rgb` values are passed to the `linecolor` attributed
-* a number which is an integer specifies the line width; a number in `(0,1)` is taken as a transparency argument and passed to `linealpha`.
 
 
 The container passed to `marker` has the following mappings:
 
 * symbols are matched against known marker shapes; if there is no match then the symbol is assumed to specify a color
-* size, color, and transparency are as for `line`
+* scale, color, and transparency are as for `line`
 
 The container passed to `fill` has the following mappings:
 
 * symbols are matched against fill styles; if there is no match the the symbol is assumed to specify a color
-* a `true` indicates the fill style should be `toself`
 * a number in `(0,1)` indicates a transparency level
 * a `0` sets fill style = `:tozeroy`. (Other integers are not available, as in `Plots.jl`)
+* a `true` indicates the fill style should be `toself`
+* The `stroke` method can be used to identify properties of the line
 
 #### Other uses of magic arguments
 
-The `font` function. The `font` function (which can be called directly or indirectly through `text` or `annotate!`) has the following magic arguments defined:
+The `font` function (which can be called directly or indirectly through `text` or `annotate!`) has the following magic arguments defined:
 
 * strings are assumed to indicate font families
 * integers specify point sizes
