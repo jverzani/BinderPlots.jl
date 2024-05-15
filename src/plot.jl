@@ -33,7 +33,7 @@ function plot!(::Val{:scatter}, p::Plot, x=nothing, y=nothing, z=nothing;
 end
 
 # scatter/3d type
-# generic one
+# the lone interaction with PlotlyLight in this file is here
 function plot!(::Val{:scatter}, m::Val{T}, p::Plot, x, y, z=nothing; kwargs...) where {T}
     mode = _valtype(m)
     type = isnothing(z) ? "scatter" : "scatter3d" # XXX not general?
@@ -81,7 +81,9 @@ end
 
 function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
                f::Function, y::Nothing, ::Nothing; kwargs...) where {M}
-    a, b= extrema(p).x
+    a, b = extrema(p).x
+    !isfinite(a) && (a = -5)
+    !isfinite(b) && (b =  5)
     plot!(t, m, p, unzip(f, a, b)...; kwargs...)
 end
 

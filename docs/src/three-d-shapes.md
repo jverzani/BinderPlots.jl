@@ -4,7 +4,7 @@
 using BinderPlots
 using PlotlyDocumenter # hide
 
-version = BinderPlots.PlotlyLight._version # hide
+version = BinderPlots.PlotlyLight.plotly.version # hide
 PlotlyDocumenter.change_default_plotly_version(version) # hide
 nothing # hide
 ```

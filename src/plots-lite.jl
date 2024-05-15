@@ -10,6 +10,7 @@ SeriesType(x::Symbol) = SeriesType(Val(x))
 # this is all it takes to make
 # `plot(x; seriestype=:histogram)` plot a histogram
 SeriesType(::Val{:histogram}) = (:histogram, :histogram)
+
 SeriesType(::Val{:bar}) = (:bar, :bar) # x categorical, y numeric
 SeriesType(::Val{:pie}) = (:pie, :pie) # plot(; values = [19, 26, 55], labels=["a","b", "c"], seriestype=:pie)
 SeriesType(::Val{:boxplot}) = (:box, :box) # could use recyler
@@ -504,19 +505,29 @@ struct Stroke
     style
 end
 Recycler(x::Stroke) = Recycler((x,))
+
+"""
+    stroke(args...; alpha=nothing)
+
+Specify line attributes. Returns a `Stroke` instance.
+
+This function can be used to specify the attributes of the polygonal line in a shape or other uses of lines.
+"""
 function stroke(args...; alpha = nothing)
-    width = 1
-    color = :black
-    style = :solid
+    width = nothing # use plotly defaults not Plots.jl
+    color = nothing
+    style = nothing
 
     for arg in args
         T = typeof(arg)
 
         # if arg in _allStyles
-        if  arg ∈ (:dash, :dashdot, :dot, :solid, :auto, :dashdotdot)
+        if  arg ∈ _linestyles
             style = arg
         elseif T <: _RGB
             color = arg
+        elseif T <: RGB || T <: RGBA
+            color = rgb(arg)
         elseif T <: Symbol || T <: AbstractString
             color = arg
         elseif 0 < arg < 1
@@ -569,7 +580,12 @@ end
 # magic
 _linestyles = (:dash, :dashdot, :dashdotdot, :dot, :solid, :auto)
 _lineshapes = (path=:linear, spline=:spline,
-              steppre=:vh, steppost=:hv)
+               steppre=:vh, steppost=:hv)
+_fillstyles = (:none,
+               :tozerox, :tonextx,
+               :tozeroy, :tonexty,
+               :toself,  :tonext)
+
 # [:path :steppre :steppost :sticks :scatter]
 
 ## ---
@@ -659,18 +675,19 @@ function font(args...;
               )
 
     for a ∈ args
+        T = typeof(a)
         # string is family
-        isa(a, AbstractString) && (family = a)
+        T <: AbstractString && (family = a)
         # pointsize or rotation
-        if isa(a, Real)
-            if isa(a, Integer)
+        if T <: Real
+            if T <: Integer
                 pointsize = a
             else
                 rotation = a
             end
         end
         # symbol is color or alignment
-        if isa(a, Symbol)
+        if T <: Symbol
             if a ∈ (:top, :bottom,:center)
                 valign = a
             elseif a ∈ (:left, :right)
@@ -809,9 +826,10 @@ function _make_magic(;
                      marker = nothing,
                      fill = nothing,
                      kwargs...)
-#    error("asf")
+
     d = Config()
-    ## lines
+
+    ## line = ...
     linecolor = nothing
     linealpha = nothing
     for a ∈ something(line, tuple())
@@ -820,17 +838,21 @@ function _make_magic(;
             _set(d, :linewidth, a.width)
             _set(d, :linecolor, rgb(a.color, a.alpha))
             _set(d, :linestyle, a.style)
-        elseif T <: Symbol
-            if a ∈ _linestyles
-                _set(d, :linestyle, a)
-            elseif a ∈ keys(_lineshapes)
-                _set(d, :lineshape, _lineshapes[a])
+        elseif T <: Symbol || T <: AbstractString
+            a′ = Symbol(a)
+            if a′ ∈ _linestyles
+                _set(d, :linestyle, a′)
+            elseif a′ ∈ keys(_lineshapes)
+                _set(d, :lineshape, _lineshapes[a′])
             else
-                linecolor = a
+                linecolor = a′
             end
         elseif T <: _RGB
             linecolor = a
             _set(d, :linecolor, a)
+        elseif T <: RGB || T <: RGBA
+            linecolor = rgb(a)
+            _set(d, :linecolor, rgb(a))
         elseif T <:  Number
             T <: Integer && _set(d, :linewidth, a)
             0 < a < 1 && (linealpha = a)
@@ -846,22 +868,24 @@ function _make_magic(;
     _set(d, :linecolor, linecolor)
 
 
-    ## -- markers
+    ## marker = ...
     markercolor = nothing
     markeralpha = nothing
     for a ∈ something(marker, tuple())
-        if isa(a, Symbol)
-            if a ∈ _marker_shapes
+        T = typeof(a)
+        if T <: Symbol || T <: AbstractString
+            a′ = Symbol(a)
+            if a′ ∈ _marker_shapes
                 _set(d, :markershape, replace(string(a), "_" => "-"))
             else
-                markercolor = a
-                #_set(d, :markercolor, a)
+                markercolor = a′
             end
-        elseif isa(a, _RGB)
+        elseif T <:  _RGB
             markercolor = a
-            #_set(d, :markercolor, a)
-        elseif isa(a, Number)
-            if isa(a, Integer)
+        elseif T <: RGB || T <: RGBA
+            markercolor = rgb(a)
+        elseif T <: Number
+            if T <: Integer
                 _set(d, :markersize, a)
             end
             0 < a < 1 && (markeralpha = a)
@@ -876,28 +900,18 @@ function _make_magic(;
     end
     _set(d, :markercolor, markercolor)
 
-    ## axis has x,y,z
-    fill_styles = (:none,
-                   :tozerox, :tonextx,
-                   :tozeroy, :tonexty,
-                   :toself,  :tonext)
+    # fill = ...
     fillcolor = nothing
     fillalpha = nothing
     fillstyle = nothing
     for a ∈ something(fill, tuple())
         T = typeof(a)
-        if T <: Symbol
-            if a ∈ fill_styles
-                fillstyle = a
-            else
-                fillcolor = a
-            end
-        elseif T <: AbstractString
+        if T <: Symbol || T <: AbstractString
             a′ = Symbol(a)
-            if a′ ∈ fill_styles
+            if a′ ∈ _fillstyles
                 _set(d, :fill, a′)
             else
-                fillcolor = a
+                fillcolor = a′
             end
         elseif T <: _RGB
             fillcolor = a
@@ -914,8 +928,8 @@ function _make_magic(;
         elseif T <: Stroke
             # adjust line properties
             _set(d, :linewidth, a.width)
-            !isnothing(a.color) && _set(d,:linecolor, rgb(a.color, a.alpha))
-            a.style ∈ _linestyles && _set(d, :linestyle, a.style)
+            _set(d,:linecolor, rgb(a.color, a.alpha))
+            _set(d, :linestyle, a.style)
         end
     end
     if isa(fillcolor, Union{String,Symbol}) && !isnothing(fillalpha)

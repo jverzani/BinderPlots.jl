@@ -88,6 +88,7 @@ import PlotlyLight
 import PlotlyLight: Plot, Config
 
 using PlotUtils
+RGB,RGBA = PlotUtils.RGB, PlotUtils.RGBA
 
 include("utils.jl")
 include("plots-lite.jl")
