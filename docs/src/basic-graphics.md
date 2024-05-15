@@ -1,6 +1,6 @@
 # Basics of BinderPlots
 
-The plotting interface provided picks some of the many parts of `Plots.jl` that prove useful for the graphics of calculus and provides a stripped-down, though reminiscent, interface using `PlotlyLight`, a package which otherwise is configured in a manner very-much like the underlying `JavaScript` implementation. The `Plots` package is great -- and has a `Plotly` backend -- but for resource-constrained usage can be too demanding.
+The plotting interface provided picks some of the many parts of `Plots.jl` that prove useful for the graphics of calculus and provides a stripped-down, though reminiscent, interface around `PlotlyLight`, a package which otherwise is configured in a manner very-much like the underlying `JavaScript` implementation. The `Plots` package is great -- and has a `Plotly` backend -- but for resource-constrained usage can be too demanding.
 
 
 Some principles of `Plots` are:
@@ -21,7 +21,7 @@ Many, but not all, of the aliases are available. (The shorter ones are not, as t
 
 * In `Plots.jl` some arguments encompass magic [arguments](https://docs.juliaplots.org/latest/attributes/#magic-arguments) for setting many related arguments at the same time.
 
-`BinderPlots` allows for magic arguments
+`BinderPlots` allows for magic arguments.
 
 
 * In `Plots.jl` the available plot types are specified through `seriestype` and there are shorthands to produce different methods (e.g., `scatter` is a shorthand for the seriestype `:scatter`.
@@ -29,7 +29,7 @@ Many, but not all, of the aliases are available. (The shorter ones are not, as t
 This is only partially the case with `BinderPlots`, as not all plot types have a shorthand defined.
 
 
-Altogether, most basic graphics created through `Plots` can be produced with `BinderPlots`, but the showcase of [examples](https://github.com/JuliaPlots/Plots.jl/blob/master/src/examples.jl), which utilize many conveniences, often have little issues preventing them from being fully runnable.
+Altogether, most basic graphics created through `Plots` can be produced with `BinderPlots`, but of the showcase of 66 [examples](https://github.com/JuliaPlots/Plots.jl/blob/master/src/examples.jl), which utilize many corners of the `Plots.jl` interface, only about 23 are fully runnable.
 
 
 ## Supported plotting functions
@@ -68,6 +68,7 @@ For line plots, as created by this usage, the supported key words include
 * `linecolor` to specify the color of the line; `linealpha` for the transparency
 * `linewidth` to adjust width in pixels
 * `linestyle` to adjust how line is drawn
+* `lineshape` to adjust how the line is interpolated between adjacent points
 *  `label` can be used to name the entry for given trace, unless `legend=false` has been specified
 
 !!! note
@@ -116,7 +117,7 @@ to_documenter(current())           # hide
 ```
 
 !!! note
-    It is a bit subtle but a vector of vectors is treated as holding multiple series; whereas a vector of tuples (or other containers) is treated as a collection of points.
+    It is a bit subtle, but a vector of vectors is treated as holding multiple series; whereas a vector of tuples (or other containers) is treated as a collection of points.
 
 ### `plot!`
 
@@ -239,17 +240,19 @@ The following `Plots.jl` fill attributes are supported:
 
 * `fillrange` one of `:none`, `:tozerox`, `:tonextx`, `:tozeroy` (or `0`), `:tonexty`, `:toself`, `:tonext`. The default for `Shape` instances is `:toself`.
 
+Use `stroke` to specify attributes for the enclosing polygonal line.
+
 !!! note
     Unlike `Plots.jl` `Shape` instances can not be used directly as marker shapes.
 
 Other plotting commands that create 2d-regions are:
 
-* `rect!(x0, x1, y0, y1)` draws a rectangle between `(x0,y0)` and `(x1,y1)`.
+* `rect!(x0, x1, y0, y1)` draws a rectangle between `(x0, y0)` and `(x1, y1)`.
 * `hspan!(ys, YS; xmin=0.0, xmax=1.0)` draws horizontal rectangle(s) with bottom and top vertices specified by `ys` and `YS`. (A different calling style than `Plots.jl`.)
 * `vspan!(xs, XS; ymin=0.0, ymax=1.0)` draws vertical rectangle(s) with left and right vertices specified by `xs` and `XS`.
 * `circle!(x0, x1, y0, y1)` draws a "circular" shape in the rectangle given by `(x0, y0)` and `(x1, y1)`.
 * `poly!(points; kwargs...)` where points is a container of ``(x,y)`` or ``(x,y,z)`` coordinates. Alternate to `Shape`.
-* `band!(lower, upper, args...; kwargs...)` draws a ribbon or band between `lower` and `upper`. These are either containers of `(x,y)` points or functions, in which case `args...` is read as `a,b,n=251` to specify a range of values to plot over. The function can be scalar valued or parameterizations of a space curve in ``2`` or ``3`` dimensions. The `ribbon` argument of `Plots` is not supported.
+* `band!(lower, upper, args...; kwargs...)` draws a ribbon or band between `lower` and `upper`. These are either containers of `(x,y)` points or functions, in which case `args...` is read as `a, b, n = 251` to specify a range of values to plot over. The function can be scalar valued or parameterizations of a space curve in ``2`` or ``3`` dimensions. The `ribbon` argument of `Plots` is not supported.
 
 There are just mutating versions of the above.
 
@@ -349,59 +352,60 @@ Some exported names are used to adjust a plot after construction:
 
 ### "Magic" arguments
 
-The designer of `Plots.jl` cleverly recognized that many argument types comes in groups. For example, lines, markers, and filling all have a color and an alpha transparency. Each may have a different style or shape. Each may have a different scale. Moreover, scales are described by integers, styles described by symbols or strings, colors by symbols or strings and transparencies by a number in $(0,1)$. As `Julia` can readily dispatch on value types, an expression like `(:red, 0.25, 12)` can be  parsed to identify a color, an alpha level and a scale. From here, it was a smart move to use a keyword to identify these values with different attributes, like lines, markers, and fill.
+The designer of `Plots.jl` cleverly recognized that many argument types come in similar groups. For example, lines, markers, and filling all have a color and an alpha transparency level. Each may have a different style or shape. Each may have a different scale. Moreover, scales are described by integers, styles described by symbols or strings, colors by symbols or strings -- if not a more specific type --  and transparencies by a number in $(0,1)$. As `Julia` can readily dispatch on value types, an expression like `(:red, 0.25, 12)` can be  parsed to identify a color, an alpha level and a scale. From here, it was a smart move to use keywords to associate these values with different attribute groups.
 
 The `Plots.jl` design leverages data types to "magically" fill in keyword arguments. Much of this is implemented within `BinderPlots`, as described next.
 
 #### Series arguments
 
-The special keyword arguments `line`, `marker`, and `fill` are iterated over to fill in keyword arguments. For example, passing `line=(5, (:red, :blue), 0.25, :dash)` will: Draw the line for any odd number series with `linewidth=5`; color `rgb(:red, 0.25)`; and line style `:dash`. Even numbered series (when present) will have color `rgb(:blue, 0.25)` and the modified line width and style, as the values are recycled when there are multiple series specified.
-
+The special keyword arguments `line`, `marker`, and `fill` are iterated over to fill in keyword arguments. For example, passing `line=(5, (:red, :blue), 0.25, :dash)` will specify: Draw the line for any odd number series with `linewidth=5`; color `rgb(:red, 0.25)`; and line style `:dash`. Even numbered series (when present) will have color `rgb(:blue, 0.25)` and the modified line width and style, as the values are recycled when there are multiple series specified.
 
 The container passed to `line` has the following mappings:
 
-* symbols and strings are matched against the linestyles, then the lineshapes; if there is no match, they are assumed to specify a color
-* a number in `(0,1)` is taken as a transparency argument and passed to `linealpha`.
+* symbols and strings are matched against the possible linestyles, then the possible lineshapes; if there is no match, then the value is assumed to specify a color
+* a number in `(0,1)` indicates a transparency level
 * an integer specifies the scale for line width
-* `rgb` values are passed to the `linecolor` attributed
+* `rgb` values are passed to the `linecolor` attribute
+* a `Stroke` object, produced by `stroke`, can alternatively be used to specify these values
 
 
 The container passed to `marker` has the following mappings:
 
-* symbols are matched against known marker shapes; if there is no match then the symbol is assumed to specify a color
+* symbols and strings are matched against known marker shapes; if there is no match then the value is assumed to specify a color
 * scale, color, and transparency are as for `line`
 
 The container passed to `fill` has the following mappings:
 
-* symbols are matched against fill styles; if there is no match the the symbol is assumed to specify a color
+* symbols and strings are matched against fill styles; if there is no match then the value is assumed to specify a color
 * a number in `(0,1)` indicates a transparency level
 * a `0` sets fill style = `:tozeroy`. (Other integers are not available, as in `Plots.jl`)
-* a `true` indicates the fill style should be `toself`
-* The `stroke` method can be used to identify properties of the line
+* a `true` indicates the fill style should be `:toself`
+* `Stroke` objects, produced by `stroke`, adjust the properties of the line
 
 #### Other uses of magic arguments
 
 The `font` function (which can be called directly or indirectly through `text` or `annotate!`) has the following magic arguments defined:
 
 * strings are assumed to indicate font families
+* symbols are checked for alignment (e.g., `:top`, `:bottom`, etc.); if no match, they are assumed to be a color specification.
 * integers specify point sizes
 * non integers (e.g. `pi/4`) indicate rotation
-* symbols are checked for alignment (e.g., `:top`, `:bottom`, etc.); if no match, they are assumed to be a color specification.
 
 The `legend` argument can be a boolean or a container. When a container the values are magically transformed with:
 
-* tuples indicate the placement position
-* fonts indicate the font in the legend
-* Boolean values indicate whether to show or hide the legend
 * symbols are checked for correspondence with a legend position; if the symbol is `:reverse`, otherwise the symbol is assumed to be a color specification.
+* tuples indicate the placement position
+* `Font` instances, as produced by `font`, indicate the font in the legend
+* Boolean values indicate whether to show or hide the legend
 
 The `[xyz]axis!` function arguments have:
 
-* `Font` values apply to the tick fonts
 * Symbols are checked for scale indicators `(:log, :linear, :log2m :log10, :flip, :invert, :inverted)`
-* tuples are assumed to indicate a range if length 2, otherwise a collection of tick placements.
-* Boolean values indicate if the grid should be shown for that axis
 * strings and `Text` values are applied to the axis label.
+* tuples are assumed to indicate a range if length 2, otherwise a collection of tick placements.
+* `Font` values apply to the tick fonts
+* Boolean values indicate if the grid should be shown for that axis
+
 
 
 ## Example
