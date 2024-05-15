@@ -14,7 +14,7 @@ Parametric plots can be easily created by using a tuple of functions, as in:
 using BinderPlots # load package if not loaded
 using PlotlyDocumenter # hide
 
-version = BinderPlots.PlotlyLight._version # hide
+version = BinderPlots.PlotlyLight.plotly.version # hide
 PlotlyDocumenter.change_default_plotly_version(version) # hide
 nothing # hide
 ```
