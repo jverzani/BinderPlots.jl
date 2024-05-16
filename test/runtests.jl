@@ -32,6 +32,7 @@ using Test
     c1,c2 = rgb(10,10,10,1), rgb(200,200,200,1)
     plot(rand(5,10); linecolor=range(c1, c2, 10))
 
+
     nothing
 
 end
@@ -68,6 +69,14 @@ end
         p = plot(sin, 0, 2pi)
         hline!.((-1, 1))
         vline!.((0,pi,2pi))
+        p
+    end
+
+    # hspan! and vspan! require a plot with data (not just a layout)
+    let
+        p = plot(sin, 0, 2pi)
+        vspan!([0,1], [1/2, 3/2], fill=((:red,:blue),0.1))
+        hspan!([-1/2, 1/2],[0,1], fill=((:green, :yellow), 0.1, stroke(0)))
         p
     end
 
@@ -130,6 +139,8 @@ end
     ys = [4,2,3,1]
     zs = [1,3,5,7]
     M = [1 2; 3 4; 5 6;7 8]
+    vv = [[1,2,3],[1,2,3]]
+
     a, b = 0, 2pi
     fs = [sin, cos]
     gs = [sin, cos, exp]
@@ -175,6 +186,10 @@ end
     # Plots.jl will plot as a 1-column matrix so plot(1:n, v)
     # vector{<:Real}//
     @test nseries(plot(xs)) == 1
+
+    # Vector{Vector}//
+    plot(vv)
+    @test nseries() == length(vv)
 
     # /Vector{<:Function/[scalar]/[scalar] isa Vector{<:Function}
     plot(fs, a, b) # no plot(v) w/o plot(v,a,b) or plot(v, (a,b))

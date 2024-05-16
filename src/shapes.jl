@@ -144,6 +144,8 @@ function center!(s::Shape)
     translate!(s, -a, -b)
 end
 
+## ----- Plotly shapes
+
 # shapes in Plotly use `layout` not `data`
 # generalize shapes (line, rect, circle, ...)
 # fillcolor
@@ -155,7 +157,7 @@ function _shape(type, x0, x1, y0, y1;
 
     c = Config(; type, x0, x1, y0, y1)
     kws = _make_magic(;kwargs...)
-    kws = _linestyle!(c.line; kws...)
+    kws = _linestyle!(c; kws...)
     kws = _fillstyle!(c; kws...)
     _merge!(c; kws...)
     c
@@ -310,9 +312,9 @@ function hspan!(p::Plot, ys, YS; xmin=0.0, xmax=1.0, kwargs...)
     a, b = extrema(p).x
     Δ = b - a
 
-    xxyy = _identity(a .+ Δ .* xmin, a .+ Δ .* xmax, ys, Ys)
+    xxyy = _identity(a .+ Δ .* xmin, a .+ Δ .* xmax, ys, YS)
     KWs = Recycler(kwargs)
-    for (i, yᵢ) ∈ enumerate(y)
+    for (i, yᵢ) ∈ enumerate(ys)
         _add_shape!(p, _shape("rect",xxyy[i]...;
                               mode="Line", KWs[i]...))
     end
@@ -341,7 +343,7 @@ function vspan!(p::Plot, xs, XS; ymin=0.0, ymax=1.0, kwargs...)
 
     xxyy = _identity(xs, XS, a .+ Δ .* ymin, a .+ Δ .* ymax)
     KWs = Recycler(kwargs)
-    for (i, yᵢ) ∈ enumerate(y)
+    for (i, yᵢ) ∈ enumerate(xs)
         _add_shape!(p, _shape("rect",xxyy[i]...;
                               mode="Line", KWs[i]...))
     end
@@ -379,7 +381,7 @@ function poly!(p::Plot,points;
         push!(y, first(y))
     end
     cfg = Config(; x, y, type="line", color=color, fill="toself")
-    kws = _linestyle!(cfg.line; kwargs...)
+    kws = _linestyle!(cfg; kwargs...)
     kws = _fillstyle!(cfg; kws...)
     _merge!(cfg; kws...)
     push!(p.data, cfg)
@@ -466,12 +468,12 @@ function band!(p::Plot, ::Val{2}, lower, upper;
 
     x,y = unzip(lower)
     l1 = Config(;x,y)
-    _linestyle!(l1.line; kwargs...)
+    _linestyle!(l1; kwargs...)
 
     x,y = unzip(upper)
     fill = "tonexty"
     l2 = Config(;x, y, fill)
-    kws = _linestyle!(l2.line; kwargs...)
+    kws = _linestyle!(l2; kwargs...)
     kws = _fillstyle!(l2; kws...)
     _merge!(l2; kws...)
 
