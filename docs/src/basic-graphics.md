@@ -580,7 +580,7 @@ The `band` function may be a substitute
 
 * `seriestype` is slightly different
 
-In `Plots.jl` it can modify how a line is drawn, using `linestyle` for that instead.
+In `Plots.jl` it can modify how a line is drawn, use `linestyle` for that instead.
 
 * guides are not supported
 
