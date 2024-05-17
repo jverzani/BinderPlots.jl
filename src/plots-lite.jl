@@ -124,7 +124,27 @@ function plot!(t::Val{T}, p::Plot, x, y, f::Function; kwargs...) where {T}
     plot!(t, p, x, y, f.(x, y'); kwargs...)
 end
 
+# create a blank canvas with a given size, etc.
+function blank_canvas(;
+                      xlim=nothing, xlims=xlim,
+                      ylim=nothing, ylims=ylim,
+                      aspect_ratio=:equal,
+                      border=:none, legend=false,
+                      kwargs...)
 
+    p = plot(; xlims, ylims,
+             aspect_ratio,
+             border, legend,
+             kwargs...)
+
+    xaxis!(p; showticklabels = false, showgrid = false, zeroline = false) #³
+    yaxis!(p; showticklabels = false, showgrid = false, zeroline = false) #³
+
+    p
+
+end
+
+## ----
 
 ##  keep track of current figure/whether a figure has been plottted
 const current_plot = Ref{Plot}() # store current plot
@@ -817,6 +837,61 @@ function _legend_magic!(p, legend)
     end
     nothing
 end
+
+_color_scales = (:YlOrRd, :YlGnBu, :RdBu,
+                 :Portland, :Picnic, :Jet, :Hot,
+                 :Greys, :Greens, :Bluered,
+                 :Electric, :Earth, :Blackbody)
+
+# act directly on config ...
+_expand_color(::Nothing) = nothing
+_expand_color(x::Symbol) = (x,)
+_expand_color(x::AbstractString) = (x,)
+_expand_color(x::T) where {T <: Union{ContinuousColorGradient, CategoricalColorGradient}}= (x,)
+_expand_color(x) = x
+
+function _color_magic(; palette=nothing, color_palette=palette,
+                      kwargs...)
+    d = Config()
+    for a ∈ something(_expand_color(color_palette), tuple())
+        T = typeof(a)
+        if T <: AbstractString
+            a,T = Symbol(a), Symbol
+        end
+        if T <: Symbol
+            if a ∈ _color_scales
+                _set(d, :colorscale, a)
+                cfg.colorscale = a
+            else
+                a = cgrad(a)
+                T = typeof(a)
+            end
+        end
+
+        if T <: ContinuousColorGradient || T <: CategoricalColorGradient
+            cols = [[v,rgb(c)] for (v,c) ∈ zip(a.values, a.colors)]
+            _set(d, :colorscale, cols)
+        end
+
+        if T <: Stroke
+            line = Config()
+            line.color = rgb(a.color, a.alpha)
+            line.width = a.width
+            line.style = a.style
+            _set(d, :line, line)
+        end
+    end
+
+    # covert back
+    kws = merge(Dict(kwargs...), d)
+    nt = NamedTuple(kws)
+    Base.Pairs(nt, keys(nt))
+end
+
+
+
+
+
 # turn magic into keyword arguments
 _set(d, key, value) = (d[key] = value)
 _set(d, key, ::Nothing) = d
@@ -938,8 +1013,11 @@ function _make_magic(;
     _set(d, :fillcolor, fillcolor)
     !isnothing(fillcolor) && _set(d, :fill, something(fillstyle, :toself))
 
+    # add color
+    kws = _color_magic(; kwargs...)
+
     # covert back
-    kws = merge(Dict(kwargs...), d)
+    kws = merge(Dict(kws...), d)
     nt = NamedTuple(kws)
     Base.Pairs(nt, keys(nt))
 

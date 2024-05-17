@@ -19,7 +19,7 @@ Create surface plot. Pass `zcontour=true` to add contour plot projected onto the
 ```
 f(x,y) = 4 - x^2 - y^2
 xs = ys = range(-2, 2, length=50)
-surface(xs, ys, f)  # zs = f.(xs', ys)
+surface(xs, ys, f; palette=cgrad(:acton))  # zs = f.(xs', ys)
 ```
 
 ## Extended help
@@ -95,13 +95,18 @@ function surface(args...; kwargs...)
     p, kws = _new_plot(; kwargs...)
     surface!(p, args...; kwargs...)
 end
-surface!(args...; kwargs...) = plot!(args...; seriestype=:surface, kwargs...)
+function surface!(args...; kwargs...)
+
+    kws = _color_magic(; kwargs...)
+    plot!(args...; seriestype=:surface, kws...)
+end
 
 # XXX not quite a good name, as surface plats can be parameterized
 # but this covers basic cases of surface, wireframe, contour, heatmpa
 function  _bivariate_scalar_styles!(t::Val{:surface}, m::Val{M}, p::Plot; kwargs...) where {M}
 
     kws = _3d_styles!(p; kwargs...)
+    kws = _color_magic(; kwargs...)
     kws = _aspect_ratio!(p::Plot; kws...)
     kws
 end
