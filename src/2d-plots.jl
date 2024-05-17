@@ -4,29 +4,12 @@
 SeriesType(::Val{:contour}) = (:contour, :contour)
 SeriesType(::Val{:heatmap}) = (:heatmap, :heatmap)
 
+
+
 # types and modes here
 ContourTypes = Union{Val{:contour}, Val{:heatmap},
                      Val{:surface}, Val{:wireframe}}
 
-# create a blank canvas with a give size, etc.
-function blank_canvas(;
-                      xlim=nothing, xlims=xlim,
-                      ylim=nothing, ylims=ylim,
-                      aspect_ratio=:equal,
-                      border=:none, legend=false,
-                      kwargs...)
-
-    p = plot(; xlims, ylims,
-             aspect_ratio,
-             border, legend,
-             kwargs...)
-
-    xaxis!(p; showticklabels = false, showgrid = false, zeroline = false) #³
-    yaxis!(p; showticklabels = false, showgrid = false, zeroline = false) #³
-
-    p
-
-end
 
 function plot!(t::T, m::M, p::Plot, x, y, z;
                kwargs...) where {T <: ContourTypes, M<:ContourTypes}
@@ -36,11 +19,18 @@ function plot!(t::T, m::M, p::Plot, x, y, z;
     push!(p.data, c)
 
     kws = _bivariate_scalar_styles!(t, m, p; kwargs...)
+    kws = _color_magic(; kws...)
     _merge!(c; kws...)
 
     p
 
 end
+
+function plot!(t::T, m::M, p::Plot, x::AbstractMatrix, y::Nothing, z::Nothing;
+               kwargs...) where {T <: ContourTypes, M<:ContourTypes}
+    plot!(t, m, p, axes(x,1), axes(x, 2), x; kwargs...)
+end
+
 
 """
     contour(x, y, z; kwargs...)
@@ -48,7 +38,7 @@ end
     contour(x, y, f::Function; kwargs...)
     contour!(x, y, f::Function; kwargs...)
 
-Create contour map
+Create contour map.
 """
 function contour(args...; kwargs...)
     p, kws = _new_plot(; kwargs...)
@@ -63,7 +53,7 @@ contourf!(args...; kwargs...) = contour!(args...; fillrange=true, kwargs...)
 _bivariate_scalar_styles!(::Val{T}, ::Val{M}, p; kwargs...) where {T,M} = kwargs
 function  _bivariate_scalar_styles!(t::Val{:contour}, ::Val{M}, p;
                            levels = nothing, # a number or something w/ step method
-                           color = nothing, # scale or single color
+                           color = nothing, # magic argument
                            colorbar::Union{Nothing, Bool} = nothing, # show colorbar
                            fillrange::Bool = false,
                            contour_labels::Bool = false,
@@ -76,18 +66,6 @@ function  _bivariate_scalar_styles!(t::Val{:contour}, ::Val{M}, p;
 
     !fillrange && (c.contours.coloring = "lines")
 
-    if !isnothing(color)
-        # support a named colorscale or a single color
-        builtin_color_scales = ("YlOrRd", "YlGnBu", "RdBu",
-                                "Portland", "Picnic", "Jet", "Hot",
-                                "Greys", "Greens", "Bluered",
-                                "Electric", "Earth","Blackbody")
-        if color ∈ builtin_color_scales
-            c.colorscale=color
-        else
-            c.line.color = color # no effect if coloring=lines!!!
-        end
-    end
     !isnothing(linewidth) && (c.line.width = linewidth)
     !isnothing(colorbar) && (c.showscale = colorbar)
 
@@ -157,7 +135,8 @@ function plot_implicit!(p::Plot, f::Function;
     xs = range(extrema(xlims)..., length=100)
     ys = range(extrema(ylims)..., length=100)
     zs = f.(xs', ys)
+    kws = _color_magic(; kwargs...)
     contour!(p, xs, ys, zs;
              levels=0,  colorbar=legend, linewidth,
-             kwargs...)
+             kws...)
 end

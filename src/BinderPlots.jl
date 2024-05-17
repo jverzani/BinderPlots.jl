@@ -89,6 +89,8 @@ import PlotlyLight: Plot, Config
 
 using PlotUtils
 RGB,RGBA = PlotUtils.RGB, PlotUtils.RGBA
+import PlotUtils: cgrad, ContinuousColorGradient, CategoricalColorGradient
+export cgrad
 
 include("utils.jl")
 include("plots-lite.jl")

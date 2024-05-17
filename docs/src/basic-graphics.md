@@ -533,9 +533,7 @@ The `seriestype` might be defined. If not, defining a method for `SeriesType`, l
 
 The only grid layout is to put the plots into an array, one plot per cell. For side-by-side plots, `plot(p1, p2, ...)` is supported.
 
-* Color palettes are not supported, e.g the `palette` argument
-
-A PR would be welcome.
+A PR would be most welcome.
 
 * Shapes can not be used as custom  markers
 

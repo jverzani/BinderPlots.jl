@@ -42,6 +42,8 @@ end
     plot(1:5, rand(5), xticks=((1:5, string.(1:5))))
     plot(1:5, rand(5), line=(:dot, 10, 0.5, col))
     scatter(1:5, rand(5), marker=(:diamond, 10, 0.5,:red))
+    scatter(1:5, rand(5), marker=(:diamond, 10, 0.5,:red))
+    surface(rand(50,50), palette=(cgrad(:bamO50),))
     f = font(:red, 20)
     title!(text("title", f))
 end
