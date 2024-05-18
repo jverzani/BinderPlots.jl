@@ -135,7 +135,7 @@ function wireframe(args...; kwargs...)
 end
 wireframe!(args...; kwargs...) = plot!(args...; seriestype=:wireframe, kwargs...)
 
-function  _bivariate_scalar_styles!(t::Val{:surface}, ::Val{:wireframe}, p; kwargs...)
+function  _bivariate_scalar_styles!(t::Val{:surface}, ::Val{:wireframe}, p::Plot; kwargs...)
     kws = _3d_styles!(p; kwargs...)
 
     c = p.data[end]
