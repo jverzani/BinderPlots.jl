@@ -303,9 +303,13 @@ rect!(x0, x1, y0, y1; kwargs...) = rect!(current_plot[], x0, x1, y0, y1; kwargs.
 
 
 """
+    hspan!([p::Plot], ys; kwargs...)
     hspan!([p::Plot], ys, YS; xmin=0.0, ymin=1.0, kwargs...)
 
 Draw horizontal rectanglular rectangle from `ys` to `YS`. By default extends over `x` range of plot `p`, though using `xmin` or `xmax` can adjust that. These are values in `[0,1]` and are interpreted relative to the range returned by `extrema(p).x`.
+
+If just `ys` is specified, it is taken as zipped form of (ys, YS). This form is from `Plots.jl` so use this for compatibility.
+
 """
 hspan!(ys,YS; kwargs...) = hspan!(current_plot[], ys, YS; kwargs...)
 function hspan!(p::Plot, ys, YS; xmin=0.0, xmax=1.0, kwargs...)
@@ -321,11 +325,20 @@ function hspan!(p::Plot, ys, YS; xmin=0.0, xmax=1.0, kwargs...)
 
     p
 end
+hspan!(y; kwargs...) = hspan!(current_plot[], y; kwargs...)
+function hspan!(p::Plot, y; kwargs...)
+    n = length(y)
+    vspan!(p, y[1:2:n], y[2:2:n]; kwargs...)
+end
 
 """
+    vspan!([p::Plot], xs; kwargs...)
     vspan!([p::Plot], xs, XS; ymin=0.0, ymin=1.0, kwargs...)
 
 Draw vertical rectanglular rectangle from `xs` to `XS`. By default extends over `y` range of plot `p`, though using `ymin` or `ymax` can adjust that. These are values in `[0,1]` and are interpreted relative to the range returned by `extrema(p).y`.
+
+If just `xs` is specified, it is taken as zipped form of `(xs, XS)`. This form is from `Plots.jl` so use this for compatibility.
+
 
 # Example
 
@@ -349,6 +362,12 @@ function vspan!(p::Plot, xs, XS; ymin=0.0, ymax=1.0, kwargs...)
     end
 
     p
+end
+# single vector for compat with Plots.jl
+vspan!(x; kwargs...) = vspan!(current_plot[], x; kwargs...)
+function vspan!(p::Plot, x; kwargs...)
+    n = length(x)
+    vspan!(p, x[1:2:n], x[2:2:n]; kwargs...)
 end
 
 # XXX poly (?https://docs.makie.org/stable/reference/plots/poly/)
