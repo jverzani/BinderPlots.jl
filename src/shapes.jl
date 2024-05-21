@@ -308,7 +308,7 @@ rect!(x0, x1, y0, y1; kwargs...) = rect!(current_plot[], x0, x1, y0, y1; kwargs.
 
 Draw horizontal rectanglular rectangle from `ys` to `YS`. By default extends over `x` range of plot `p`, though using `xmin` or `xmax` can adjust that. These are values in `[0,1]` and are interpreted relative to the range returned by `extrema(p).x`.
 
-If just `ys` is specified, it is taken as zipped form of (ys, YS). This form is from `Plots.jl` so use this for compatability.
+If just `ys` is specified, it is taken as zipped form of (ys, YS). This form is from `Plots.jl` so use this for compatibility.
 
 """
 hspan!(ys,YS; kwargs...) = hspan!(current_plot[], ys, YS; kwargs...)
@@ -337,7 +337,7 @@ end
 
 Draw vertical rectanglular rectangle from `xs` to `XS`. By default extends over `y` range of plot `p`, though using `ymin` or `ymax` can adjust that. These are values in `[0,1]` and are interpreted relative to the range returned by `extrema(p).y`.
 
-If just `xs` is specified, it is taken as zipped form of `(xs, XS)`. This form is from `Plots.jl` so use this for compatability.
+If just `xs` is specified, it is taken as zipped form of `(xs, XS)`. This form is from `Plots.jl` so use this for compatibility.
 
 
 # Example
