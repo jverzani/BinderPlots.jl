@@ -11,12 +11,47 @@ import CalculusWithJulia:
     riemann_plot, riemann_plot!
 
 using BinderPlots
+function CalculusWithJulia.plotif(f, g, a::Real, b::Real;
+                linecolor=(:orange, :black),
+                linewidth=(3,5),
+                linestyle=(:solid, :dot),
+                fill=(:red, 0.10, stroke(0)),
+                title = "Plot of f highlighting when g ≥ 0",
+                legend=false,
+                kwargs...)
 
-# plotif
-function CalculusWithJulia.plotif(f, g, a::Real, b::Real; kwargs...)
-    title = "Plot of f colored when g ≥ 0"
-    h = x -> g(x) ≥ 0 ? f(x) : NaN
-    BinderPlots.plot([f, h], a, b; title, kwargs...)
+    # get shading
+    xs, ys = BinderPlots.unzip(x -> g(x) ≥ 0 ? f(x) : NaN, a, b)
+    ls,rs = eltype(xs)[], eltype(xs)[]
+
+    left = true
+    for (x,y) ∈ zip(xs, ys)
+        if left
+            if !isnan(y)
+                push!(ls, x); push!(rs, x)
+                left = false
+            end
+        else
+            if isnan(y)
+            left = true
+            else
+                rs[end] = x
+            end
+        end
+    end
+
+    # make plot
+    plot(f, a, b; linecolor=linecolor[1],
+         linewidth=linewidth[1],
+         linestyle=linestyle[1],
+         title=title,
+         legend=legend,
+         kwargs...)
+    plot!(xs, ys; linecolor=linecolor[2],
+          linewidth=linewidth[2],
+          linestyle=linestyle[2])
+    vspan!(collect(Base.Iterators.flatten(zip(ls,rs))),
+           fill=fill)
 end
 
 
