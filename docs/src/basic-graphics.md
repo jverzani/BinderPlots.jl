@@ -205,9 +205,9 @@ The `annotate!` function takes a a tuple of `(x,y,txt)` points or vectors of eac
 
 The `quiver!` function plots arrows with optional text labels. Due to the underlying use of `Plotly`, `quiver` is restricted to 2 dimensions. The arguments to quiver are tail position(s) in `x` and `y` and arrow lengths, passed to `quiver` as `dx` and `dy`. The optional `txt` argument can be used to label the anchors.
 
-The `arrow!` function is not from `Plots.jl`. It provides a different interface to arrow drawing than `quiver`. For `arrow!` the tail and vectors are passed in as vectors. (so for a single arrow from `p=[1,2]` with direction `v=[3,1]` one call would be `arrow!(p, v)` (as compared with `quiver([1],[2], quiver=([3],[1]))`). The latter more efficient for many arrows.
+The `BinderPlots.arrow!` function is not from `Plots.jl`. It provides a different interface to arrow drawing than `quiver`. For `BinderPlots.arrow!` the tail and vectors are passed in as vectors. (so for a single arrow from `p=[1,2]` with direction `v=[3,1]` one call would be `arrow!(p, v)` (as compared with `quiver([1],[2], quiver=([3],[1]))`). The latter more efficient for many arrows.
 
-The `arrows!` function borrows the `Makie.jl` interface to specify an arrow (basically `arrows!(x,y,u,v)` is `quiver!(x,y,quiver=(u,v))`.
+The `BinderPlots.arrows!` function borrows the `Makie.jl` interface to specify an arrow (basically `arrows!(x,y,u,v)` is `quiver!(x,y,quiver=(u,v))`.
 
 
 The following `Plots.jl` text attributes are supported:

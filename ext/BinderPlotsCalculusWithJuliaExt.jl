@@ -7,6 +7,7 @@ import CalculusWithJulia:
     plot_polar, plot_polar!,
     plot_implicit_surface,
     implicit_plot, implicit_plot!,
+    arrow, arrow!,
     newton_vis, newton_plot!,
     riemann_plot, riemann_plot!
 
@@ -141,6 +142,10 @@ function plot_implicit_surface(F, c=0;
 
     p
 end
+
+##
+CalculusWithJulia.arrow(args...;kwargs...) = BinderPlots.arrow(args...;kwargs...)
+CalculusWithJulia.arrow!(args...;kwargs...) = BinderPlots.arrow!(args...;kwargs...)
 
 ## ----
 
