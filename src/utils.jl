@@ -151,6 +151,10 @@ Recycler(x::Symbol) = Recycler((x,))
 Recycler(x::AbstractString) = Recycler((x,))
 Recycler(x::PlotUtils.Colors.RGB) = Recycler((x,))
 
+function Base.iterate(r::BinderPlots.Recycler, state=nothing)
+    isnothing(state) && return (r[1],2)
+    return (r[state],state+1)
+end
 
 
 function Base.getindex(R::Recycler, i::Int)
@@ -346,15 +350,18 @@ end
     Shape(x, y)
     Shape(vertices)
 
-Construct a *polygon* to be plotted
+Construct a *polygon* to be plotted.
+
+When plotting shapes, use `stroke` argument to `fill` to adjust bounding
+line properties.
 """
 struct Shape{X, Y}
-    x::X
-    y::Y
+    x::AbstractVector{X}
+    y::AbstractVector{Y}
     function Shape(x::X,y::Y) where {X, Y}
         length(x) == length(y) || throw(ArgumentError("Need same length objects"))
         x′, y′ = float(x), float(y)
-        X′, Y′ = typeof(x′), typeof(y′)
+        X′, Y′ = eltype(x′), eltype(y′)
         new{X′,Y′}(x′, y′)
     end
 end

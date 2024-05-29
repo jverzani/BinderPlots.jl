@@ -301,6 +301,24 @@ As seen in this overblown example, there are other methods besides `plot` for ot
 * `rect!` is used to make a rectangle. There are also `hspan!` and `vspan!`. For lines, there are `hline!` and `vline!` to draw horizontal or vertical lines across the extent of the plotting region. There is also `abline!` to draw lines specified in intercept-slope form across the extent of the plotting region. Other regions can be draws. For example, `circle!` to draw a circle, and, more generally, `poly` can be used to draw a polygonal region.
 
 
+For another example, shapes can be used to create error bars. For example, suppose at a pair of points, error bars with width ``\sigma`` are to be drawn:
+
+```@example lite
+import BinderPlots: translate, scale
+xs = 1:5
+ys = [1,3,2,4,5]
+sigmas = 1 ./ (1:5)
+
+
+scatter(xs, ys, markersize=5)
+errors = [translate(scale(vl, 1, σ), x, y) for (σ, x,y) in zip(sigmas, xs, ys)]
+plot!(errors; fill=(stroke(2),) )
+
+to_documenter(current())           # hide
+```
+
+To adjust the width of the bar, we pass the value through `stroke`.
+
 ## Attributes
 
 Attributes of a plot are modified through keyword arguments. The `Plots.jl` interface allows many aliases and has magic argument. No attempt to cover all of these is made.

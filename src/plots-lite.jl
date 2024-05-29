@@ -743,7 +743,6 @@ function _fillstyle!(cfg::Config;
                      kwargs...)
     if !isnothing(fillcolor)
         fillcolor = rgb(fillcolor, fillalpha)
-        isnothing(fill) && (fill = :toself)
     end
     _merge!(cfg; fill, fillcolor)
     kwargs
@@ -904,6 +903,46 @@ function _make_magic(;
 
     d = Config()
 
+    # fill = ...
+    fillcolor = nothing
+    fillalpha = nothing
+    fillstyle = get(kwargs, :fillstyle, nothing)
+
+    for a ∈ something(fill, tuple())
+        T = typeof(a)
+        if T <: Symbol || T <: AbstractString
+            a′ = Symbol(a)
+            if a′ ∈ _fillstyles
+                fillstyle = a′
+            else
+                fillcolor = a′
+            end
+        elseif T <: _RGB
+            fillcolor = a
+        elseif T <: Bool
+            a && (fillstyle = :toself) # true false
+        elseif T <: Real
+            if 0 < a < 1
+                fillalpha =a
+            elseif iszero(a)
+                fillstyle = :tozeroy
+            elseif isa(a, Integer)
+                @warn "Fill to a non-zero y value is not implemented"
+            end
+        elseif T <: Stroke
+            # adjust line properties
+            _set(d, :linewidth, a.width)
+            _set(d, :linecolor, rgb(a.color, a.alpha))
+            _set(d, :linestyle, a.style)
+        end
+    end
+    if isa(fillcolor, Union{String,Symbol}) && !isnothing(fillalpha)
+        fillcolor = rgb(fillcolor, fillalpha)
+    end
+    _set(d, :fillcolor, fillcolor)
+    !isnothing(fillcolor) && _set(d, :fill, fillstyle)
+
+
     ## line = ...
     linecolor = nothing
     linealpha = nothing
@@ -974,44 +1013,6 @@ function _make_magic(;
         end
     end
     _set(d, :markercolor, markercolor)
-
-    # fill = ...
-    fillcolor = nothing
-    fillalpha = nothing
-    fillstyle = nothing
-    for a ∈ something(fill, tuple())
-        T = typeof(a)
-        if T <: Symbol || T <: AbstractString
-            a′ = Symbol(a)
-            if a′ ∈ _fillstyles
-                _set(d, :fill, a′)
-            else
-                fillcolor = a′
-            end
-        elseif T <: _RGB
-            fillcolor = a
-        elseif T <: Bool
-            a && _set(d, :fill, :toself) # true false
-        elseif T <: Real
-            if 0 < a < 1
-                fillalpha =a
-            elseif iszero(a)
-                fillstyle = :tozeroy
-            elseif isa(a, Integer)
-                @warn "Fill to a non-zero y value is not implemented"
-            end
-        elseif T <: Stroke
-            # adjust line properties
-            _set(d, :linewidth, a.width)
-            _set(d,:linecolor, rgb(a.color, a.alpha))
-            _set(d, :linestyle, a.style)
-        end
-    end
-    if isa(fillcolor, Union{String,Symbol}) && !isnothing(fillalpha)
-        fillcolor = rgb(fillcolor, fillalpha)
-    end
-    _set(d, :fillcolor, fillcolor)
-    !isnothing(fillcolor) && _set(d, :fill, something(fillstyle, :toself))
 
     # add color
     kws = _color_magic(; kwargs...)

@@ -23,11 +23,12 @@ SeriesType(::Val{:path3d}) = (:scatter, :lines)
 
 function plot!(::Val{:scatter}, p::Plot, x=nothing, y=nothing, z=nothing;
                seriestype::Symbol=:lines,
+               ribbon=nothing,
                kwargs...)
     _,mode = SeriesType(seriestype)
     KWs = Recycler(kwargs)
     for (i, xyzₛ) ∈ enumerate(xyz(x,y,z))
-        plot!(Val(:scatter), Val(Symbol(mode)), p, xyzₛ...; KWs[i]...)
+        plot!(Val(:scatter), Val(Symbol(mode)), p, xyzₛ...; ribbon, KWs[i]...)
     end
     p
 end
@@ -37,18 +38,16 @@ end
 function plot!(::Val{:scatter}, m::Val{T}, p::Plot, x, y, z=nothing; kwargs...) where {T}
     mode = _valtype(m)
     type = isnothing(z) ? "scatter" : "scatter3d" # XXX not general?
-
     c = Config(;
                x=_replace_infinite(x),
                y=_replace_infinite(y),
                z=_replace_infinite(z),
                type,
                mode=mode)
-    kws = _make_magic(; kwargs...)
+    kws = _make_magic(; fillstyle=nothing,kwargs...)
     kws = _series_styles(c; kws...)
     kws = _trace_styles!(c; kws...)
     _merge!(c; kws...)
-
     push!(p.data, c)
     nothing
 end
@@ -132,28 +131,6 @@ function plot!(t::Val{:scatter}, m::Val{:sticks}, p::Plot, x, y, z::Nothing; kwa
     p
 end
 
-# Shape recipes
-function plot!(t::Val{:scatter}, m::Val{:lines}, p::Plot, x::Shape, y::Nothing, z::Nothing; kwargs...)
-    xs, ys = x.x, x.y
-    if (first(xs) != last(xs)) || (first(ys) != last(ys))
-        push!(xs, first(xs))
-        push!(ys, first(ys))
-    end
-    plot!(t, m, p, xs, ys; kwargs...)
-end
-
-
-function plot!(t::Val{:scatter}, p::Plot, x::AbstractVector{<:Shape}, y::Nothing, z::Nothing;
-               seriestype::Symbol=:lines,
-               kwargs...)
-
-    _,mode = SeriesType(seriestype)
-    KWs = Recycler(kwargs)
-    for (i, s) ∈ enumerate(x)
-        plot!(t, Val(Symbol(mode)),p, s; KWs[i]...)
-    end
-    p
-end
 
 # XXX
 function plot!(t::Val{:scatter}, m::Val{M}, p::Plot, x::AbstractVector{T}, y::Nothing, z::Nothing; kwargs...) where {M,T<:Union{Missing,Real}}
