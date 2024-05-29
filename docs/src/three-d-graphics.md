@@ -41,7 +41,7 @@ rp(t) = (cos(t), -sin(t), 1)
 ts = range(0, 4pi, length=251)
 plot(BinderPlots.unzip(r.(ts))...; legend=false)
 ts = range(0, 4pi, length=10)
-arrow!(r.(ts), rp.(ts))
+BinderPlots.arrow!(r.(ts), rp.(ts))
 
 delete!(current().layout, :width)  # hide
 delete!(current().layout, :height) # hide

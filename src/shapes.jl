@@ -26,7 +26,7 @@ Shape(::Val{:rect}, args...) = Shape(Val(:ngon),4,1/4)
 Shape(::Val{:pentagon}, args...) = Shape(Val(:ngon),5)
 Shape(::Val{:hexagon}, args...)  = Shape(Val(:ngon),5)
 Shape(::Val{:heptogon}, args...) = Shape(Val(:ngon),7)
-Shape(::Val{:octogon}, args...)  = Shape(Val(:ngon),8)
+Shape(::Val{:octagon}, args...)  = Shape(Val(:ngon),8)
 
 Shape(::Val{:hline}) = Shape([-1,1],[0,0])
 Shape(::Val{:vline}) = Shape([0,0], [-1,1])
@@ -54,7 +54,14 @@ Shape(::Val{:star6}, args...) = Shape(Val(:star), 6)
 Shape(::Val{:star7}, args...) = Shape(Val(:star), 7)
 Shape(::Val{:star8}, args...) = Shape(Val(:star), 8)
 
+function Shape(::Val{:rounded_square}, k=5, args...) # maybe for text bubbles?
+    ts = range(0, pi/2,21)
+    xs,ys = (cos.(ts).^(1/k)), (sin.(ts).^(1/k))
+    return Shape(vcat(xs, -reverse(xs), -xs, reverse(xs)),
+                 vcat(ys, reverse(ys), -ys, -reverse(ys)))
+end
 
+## ---- transformations
 
 """
     scale(s::Shape, x, y=x)
@@ -136,13 +143,142 @@ function center(s::Shape)
         Cx += (x[i] + x[ip1]) * m
         Cy += (y[i] + y[ip1]) * m
     end
-    Cx / 6A, Cy / 6A
+    iszero(A) ? (Cx, Cy) : (Cx / 6A, Cy / 6A)
 end
 
 function center!(s::Shape)
     a,b = center(s)
     translate!(s, -a, -b)
 end
+
+
+## ---- render shapes
+# Shape ignores line properties not given in `stroke`
+function plot!(t::Val{:scatter}, m::Val{:lines}, p::Plot, x::Shape,
+               y::Nothing, z::Nothing;
+               line=nothing,
+               linewidth=nothing, linecolor=nothing, linestyle=nothing,
+               fillstyle=nothing,
+               kwargs...)
+    xs, ys = x.x, x.y
+    if (first(xs) != last(xs)) || (first(ys) != last(ys))
+        push!(xs, first(xs))
+        push!(ys, first(ys))
+    end
+
+    fillstyle = something(fillstyle, :toself)
+
+    plot!(t, m, p, xs, ys; fillstyle, kwargs...)
+end
+
+
+function plot!(t::Val{:scatter}, p::Plot, x::AbstractVector{<:Shape}, y::Nothing, z::Nothing;
+               seriestype::Symbol=:lines,
+               kwargs...)
+
+    _,mode = SeriesType(seriestype)
+    KWs = Recycler(kwargs)
+    for (i, s) ∈ enumerate(x)
+        plot!(t, Val(Symbol(mode)),p, s; KWs[i]...)
+    end
+    p
+end
+
+# ribbon tuple -> two sided, else ...
+# ribbon has strokewidth 0 by default; use stroke to change
+# Ribbon is **not** the same a Plots.jl
+# * called with a seriestype
+# * when multiple seriestypes, the arguments may get mixed up
+
+SeriesType(::Val{:ribbon}) =  (:scatter, :ribbon)
+function plot!(t::Val{:scatter}, m::Val{:ribbon}, p::Plot, x, y, z::Nothing;
+               ribbon=nothing,
+               fill = nothing,
+               kwargs...)
+    # make shape(s); plot shape(s)
+    T,S = float(eltype(x)), float(eltype(y))
+    ss = Shape{T,S}[]
+    xs, ysu, ysl = T[], S[], S[]
+    inshape = true
+    ru,rl = (first(ribbon), last(ribbon))
+    ruc = Recycler(ru)
+    rlc = Recycler(rl)
+    for (i,(xi,yi)) ∈ enumerate(zip(x,y))
+        if inshape
+            if isfinite(yi)
+                push!(xs,  xi)
+                push!(ysu, yi + ruc[i])
+                push!(ysl, yi - rlc[i])
+            else
+                S = Shape(vcat(xs, reverse(xs)), vcat(ysl, reverse(ysu)))
+                push!(ss, S)
+                empty!(xs); empty!(ysu); empty!(ysl)
+                inshape = false
+            end
+        else
+            if isfinite(yi)
+                push!(xs,  xi)
+                push!(ysu, yi + ruc[i])
+                push!(ysl, yi - rlc[i])
+                inshape = true
+            end
+        end
+    end
+    if inshape
+        S = Shape(vcat(xs, reverse(xs)), vcat(ysl, reverse(ysu)))
+        push!(ss, S)
+    end
+
+    for S ∈ ss
+        plot!(t, Val(:lines), p, S, nothing, nothing; linewidth=0, fill,
+              kwargs...)
+    end
+
+    p
+end
+
+# xerror and yerror are seriestypes, not just arguments
+# must call
+SeriesType(::Val{:xerror}) =  (:scatter, :xerror)
+SeriesType(::Val{:yerror}) =  (:scatter, :yerror)
+function plot!(t::Val{:scatter}, m::Val{:xerror}, p::Plot, x, y, z::Nothing;
+               xerror = nothing,
+               kwargs...)
+    isnothing(xerror) && return p # do nothing
+    σ = xerror                    # could make two sided...
+    S = Shape(:vline)
+    ss = typeof(S)[]
+    for (σi, xi,yi) ∈ zip(Recycler(xerror), x,y)
+        !isfinite(yi) && continue
+        push!(ss, translate(scale(S, 1, σi), xi, yi))
+    end
+    for S ∈ ss
+        plot!(t, Val(:lines), p, S, nothing, nothing;
+              kwargs...)
+    end
+
+    p
+end
+function plot!(t::Val{:scatter}, m::Val{:yerror}, p::Plot, x, y, z::Nothing;
+               yerror = nothing,
+               kwargs...)
+
+    isnothing(yerror) && return p # do nothing
+    S = Shape(:hline)
+    ss = typeof(S)[]
+    for (σi, xi,yi) ∈ zip(Recycler(yerror), x,y)
+        !isfinite(yi) && continue
+        push!(ss, translate(scale(S, σi, 1), xi, yi))
+    end
+
+    for S ∈ ss
+        plot!(t, Val(:lines), p, S, nothing, nothing;
+              kwargs...)
+    end
+
+    p
+end
+
 
 ## ----- Plotly shapes
 
@@ -486,12 +622,15 @@ function band!(p::Plot, ::Val{2}, lower, upper;
                kwargs...)
 
     x,y = unzip(lower)
+    x, y = _replace_infinite(x), _replace_infinite(y)
     l1 = Config(;x,y)
     _linestyle!(l1; kwargs...)
 
     x,y = unzip(upper)
+    x, y = _replace_infinite(x), _replace_infinite(y)
     fill = "tonexty"
     l2 = Config(;x, y, fill)
+
     kws = _linestyle!(l2; kwargs...)
     kws = _fillstyle!(l2; kws...)
     _merge!(l2; kws...)

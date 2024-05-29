@@ -112,7 +112,8 @@ export Shape
 export contour, contour!, contourf, contourf!, heatmap, heatmap!
 export surface, surface!, wireframe, wireframe!
 export plot_implicit, plot_implicit!
-export quiver, quiver!, arrow, arrow!
+export quiver, quiver!
+#export arrow, arrow!
 export annotate, annotate!, title!, size!, legend!
 export text, font, stroke
 export xlabel!, ylabel!, zlabel!

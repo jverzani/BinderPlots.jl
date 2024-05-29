@@ -205,9 +205,9 @@ The `annotate!` function takes a a tuple of `(x,y,txt)` points or vectors of eac
 
 The `quiver!` function plots arrows with optional text labels. Due to the underlying use of `Plotly`, `quiver` is restricted to 2 dimensions. The arguments to quiver are tail position(s) in `x` and `y` and arrow lengths, passed to `quiver` as `dx` and `dy`. The optional `txt` argument can be used to label the anchors.
 
-The `arrow!` function is not from `Plots.jl`. It provides a different interface to arrow drawing than `quiver`. For `arrow!` the tail and vectors are passed in as vectors. (so for a single arrow from `p=[1,2]` with direction `v=[3,1]` one call would be `arrow!(p, v)` (as compared with `quiver([1],[2], quiver=([3],[1]))`). The latter more efficient for many arrows.
+The `BinderPlots.arrow!` function is not from `Plots.jl`. It provides a different interface to arrow drawing than `quiver`. For `BinderPlots.arrow!` the tail and vectors are passed in as vectors. (so for a single arrow from `p=[1,2]` with direction `v=[3,1]` one call would be `arrow!(p, v)` (as compared with `quiver([1],[2], quiver=([3],[1]))`). The latter more efficient for many arrows.
 
-The `arrows!` function borrows the `Makie.jl` interface to specify an arrow (basically `arrows!(x,y,u,v)` is `quiver!(x,y,quiver=(u,v))`.
+The `BinderPlots.arrows!` function borrows the `Makie.jl` interface to specify an arrow (basically `arrows!(x,y,u,v)` is `quiver!(x,y,quiver=(u,v))`.
 
 
 The following `Plots.jl` text attributes are supported:
@@ -300,6 +300,25 @@ As seen in this overblown example, there are other methods besides `plot` for ot
 
 * `rect!` is used to make a rectangle. There are also `hspan!` and `vspan!`. For lines, there are `hline!` and `vline!` to draw horizontal or vertical lines across the extent of the plotting region. There is also `abline!` to draw lines specified in intercept-slope form across the extent of the plotting region. Other regions can be draws. For example, `circle!` to draw a circle, and, more generally, `poly` can be used to draw a polygonal region.
 
+
+For another example, shapes can be used to create error bars. For example, suppose at a pair of points, error bars with width ``\sigma`` are to be drawn:
+
+```@example lite
+import BinderPlots: translate, scale
+xs = 1:5
+ys = [1,3,2,4,5]
+sigmas = 1 ./ (1:5)
+
+scatter(xs, ys, markersize=5)
+
+vl = Shape(:vline)
+errors = [translate(scale(vl, 1, σ), x, y) for (σ, x,y) in zip(sigmas, xs, ys)]
+plot!(errors; fill=(stroke(2),) )
+
+to_documenter(current())           # hide
+```
+
+To adjust the width of the bar, we pass the value through `stroke`. Error bars can be added with the series type `:xerror`, as with `plot!(xs, ys; seriestype=[:xerror], xerror=(1 ./ (1:5), ))`.
 
 ## Attributes
 

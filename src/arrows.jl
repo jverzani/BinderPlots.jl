@@ -4,7 +4,7 @@
     quiver!([p::Plot], x, y, txt=nothing; quiver=(dx, dy), kwargs...)
     quiver(x, y, txt=nothing; quiver=(dx, dy), kwargs...)
 
-Draw 2d arrows. See `arrow!` for a single arrow.
+Draw 2d arrows. See `BinderPlots.arrow!` for a single arrow.
 
 * `(x,y)` are tail positions, optionally labeled by `txt`
 * `quiver` specifies vector part of arrow
