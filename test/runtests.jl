@@ -114,7 +114,7 @@ end
     let
         q, n = [0,0,0], [0,0,1]
         circ3d(q, 3, n)
-        arrow!(q, n)
+        BinderPlots.arrow!(q, n)
     end
 
     # skirt

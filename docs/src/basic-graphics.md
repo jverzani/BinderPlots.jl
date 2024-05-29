@@ -309,15 +309,16 @@ xs = 1:5
 ys = [1,3,2,4,5]
 sigmas = 1 ./ (1:5)
 
-
 scatter(xs, ys, markersize=5)
+
+vl = Shape(:vline)
 errors = [translate(scale(vl, 1, σ), x, y) for (σ, x,y) in zip(sigmas, xs, ys)]
 plot!(errors; fill=(stroke(2),) )
 
 to_documenter(current())           # hide
 ```
 
-To adjust the width of the bar, we pass the value through `stroke`.
+To adjust the width of the bar, we pass the value through `stroke`. Error bars can be added with the series type `:xerror`, as with `plot!(xs, ys; seriestype=[:xerror], xerror=(1 ./ (1:5), ))`.
 
 ## Attributes
 
