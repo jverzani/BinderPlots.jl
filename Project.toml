@@ -8,18 +8,21 @@ PlotUtils = "995b91a9-d308-5afd-9ec6-746e21dbc043"
 PlotlyLight = "ca7969ec-10b3-423e-8d99-40f33abb42bf"
 
 [weakdeps]
-"CalculusWithJulia" = "a2e0e22d-7d4c-5312-9169-8b992201a882"
-"SimpleExpressions" = "deba94f7-f32a-40ad-b45e-be020a5ded2f"
+CalculusWithJulia = "a2e0e22d-7d4c-5312-9169-8b992201a882"
+SimpleExpressions = "deba94f7-f32a-40ad-b45e-be020a5ded2f"
+SymPyCore = "458b697b-88f0-4a86-b56b-78b75cfb3531"
 
 [extensions]
 BinderPlotsCalculusWithJuliaExt = "CalculusWithJulia"
 BinderPlotsSimpleExpressionsExt = "SimpleExpressions"
+BinderPlotsSymPyCoreExt = "SymPyCore"
 
 [compat]
 PlotUtils = "1"
 PlotlyLight = "0.8, 0.9"
 CalculusWithJulia = "0.2"
 SimpleExpressions = "1"
+SymPyCore = "0.2"
 julia = "1.9"
 
 [extras]
