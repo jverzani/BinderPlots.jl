@@ -66,7 +66,8 @@ function plot!(t::Val{:scatter}, p::Plot,
 end
 
 
-# recipe(s) for function f,[a],[b]
+# function recipes
+# recipe(s) for function f,[a],[b], and xs, ys, f
 # XXX a little lower than desirable
 function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
                f::Function, y, z; kwargs...) where {M}
@@ -84,6 +85,10 @@ function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
     !isfinite(a) && (a = -5)
     !isfinite(b) && (b =  5)
     plot!(t, m, p, unzip(f, a, b)...; kwargs...)
+end
+
+function plot!(t::Val{T}, p::Plot, x, y, f::Function; kwargs...) where {T}
+    plot!(t, p, x, y, f.(x, y'); kwargs...)
 end
 
 ## parametric

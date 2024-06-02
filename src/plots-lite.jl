@@ -119,11 +119,6 @@ function plot!(t::Val{T}, m::Val{M}, p::Plot, x=nothing, y=nothing, z=nothing;
     p
 end
 
-# function recipes
-function plot!(t::Val{T}, p::Plot, x, y, f::Function; kwargs...) where {T}
-    plot!(t, p, x, y, f.(x, y'); kwargs...)
-end
-
 # create a blank canvas with a given size, etc.
 function blank_canvas(;
                       xlim=nothing, xlims=xlim,
@@ -179,7 +174,22 @@ function _new_plot(;
     p, kwargs
 end
 
+#=
+processing pipeline
+A plot(...) call for a line plot does:
 
+* `_new_plot` adjusts windowsize
+* `_layout_styles` processes layout arguments
+* loop over `seriestype` value(s)
+* kwargs are recycled
+* data is split into series (if necessary)
+* magic arguments are processed to adjust kwargs
+* `_series_styles` are processed
+* `trace_styles!` are processed mapping kwargs -> attribute names
+* data pushed to `p.data`
+
+
+=#
 
 # plot attributes
 
@@ -419,41 +429,6 @@ function _axisstyle!(cfg;
     kwargs
 end
 
-# match args to axis property
-# https://docs.juliaplots.org/latest/attributes/#magic-arguments
-function _axis_magic!(cfg, args...)
-    for a ∈ args
-        if isa(a, Font)
-            _fontstyle!(cfg.tickfont, a)
-            cfg.tickangle = a.rotation
-        elseif a ∈ (:log, :linear)
-            cfg.type = a
-        elseif a ∈ (:log2, :log10)
-            cfg.type = :log
-        elseif a ∈ (:flip, :invert, :inverted)
-            cfg.autorange = "reversed"
-        elseif (isa(a, Tuple) || isa(a, AbstractVector))
-            if length(a) == 2
-                cfg.range = a
-            else
-                x₁ = first(a)
-                if isa(x₁, Number)
-                    cfg.tickvals = collect(a)
-                else
-                    cfg.ticktext = collect(a)
-                end
-            end
-        elseif isa(a, Bool)
-            cfg.showgrid = a
-        elseif isa(a, AbstractString)
-            _labelstyle!(cfg, a)
-        elseif isa(a, TextFont)
-            _labelstyle!(cfg, a)
-        end
-    end
-    cfg
-end
-
 
 "`legend!([p::Plot], legend::Bool)` hide/show legend"
 legend!(p::Plot, ::Nothing) = nothing
@@ -562,105 +537,6 @@ function stroke(args...; alpha = nothing)
     Stroke(width, color, alpha, style)
 end
 
-
-
-# linecolor - color
-# linealpha - float
-# linewidth - integer
-# linestyle: solic, dot, dashdot, ...
-# lineshape: linear, hv, vh, hvh, vhv, spline; or keys of _lineshapes
-function _linestyle!(c::Config;
-                     lc=nothing, linecolor = lc, # string, symbol, RGB?
-                     linealpha=nothing,
-                     lw=nothing, width=lw, linewidth = width, # pixels
-                     style=nothing, ls=style, linestyle = ls, # solid, dot, dashdot,
-                     lineshape = nothing,
-                     kwargs...)
-
-    cfg = c.line # pass in config object, not line part
-
-    shape = isnothing(lineshape) ? nothing :
-        lineshape ∈ keys(_lineshapes) ? _lineshapes[lineshape] : lineshape
-
-    color = linecolor
-
-    if !isnothing(linealpha)
-        if !isnothing(color)
-            color = rgb(linecolor, linealpha)
-        else
-            _merge!(c; opacity=linealpha) # opacity is not line, but c
-        end
-    end
-
-    _merge!(cfg; color=color, width=linewidth, dash=linestyle, shape)
-
-    kwargs
-end
-
-# magic
-_linestyles = (:dash, :dashdot, :dashdotdot, :dot, :solid, :auto)
-_lineshapes = (path=:linear, spline=:spline,
-               steppre=:vh, steppost=:hv)
-_fillstyles = (:none,
-               :tozerox, :tonextx,
-               :tozeroy, :tonexty,
-               :toself,  :tonext)
-
-# [:path :steppre :steppost :sticks :scatter]
-
-## ---
-
-function _markerstyle!(cfg::Config; # .marker
-                       shape = nothing, markershape = shape,
-                       ms=nothing, markersize  = ms,
-                       mc=nothing, markercolor = mc,
-                       malpha=nothing, markeralpha = malpha,
-                       # no makr opacity; pass `rgba(r,g,b,α)` to color
-                       #ma=nothing, markeralpha=ma,opacity=markeralpha,
-                       kwargs...)
-    if !isnothing(markeralpha)
-        if !isnothing(markercolor)
-            markercolor = rgb(markercolor, markeralpha)
-        else
-            _merge!(cfg; opacity=markeralpha)
-        end
-    end
-
-    _merge!(cfg;
-            symbol=markershape,
-            size=markersize,
-            color=markercolor)
-    kwargs
-end
-
-# magic arguments
-# use :nm_attribute not nm-attribute
-_marker_shapes = (:circle, :circle_open, :circle_dot, :circle_open_dot, :square, :square_open, :square_dot, :square_open_dot, :diamond, :diamond_open, :diamond_dot, :diamond_open_dot, :cross, :cross_open, :cross_dot, :cross_open_dot, :x, :x_open, :x_dot, :x_open_dot, :triangle_up, :triangle_up_open, :triangle_up_dot, :triangle_up_open_dot, :triangle_down, :triangle_down_open, :triangle_down_dot, :triangle_down_open_dot, :triangle_left, :triangle_left_open, :triangle_left_dot, :triangle_left_open_dot, :triangle_right, :triangle_right_open, :triangle_right_dot, :triangle_right_open_dot, :triangle_ne, :triangle_ne_open, :triangle_ne_dot, :triangle_ne_open_dot, :triangle_se, :triangle_se_open, :triangle_se_dot, :triangle_se_open_dot, :triangle_sw, :triangle_sw_open, :triangle_sw_dot, :triangle_sw_open_dot, :triangle_nw, :triangle_nw_open, :triangle_nw_dot, :triangle_nw_open_dot, :pentagon, :pentagon_open, :pentagon_dot, :pentagon_open_dot, :hexagon, :hexagon_open, :hexagon_dot, :hexagon_open_dot, :hexagon2, :hexagon2_open, :hexagon2_dot, :hexagon2_open_dot, :octagon, :octagon_open, :octagon_dot, :octagon_open_dot, :star, :star_open, :star_dot, :star_open_dot, :hexagram, :hexagram_open, :hexagram_dot, :hexagram_open_dot, :star_triangle_up, :star_triangle_up_open, :star_triangle_up_dot, :star_triangle_up_open_dot, :star_triangle_down, :star_triangle_down_open, :star_triangle_down_dot, :star_triangle_down_open_dot, :star_square, :star_square_open, :star_square_dot, :star_square_open_dot, :star_diamond, :star_diamond_open, :star_diamond_dot, :star_diamond_open_dot, :diamond_tall, :diamond_tall_open, :diamond_tall_dot, :diamond_tall_open_dot, :diamond_wide, :diamond_wide_open, :diamond_wide_dot, :diamond_wide_open_dot, :hourglass, :hourglass_open, :bowtie, :bowtie_open, :circle_cross, :circle_cross_open, :circle_x, :circle_x_open, :square_cross, :square_cross_open, :square_x, :square_x_open, :diamond_cross, :diamond_cross_open, :diamond_x, :diamond_x_open, :cross_thin, :cross_thin_open, :x_thin, :x_thin_open, :asterisk, :asterisk_open, :hash, :hash_open, :hash_dot, :hash_open_dot, :y_up, :y_up_open, :y_down, :y_down_open, :y_left, :y_left_open, :y_right, :y_right_open, :line_ew, :line_ew_open, :line_ns, :line_ns_open, :line_ne, :line_ne_open, :line_nw, :line_nw_open, :arrow_up, :arrow_up_open, :arrow_down, :arrow_down_open, :arrow_left, :arrow_left_open, :arrow_right, :arrow_right_open, :arrow_bar_up, :arrow_bar_up_open, :arrow_bar_down, :arrow_bar_down_open, :arrow_bar_left, :arrow_bar_left_open, :arrow_bar_right, :arrow_bar_right_open, :arrow, :arrow_open, :arrow_wide, :arrow_wide_open,
-                )
-## ---
-function _textstyle!(cfg::Config;
-                     family    = nothing,
-                     pointsize = nothing,
-                     halign    = nothing,
-                     valign    = nothing,
-                     rotation  = nothing,
-                     color     = nothing,
-                     kwargs...)
-    # https://plotly.com/javascript/reference/layout/annotations/
-    _merge!(cfg, # textftont
-            color=color,
-            family=family,
-            size=pointsize,
-            align=halign,  # one of "left","center","right"
-            valign=valign, # one of "top", "middle", "bottom"
-            textangle=rotation)
-    kwargs
-end
-
-
-function _shapestyle!(cfg; kwargs...)
-    _merge!(cfg, Config(kwargs...))
-end
 # https://docs.juliaplots.org/latest/attributes/#magic-arguments
 """
     font(args...)
@@ -734,6 +610,94 @@ _align(x::Symbol, ::Nothing) = string(x)
 _align(::Nothing, ::Nothing) = ""
 _align(x::Symbol, y::Symbol) = join((string(x), string(y)), " ")
 
+## ----
+
+# linecolor - color
+# linealpha - float
+# linewidth - integer
+# linestyle: solic, dot, dashdot, ...
+# lineshape: linear, hv, vh, hvh, vhv, spline; or keys of _lineshapes
+function _linestyle!(c::Config;
+                     lc=nothing, linecolor = lc, # string, symbol, RGB?
+                     linealpha=nothing,
+                     lw=nothing, width=lw, linewidth = width, # pixels
+                     style=nothing, ls=style, linestyle = ls, # solid, dot, dashdot,
+                     lineshape = nothing,
+                     kwargs...)
+
+    cfg = c.line # pass in config object, not line part
+
+    shape = isnothing(lineshape) ? nothing :
+        lineshape ∈ keys(_lineshapes) ? _lineshapes[lineshape] : lineshape
+
+    color = linecolor
+
+    if !isnothing(linealpha)
+        if !isnothing(color)
+            color = rgb(linecolor, linealpha)
+        else
+            _merge!(c; opacity=linealpha) # opacity is not line, but c
+        end
+    end
+
+    _merge!(cfg; color=color, width=linewidth, dash=linestyle, shape)
+
+    kwargs
+end
+
+# [:path :steppre :steppost :sticks :scatter]
+
+## ---
+
+function _markerstyle!(cfg::Config; # .marker
+                       shape = nothing, markershape = shape,
+                       ms=nothing, markersize  = ms,
+                       mc=nothing, markercolor = mc,
+                       malpha=nothing, markeralpha = malpha,
+                       # no makr opacity; pass `rgba(r,g,b,α)` to color
+                       #ma=nothing, markeralpha=ma,opacity=markeralpha,
+                       kwargs...)
+    if !isnothing(markeralpha)
+        if !isnothing(markercolor)
+            markercolor = rgb(markercolor, markeralpha)
+        else
+            _merge!(cfg; opacity=markeralpha)
+        end
+    end
+
+    _merge!(cfg;
+            symbol=markershape,
+            size=markersize,
+            color=markercolor)
+    kwargs
+end
+
+# magic arguments
+## ---
+function _textstyle!(cfg::Config;
+                     family    = nothing,
+                     pointsize = nothing,
+                     halign    = nothing,
+                     valign    = nothing,
+                     rotation  = nothing,
+                     color     = nothing,
+                     kwargs...)
+    # https://plotly.com/javascript/reference/layout/annotations/
+    _merge!(cfg, # textftont
+            color=color,
+            family=family,
+            size=pointsize,
+            align=halign,  # one of "left","center","right"
+            valign=valign, # one of "top", "middle", "bottom"
+            textangle=rotation)
+    kwargs
+end
+
+
+function _shapestyle!(cfg; kwargs...)
+    _merge!(cfg, Config(kwargs...))
+end
+
 ## ---
 # for filled shapes
 function _fillstyle!(cfg::Config;
@@ -802,45 +766,7 @@ function _3d_styles!(p;
     kws
 end
 
-_legend_positions =
-    (topleft=(0,1), top=(1/2,1), topright=(1,1),
-     left=(0,1/2),  inside=(1/2,1/2), right=(1,1/2),
-     bottomleft=(0,0), bottom=(1/2,0), bottomright=(1,0))
 
-
-function _legend_magic!(p, legend)
-
-    lyt = p.layout
-    leg = p.layout.legend
-    for a ∈ legend
-        if isa(a, Tuple)
-            x, y = a
-            leg.x = x; leg.y=y
-        elseif isa(a, Font)
-            font = leg.font
-            font.family = a.family
-            font.size = a.pointsize
-            font.color = a.color
-        elseif isa(a, Bool)
-           lyt.showlegend=a
-        elseif isa(a, Symbol)
-            if haskey(_legend_positions, a)
-                x,y = _legend_positions[a]
-                leg.x = x; leg.y=y
-            elseif a == :reversed
-                leg.traceorder = :reversed
-            else
-                leg.bgcolor = a
-            end
-        end
-    end
-    nothing
-end
-
-_color_scales = (:YlOrRd, :YlGnBu, :RdBu,
-                 :Portland, :Picnic, :Jet, :Hot,
-                 :Greys, :Greens, :Bluered,
-                 :Electric, :Earth, :Blackbody)
 
 # act directly on config ...
 _expand_color(::Nothing) = nothing
@@ -849,180 +775,6 @@ _expand_color(x::AbstractString) = (x,)
 _expand_color(x::T) where {T <: Union{ContinuousColorGradient, CategoricalColorGradient}}= (x,)
 _expand_color(x) = x
 
-function _color_magic(; palette=nothing, color_palette=palette,
-                      kwargs...)
-    d = Config()
-    for a ∈ something(_expand_color(color_palette), tuple())
-        T = typeof(a)
-        if T <: AbstractString
-            a,T = Symbol(a), Symbol
-        end
-        if T <: Symbol
-            if a ∈ _color_scales
-                _set(d, :colorscale, a)
-                cfg.colorscale = a
-            else
-                a = cgrad(a)
-                T = typeof(a)
-            end
-        end
-
-        if T <: ContinuousColorGradient || T <: CategoricalColorGradient
-            cols = [[v,rgb(c)] for (v,c) ∈ zip(a.values, a.colors)]
-            _set(d, :colorscale, cols)
-        end
-
-        if T <: Stroke
-            line = Config()
-            line.color = rgb(a.color, a.alpha)
-            line.width = a.width
-            line.style = a.style
-            _set(d, :line, line)
-        end
-    end
-
-    # covert back
-    kws = merge(Dict(kwargs...), d)
-    nt = NamedTuple(kws)
-    Base.Pairs(nt, keys(nt))
-end
-
-
-
-
-
-# turn magic into keyword arguments
-_set(d, key, value) = (d[key] = value)
-_set(d, key, ::Nothing) = d
-
-function _make_magic(;
-                     line = nothing,
-                     marker = nothing,
-                     fill = nothing,
-                     kwargs...)
-
-    d = Config()
-
-    # fill = ...
-    fillcolor = nothing
-    fillalpha = nothing
-    fillstyle = get(kwargs, :fillstyle, nothing)
-
-    for a ∈ something(fill, tuple())
-        T = typeof(a)
-        if T <: Symbol || T <: AbstractString
-            a′ = Symbol(a)
-            if a′ ∈ _fillstyles
-                fillstyle = a′
-            else
-                fillcolor = a′
-            end
-        elseif T <: _RGB
-            fillcolor = a
-        elseif T <: Bool
-            a && (fillstyle = :toself) # true false
-        elseif T <: Real
-            if 0 < a < 1
-                fillalpha =a
-            elseif iszero(a)
-                fillstyle = :tozeroy
-            elseif isa(a, Integer)
-                @warn "Fill to a non-zero y value is not implemented"
-            end
-        elseif T <: Stroke
-            # adjust line properties
-            _set(d, :linewidth, a.width)
-            _set(d, :linecolor, rgb(a.color, a.alpha))
-            _set(d, :linestyle, a.style)
-        end
-    end
-    if isa(fillcolor, Union{String,Symbol}) && !isnothing(fillalpha)
-        fillcolor = rgb(fillcolor, fillalpha)
-    end
-    _set(d, :fillcolor, fillcolor)
-    !isnothing(fillcolor) && _set(d, :fill, fillstyle)
-
-
-    ## line = ...
-    linecolor = nothing
-    linealpha = nothing
-    for a ∈ something(line, tuple())
-        T = typeof(a)
-        if T <: Stroke
-            _set(d, :linewidth, a.width)
-            _set(d, :linecolor, rgb(a.color, a.alpha))
-            _set(d, :linestyle, a.style)
-        elseif T <: Symbol || T <: AbstractString
-            a′ = Symbol(a)
-            if a′ ∈ _linestyles
-                _set(d, :linestyle, a′)
-            elseif a′ ∈ keys(_lineshapes)
-                _set(d, :lineshape, _lineshapes[a′])
-            else
-                linecolor = a′
-            end
-        elseif T <: _RGB
-            linecolor = a
-            _set(d, :linecolor, a)
-        elseif T <: RGB || T <: RGBA
-            linecolor = rgb(a)
-            _set(d, :linecolor, rgb(a))
-        elseif T <:  Number
-            T <: Integer && _set(d, :linewidth, a)
-            0 < a < 1 && (linealpha = a)
-        end
-    end
-    if !isnothing(linealpha)
-        if isa(linecolor, Union{String,Symbol})
-            linecolor = rgb(linecolor, linealpha)
-        else
-            _set(d, :opacity, linealpha)
-        end
-    end
-    _set(d, :linecolor, linecolor)
-
-
-    ## marker = ...
-    markercolor = nothing
-    markeralpha = nothing
-    for a ∈ something(marker, tuple())
-        T = typeof(a)
-        if T <: Symbol || T <: AbstractString
-            a′ = Symbol(a)
-            if a′ ∈ _marker_shapes
-                _set(d, :markershape, replace(string(a), "_" => "-"))
-            else
-                markercolor = a′
-            end
-        elseif T <:  _RGB
-            markercolor = a
-        elseif T <: RGB || T <: RGBA
-            markercolor = rgb(a)
-        elseif T <: Number
-            if T <: Integer
-                _set(d, :markersize, a)
-            end
-            0 < a < 1 && (markeralpha = a)
-        end
-    end
-    if  !isnothing(markeralpha)
-        if isa(markercolor, Union{String,Symbol})
-            markercolor = rgb(markercolor, markeralpha)
-        else
-            _set(d, :opacity, markeralpha)
-        end
-    end
-    _set(d, :markercolor, markercolor)
-
-    # add color
-    kws = _color_magic(; kwargs...)
-
-    # covert back
-    kws = merge(Dict(kws...), d)
-    nt = NamedTuple(kws)
-    Base.Pairs(nt, keys(nt))
-
-end
 
 function _series_styles(cfg;
                         c=nothing, color=c, seriescolor=color,
