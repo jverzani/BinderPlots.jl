@@ -92,7 +92,11 @@ RGB,RGBA = PlotUtils.RGB, PlotUtils.RGBA
 import PlotUtils: cgrad, ContinuousColorGradient, CategoricalColorGradient
 export cgrad
 
+import SplitApplyCombine: invert, invert!
+
 include("utils.jl")
+include("styles.jl")
+include("magic.jl")
 include("plots-lite.jl")
 include("plot.jl")
 include("scatter.jl")
@@ -108,12 +112,10 @@ export Plot, Config # but not Preset, preset, plot
 
 export plot, plot!, scatter, scatter!
 export Shape
-#export Poly, rotate, translate, shear  # <<- not such a good idea?
 export contour, contour!, contourf, contourf!, heatmap, heatmap!
 export surface, surface!, wireframe, wireframe!
 export plot_implicit, plot_implicit!
 export quiver, quiver!
-#export arrow, arrow!
 export annotate, annotate!, title!, size!, legend!
 export text, font, stroke
 export xlabel!, ylabel!, zlabel!
@@ -125,7 +127,7 @@ export ★, ★!, ziptie, ziptie!
 export parallelogram, parallelogram!, circ3d, circ3d!, skirt, skirt!
 export current
 
-
+#shapes; maybe modify
 export arrows, arrows!, poly, poly!, band, band!, hspan!, vspan!, abline!, image!
 export rgb, colormap
 
