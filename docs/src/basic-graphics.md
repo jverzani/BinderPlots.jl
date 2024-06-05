@@ -23,7 +23,6 @@ Many, but not all, of the aliases are available. (The shorter ones are not, as t
 
 `BinderPlots` allows for magic arguments.
 
-
 * In `Plots.jl` the available plot types are specified through `seriestype` and there are shorthands to produce different methods (e.g., `scatter` is a shorthand for the seriestype `:scatter`.
 
 This is only partially the case with `BinderPlots`, as not all plot types have a shorthand defined.
@@ -322,7 +321,7 @@ To adjust the width of the bar, we pass the value through `stroke`. Error bars c
 
 ## Attributes
 
-Attributes of a plot are modified through keyword arguments. The `Plots.jl` interface allows many aliases and has magic argument. No attempt to cover all of these is made.
+Attributes of a plot are modified through keyword arguments. The `Plots.jl` interface allows many aliases and has magic arguments. No attempt to cover all of these is made.
 
 ### Keyword arguments
 
@@ -338,6 +337,7 @@ Some keywords chosen to mirror `Plots.jl` are:
 |`aspect_ratio`     | new plot calls | set to `:equal` for equal `x`-`y` (and `z`) axes |
 |`label`	    	| `plot`, `plot!`| set with a name for trace in legend |
 |`linecolor`		| `plot`, `plot!`| set with a color; alias `lc` |
+|`linealpha`		| `plot`, `plot!`| set with a value in `(0,1)` |
 |`linewidth`		| `plot`, `plot!`| set with an integer; aliases `lw`, `width` |
 |`linestyle`		| `plot`, `plot!`| set with `"solid"`, `"dot"`, `"dash"`, `"dotdash"`, [...](https://plotly.com/javascript/reference/#scatter-line-dash); aliases `style`, `ls` |
 |`lineshape`		| `plot`, `plot!`| set with `"linear"`, `"hv"`, `"vh"`, `"hvh"`, `"vhv"`, `"spline"`; from [plotly](https://plotly.com/javascript/reference/#scatter-line-shape) |
@@ -345,8 +345,10 @@ Some keywords chosen to mirror `Plots.jl` are:
 |`markershape`		| `scatter`, `scatter!` | set with `"diamond"`, `"circle"`, ...; alias `shape` |
 |`markersize`		| `scatter`, `scatter!` | set with integer; alias `ms` |
 |`markercolor`		| `scatter`, `scatter!` | set with color; alias `mc` |
-|`marker`           | `plot`, `plot!` | set with tuple of magic marker arguments |
+|`markeralpha`		| `scatter`, `scatter!`| set with a value in `(0,1)` |
+|`marker`           | `scatter`, `scatter!` | set with tuple of magic marker arguments |
 |`fillcolor`        | shapes                | interior color of a 2D shape; alias `fc` |
+|`fillalpha`		| shapes | set with a value in `(0,1)` |
 |`fillrange`        | shapes                | how much to fill |
 |`fill`             | shapes                | set with magic fill arguments |
 |`color`			| `annotate!` | set with color argument of `text`  |
@@ -371,19 +373,20 @@ Some exported names are used to adjust a plot after construction:
 
 ### "Magic" arguments
 
-The designer of `Plots.jl` cleverly recognized that many argument types come in similar groups. For example, lines, markers, and filling all have a color and an alpha transparency level. Each may have a different style or shape. Each may have a different scale. Moreover, scales are described by integers, styles described by symbols or strings, colors by symbols or strings -- if not a more specific type --  and transparencies by a number in $(0,1)$. As `Julia` can readily dispatch on value types, an expression like `(:red, 0.25, 12)` can be  parsed to identify a color, an alpha level and a scale. From here, it was a smart move to use keywords to associate these values with different attribute groups.
+The designer of `Plots.jl` cleverly recognized that many argument types come in similar groups. For example, lines, markers, and filling all have a color and an alpha transparency level. Each may have a different style or shape. Each may have a different scale. Moreover, scales are described by integers, styles described by symbols or strings, colors by symbols or strings -- if not a more specific type --  and transparencies by a number in $(0,1)$. As `Julia` can readily dispatch on value types, an expression like `(:red, 0.25, 12)` can be  parsed to identify a color, an alpha level and a scale. From here, it was a smart move to use keywords, like `line` and `fill`, to associate these values with different attribute groups.
 
 The `Plots.jl` design leverages data types to "magically" fill in keyword arguments. Much of this is implemented within `BinderPlots`, as described next.
 
 #### Series arguments
 
-The special keyword arguments `line`, `marker`, and `fill` are iterated over to fill in keyword arguments. For example, passing `line=(5, (:red, :blue), 0.25, :dash)` will specify: Draw the line for any odd number series with `linewidth=5`; color `rgb(:red, 0.25)`; and line style `:dash`. Even numbered series (when present) will have color `rgb(:blue, 0.25)` and the modified line width and style, as the values are recycled when there are multiple series specified.
+The special keyword arguments `line`, `marker`, and `fill` are iterated over to fill in keyword arguments. For example, passing `line=(5, (:red, :blue), 0.25, :dash)` will specify: Draw all lines with width `5`, `linealpha=0.25`, and use dashs, not solid lines, for the line style.
+For any odd number series the line color will be `rgb(:red, 0.25)`; even numbered series (when present) will have color `rgb(:blue, 0.25)`, as the values passed to `line` are recycled when there are multiple series specified.
 
 The container passed to `line` has the following mappings:
 
 * symbols and strings are matched against the possible linestyles, then the possible lineshapes; if there is no match, then the value is assumed to specify a color
 * a number in `(0,1)` indicates a transparency level
-* an integer specifies the scale for line width
+* an integer specifies the scale for the line width
 * `rgb` values are passed to the `linecolor` attribute
 * a `Stroke` object, produced by `stroke`, can alternatively be used to specify these values
 
@@ -583,9 +586,10 @@ to_documenter(current())           # hide
 
 * magic grid arguments are not supported
 
-* The `ribbon` argument is not supported
+* The `ribbon` argument is not supported in the same manner
 
-The `band` function may be a substitute
+Ribbons must be specified with the seriestype `:ribbon`.
+The `band` function may be a substitute.
 
 * The `lens` feature is not supported
 
