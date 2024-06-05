@@ -379,7 +379,7 @@ The `Plots.jl` design leverages data types to "magically" fill in keyword argume
 
 #### Series arguments
 
-The special keyword arguments `line`, `marker`, and `fill` are iterated over to fill in keyword arguments. For example, passing `line=(5, (:red, :blue), 0.25, :dash)` will specify: Draw all lines with width `5`, `linealpha=0.25`, and use dashs, not solid lines, for the line style.
+The special keyword arguments `line`, `marker`, and `fill` are iterated over to fill in keyword arguments. For example, passing `line=(5, (:red, :blue), 0.25, :dash)` will specify: Draw all lines with width `5`, `linealpha=0.25`, and use dashes, not solid lines, for the line style.
 For any odd number series the line color will be `rgb(:red, 0.25)`; even numbered series (when present) will have color `rgb(:blue, 0.25)`, as the values passed to `line` are recycled when there are multiple series specified.
 
 The container passed to `line` has the following mappings:
