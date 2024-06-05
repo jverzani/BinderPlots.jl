@@ -216,7 +216,7 @@ function skirt!(p::Plot, xs, ys, zs, f::Function; kwargs...)
     ziptie!(p, xs, ys, zs, xs, ys, zs′; kwargs...)
 end
 
-# 3D method for band; dispatch set up in shapes.jl
+# 3D method for band; dispatch set up in plotly-shapes.jl
 function band!(p::Plot, ::Val{3}, lower, upper; kwargs...)
     ziptie!(p, unzip(lower)..., unzip(upper)...; kwargs...)
 end

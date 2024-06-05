@@ -23,12 +23,14 @@ SeriesType(::Val{:path3d}) = (:scatter, :lines)
 
 function plot!(::Val{:scatter}, p::Plot, x=nothing, y=nothing, z=nothing;
                seriestype::Symbol=:lines,
-               ribbon=nothing,
+#               ribbon=nothing,
                kwargs...)
     _,mode = SeriesType(seriestype)
     KWs = Recycler(kwargs)
     for (i, xyzₛ) ∈ enumerate(xyz(x,y,z))
-        plot!(Val(:scatter), Val(Symbol(mode)), p, xyzₛ...; ribbon, KWs[i]...)
+        plot!(Val(:scatter), Val(Symbol(mode)), p, xyzₛ...;
+#              ribbon,
+              KWs[i]...)
     end
     p
 end
