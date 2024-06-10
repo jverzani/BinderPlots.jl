@@ -78,6 +78,7 @@ ntraces(::Function) = 1
 ntraces(::Number) = 1
 ntraces(x::Series) = length(x.ss)
 ntraces(x::Vector{Vector{T}}) where {T <: Real} = length(x)
+ntraces(x::Vector{Vector{T}}) where {T <: AbstractString} = length(x)
 
 # use Tables.
 _eachcol(x::AbstractMatrix) = [x[:,i] for i in 1:size(x)[2]]
@@ -88,6 +89,7 @@ _eachcol(x::AbstractRange) = (x,)
 _eachcol(x::Series) = x.ss
 _eachcol(::Nothing) = nothing
 _eachcol(x::Vector{Vector{T}}) where {T<:Real} = [xᵢ for xᵢ ∈ x]
+_eachcol(x::Vector{Vector{T}}) where {T<:AbstractString} = [xᵢ for xᵢ ∈ x]
 _eachcol(x) = (x,)
 
 # make a reccyler for x,y,z values
@@ -147,6 +149,7 @@ _ndims(x) = ndims(x)
 
 Recycler(x) =  Recycler(x, length(x))
 Recycler(::Nothing) =  Recycler([nothing],1)
+Recycler(x::PlotlyLight.Config) = Recycler((x,))
 Recycler(x::Symbol) = Recycler((x,))
 Recycler(x::AbstractString) = Recycler((x,))
 Recycler(x::PlotUtils.Colors.RGB) = Recycler((x,))

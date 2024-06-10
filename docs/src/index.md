@@ -4,7 +4,7 @@ CurrentModule = BinderPlots
 
 # BinderPlots
 
-Documentation for [BinderPlots](https://github.com/jverzani/BinderPlots.jl), a simple plotting package for resource-constrained environments using `PlotlyLight.jl` to render graphics described with an interface borrowed from `Plots.jl`.
+Documentation for [BinderPlots](https://github.com/jverzani/BinderPlots.jl), a simple plotting package for resource-constrained environments using `PlotlyLight.jl` to render graphics described with an interface superficially resembling much of that from `Plots.jl`.
 
 * [Plotly](https://plotly.com/) is a JavaScript library for plotting that is widely used and has supported interfaces for `Python`, `R`, and `Julia` (through `PlotlyJS`).
 * [PlotlyLight](https://github.com/JuliaComputing/PlotlyLight.jl) is a very lightweight package to create `Plotly` graphs using the JavaScript interface. The JSON structures are readily created using the clever `Config` constructor on the `Julia` side.
@@ -13,7 +13,7 @@ Documentation for [BinderPlots](https://github.com/jverzani/BinderPlots.jl), a s
 
 This package provides a light-weight plotting alternative to `Plots.jl` utilizing a subset of the `Plots` interface, particularly where it allows a function to be specified in a declarative manner. It is inspired by `SimplePlots` and is envisioned as being useful within resource-constrained environments such as [`binder.org`](https://mybinder.org/v2/gh/mth229/229-projects/lite?labpath=blank-notebook.ipynb).
 
-This is not a re-implementation of `Plots`. That package is far more developed in terms of its API, its extendable plot recipes, and its extensions like `StatsPlots.jl`. This package only provides a small fraction, primarily that part of the interface that makes visualizing functions in low dimensions easier.
+This is not a re-implementation of `Plots`; it only bears a superficial resemblance. The `Plots` package is far more developed in terms of its API, its extendable plot recipes, and its extensions like `StatsPlots.jl`. The `BinderPlots` package only provides a small fraction, primarily that part of the interface that makes visualizing functions in low dimensions easier.
 
 
 ## Installation

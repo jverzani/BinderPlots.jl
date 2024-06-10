@@ -7,14 +7,6 @@ Return a type and mode for `plotly` based on a Plots.jl series type.
 """
 SeriesType(x::Symbol) = SeriesType(Val(x))
 
-# this is all it takes to make
-# `plot(x; seriestype=:histogram)` plot a histogram
-SeriesType(::Val{:histogram}) = (:histogram, :histogram)
-
-SeriesType(::Val{:bar}) = (:bar, :bar) # x categorical, y numeric
-SeriesType(::Val{:pie}) = (:pie, :pie) # plot(; values = [19, 26, 55], labels=["a","b", "c"], seriestype=:pie)
-SeriesType(::Val{:boxplot}) = (:box, :box) # could use recyler
-SeriesType(::Val{:violin}) = (:violin, :violin)
 SeriesType(::Val{:mesh3d}) = (:mesh3d, :mesh3d)
 
 """
@@ -89,6 +81,9 @@ function plot!(p::Plot, x=nothing, y=nothing, z=nothing;
                seriestype= :lines,
                kwargs...)
     kws = _layout_styles!(p;  kwargs...) # adjust layout
+
+
+
     types = isa(seriestype, Symbol) ? (seriestype,) : tuple(seriestype...)
     for seriestype in types
         type, mode =  SeriesType(seriestype)
@@ -877,7 +872,11 @@ function Base.getindex(R::MagicRecycler, i::Int)
 end
 
 # recycle magic so that all is well in the world
+# bypass Config(...)
 KWRecycler(::Val{T}, o) where {T} = Recycler(o) # default
+KWRecycler(::Val{:line}, o::Config) =  Recycler(o)
 KWRecycler(::Val{:line}, o) = MagicRecycler(o)
+KWRecycler(::Val{:marker}, o::Config) =  Recycler(o)
 KWRecycler(::Val{:marker}, o) =  MagicRecycler(o)
+KWRecycler(::Val{:fill}, o::Config) =  Recycler(o)
 KWRecycler(::Val{:fill}, o) = MagicRecycler(o)
