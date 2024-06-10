@@ -164,7 +164,7 @@ This examples uses `marker` to specify a color to the histogram. A `Config` obje
 
 ```@example lite
 y = rand(500)
-plot(nothing, y,seriestype=:histogram,  marker=Config(color=:pink)) # not recyled
+plot(nothing, y,seriestype=:histogram,  marker=Config(color=:pink)) # not recycled
 to_documenter(current())           # hide
 ```
 
