@@ -21,15 +21,38 @@ SeriesType(::Val{:path}) =  (:scatter, :lines) # is this correct?
 SeriesType(::Val{:sticks}) =  (:scatter, :sticks)
 SeriesType(::Val{:path3d}) = (:scatter, :lines)
 
+# XXX group does not work with x::Function case
 function plot!(::Val{:scatter}, p::Plot, x=nothing, y=nothing, z=nothing;
+               group = nothing,
+               label = nothing,
                seriestype::Symbol=:lines,
-#               ribbon=nothing,
                kwargs...)
+    # group
+    if !isnothing(group)
+        if !isnothing(x)
+            xx = SplitApplyCombine.group(group, x)
+            x = collect(xx)
+            label = something(label, collect(string.(keys(xx))))
+        end
+        if !isnothing(y)
+            yy = SplitApplyCombine.group(group, y)
+            y = collect(yy)
+            label = something(label, collect(string.(keys(yy))))
+        end
+        if !isnothing(z)
+            zz = SplitApplyCombine.group(group, z)
+            z = collect(zz)
+            label = something(label, collect(string.(keys(zz))))
+        end
+    end
+
     _,mode = SeriesType(seriestype)
     KWs = Recycler(kwargs)
+    label = Recycler(label)
+
     for (i, xyzₛ) ∈ enumerate(xyz(x,y,z))
         plot!(Val(:scatter), Val(Symbol(mode)), p, xyzₛ...;
-#              ribbon,
+              label = label[i],
               KWs[i]...)
     end
     p

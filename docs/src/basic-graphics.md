@@ -1,6 +1,6 @@
 # Basics of BinderPlots
 
-The plotting interface provided picks some of the many parts of `Plots.jl` that prove useful for the graphics of calculus and provides a stripped-down, though reminiscent, interface around `PlotlyLight`, a package which otherwise is configured in a manner very-much like the underlying `JavaScript` implementation. The `Plots` package is great -- and has a `Plotly` backend -- but for resource-constrained usage can be too demanding.
+The plotting interface provided by `BinderPlots` superficially resembles that of `Plots.jl`. `BinderPlots`  picks some of the many parts of `Plots.jl` that prove useful for the graphics of calculus and provides a stripped-down, though reminiscent, interface around `PlotlyLight`, a package which otherwise is configured in a manner very-much like the underlying `JavaScript` implementation. The `Plots` package is great -- and has a `Plotly` backend -- but for resource-constrained usage can be too demanding.
 
 
 Some principles of `Plots` are:
@@ -158,27 +158,12 @@ Arrange an array of plot objects into a regular layout for display.
 
 ### `plot(; seriestype::Symbol, kwargs...)`
 
-There are a few series types for which the underlying `PlotlyLight` `Plot` function is basically called. A few examples from statistics, might be:
+The `seriestype` argument refers to a plotly `type` and `mode` which could be specified directly to `PlotlyLight`. For example, `plot(x, y; type="scatter", mode="markers+lines", ...)` would produce a scatter plot along with lines connecting the points. This task can be done by either combining  `plot` with `scatter!` (introduced next) *or* passing `seriestype=[:lines, :scatter]`.
 
-```@example lite
-p1 = plot(; values = [19, 26, 55], labels=["a","b", "c"], seriestype=:pie)
-p2 = plot(randn(100); seriestype=:histogram)
-p3 = plot(nothing, randn(100); seriestype=:boxplot)
-animals = ["giraffes", "orangutans", "monkeys"]
-p4 = plot(animals, [10,20,30]; seriestype=:bar, label="Zoo 1")
-plot!(p4, animals, [5,6,8];    seriestype=:bar, label="Zoo 2")
-p4.layout.barmode="group";
 
-plot([p1 p2; p3 p4])   # lost labels are a bug; only shows 1 plot in docs
+For many basic graphics, there are shorthands, such as `scatter!` to initiate the plotting. For the basic graphics of statistics, they use of the series type is necessary, as no shorthands are provided.
 
-to_documenter(current())           # hide
-```
 
-The keyword arguments defined within this package are processed; the rest passed onto the data configuration of Plotly. The bar plot required a specification of the layout configuration.
-
-!!! note "seriestype"
-    The `seriestype` argument refers to a plotly `type` and `mode` which could be specified directly. For example, `plot(x,y; type="scatter", mode="markers+lines", ...)` would produce a scatter plot along with lines connecting the points.
-This task can be done by either combining  `plot` with `scatter!` (introduced next) *or* passing `seriestype=[:lines, :scatter]`.
 
 ### `scatter(xs, ys, [zs])` or `scatter(pts)`
 
@@ -576,7 +561,7 @@ plot!([BinderPlots.translate(s, x, y) for (x,y) in zip(xs,ys)],
 to_documenter(current())           # hide
 ```
 
-* There is no `@df` macro, no `group` argument
+* There is no `@df` macro
 
 * The `projection` keyword is not supported for polar maps
 

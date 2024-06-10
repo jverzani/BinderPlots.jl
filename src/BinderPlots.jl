@@ -92,6 +92,7 @@ RGB,RGBA = PlotUtils.RGB, PlotUtils.RGBA
 import PlotUtils: cgrad, ContinuousColorGradient, CategoricalColorGradient
 export cgrad
 
+import SplitApplyCombine
 import SplitApplyCombine: invert, invert!
 
 include("utils.jl")
@@ -102,6 +103,7 @@ include("plot.jl")
 include("scatter.jl")
 include("2d-plots.jl")
 include("surface.jl")
+include("statistics.jl")
 include("shapes.jl")
 include("plotly-shapes.jl")
 include("3d-shapes.jl")
