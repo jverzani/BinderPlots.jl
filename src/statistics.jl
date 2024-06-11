@@ -2,6 +2,7 @@
 # `plot(x; seriestype=:histogram)` plot a histogram
 
 # no grouping
+SeriesType(::Val{:histogram2d}) = (:histogram2d, :histogram2d)
 # https://plotly.com/javascript/pie-charts/
 SeriesType(::Val{:pie}) = (:pie, :pie) # plot(; values = [19, 26, 55], labels=["a","b", "c"], seriestype=:pie)
 

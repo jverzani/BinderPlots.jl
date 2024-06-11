@@ -197,6 +197,7 @@ end
 SeriesType(::Val{:ribbon}) =  (:ribbon, :ribbon)
 function plot!(t::Val{:ribbon}, m::Val{:ribbon}, p::Plot, x, y, z::Nothing;
                ribbon=nothing,
+
                fill = nothing,
                kwargs...)
 

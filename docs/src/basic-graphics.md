@@ -1,6 +1,6 @@
 # Basics of BinderPlots
 
-The plotting interface provided by `BinderPlots` superficially resembles that of `Plots.jl`. `BinderPlots`  picks some of the many parts of `Plots.jl` that prove useful for the graphics of calculus and provides a stripped-down, though reminiscent, interface around `PlotlyLight`, a package which otherwise is configured in a manner very-much like the underlying `JavaScript` implementation. The `Plots` package is great -- and has a `Plotly` backend -- but for resource-constrained usage can be too demanding.
+The plotting interface provided by `BinderPlots` superficially resembles that of `Plots.jl`. `BinderPlots` picks some of the many parts of `Plots.jl` that prove useful for the graphics of calculus and provides a stripped-down, though reminiscent, interface around `PlotlyLight`, a package which otherwise is configured in a manner very-much like the underlying `JavaScript` implementation. The `Plots` package is great -- and has a `Plotly` backend -- but for resource-constrained usage can be too demanding.
 
 
 Some principles of `Plots` are:
@@ -17,7 +17,7 @@ The `PlotlyLight` interface is essentially the `JavaScript` interface for `Plotl
 
 * In `Plots.jl` for keyword arguments many aliases are used, allowing for shorter calling patterns for experienced users.
 
-Many, but not all, of the aliases are available. (The shorter ones are not, as they are as cryptic as magic arguments and more work to type.)
+Many, but not all, of the aliases are available. (The shorter ones are not, as they seem as cryptic as magic arguments and more work to type.)
 
 * In `Plots.jl` some arguments encompass magic [arguments](https://docs.juliaplots.org/latest/attributes/#magic-arguments) for setting many related arguments at the same time.
 
@@ -46,7 +46,7 @@ This package directly implements some of the `Plots` recipes for functions that 
 
 The `plot` function from `PlotlyLight` is given several methods through dispatch to create line graphs.
 
-The simplest means to plot a function `f` over the interval `[a,b]` is the declarative pattern `plot(f, a, b)`. For example:
+The simplest means to plot a function `f` over the interval `[a,b]` is through the declarative pattern `plot(f, a, b)`. For example:
 
 ```@example lite
 plot(sin, 0, 2pi)
@@ -139,9 +139,6 @@ to_documenter(current())           # hide
 
 As a convenience, to plot two or more traces in a graphic, a vector of functions can be passed in. In which case, each is plotted over the interval. (Similar to using `plot` to plot the first and `plot!` to add the rest.)
 
-The `Plots` keyword `line` arguments are recycled. For more control, using `plot!`, as above.
-
-
 ### `plot(fs::NTuple{N,Function}, a, b)`
 
 Two dimensional parametric plots show the trace of ``(f(t), g(t))`` for ``t`` in ``[a,b]``. These are easily created by `plot(x,y)` where the `x` and `y` values are produced by broadcasting, say, such as `f.(ts)` where `ts = range(a,b,n)`.
@@ -158,10 +155,10 @@ Arrange an array of plot objects into a regular layout for display.
 
 ### `plot(; seriestype::Symbol, kwargs...)`
 
-The `seriestype` argument refers to a plotly `type` and `mode` which could be specified directly to `PlotlyLight`. For example, `plot(x, y; type="scatter", mode="markers+lines", ...)` would produce a scatter plot along with lines connecting the points. This task can be done by either combining  `plot` with `scatter!` (introduced next) *or* passing `seriestype=[:lines, :scatter]`.
+The `seriestype` argument resolves to a plotly `type` and possibly `mode` which could be specified directly to `PlotlyLight`. For example, `plot(x, y; type="scatter", mode="markers+lines", ...)` would produce a scatter plot along with lines connecting the points. This task can be done by either combining  `plot` with `scatter!` (introduced next) *or* passing `seriestype=[:lines, :scatter]`.
 
 
-For many basic graphics, there are shorthands, such as `scatter!` to initiate the plotting. For the basic graphics of statistics, they use of the series type is necessary, as no shorthands are provided.
+For many basic graphics, there are shorthands, such as `scatter!` to initiate the plotting, as opposed to specifying a `seriestype` value. For the basic graphics of statistics, they use of the series type is necessary, as no shorthands are provided.
 
 
 
@@ -174,11 +171,11 @@ Related to `plot` and `plot!` are `scatter` and `scatter!`; which render just th
 
 The following `Plots.jl` marker attributes are supported:
 
-* `markershape` to set the shape
-* `markersize` to set the marker size
 * `markercolor` to adjust the color; `markeralpha` for its transparency level
+* `markersize` to set the marker size
+* `markershape` to set the shape
 
-A specification like `marker=(:diamond, 20, :blue, 0.75)` will set the four attributes above with matching by type. (The set of marker shapes is extensive, but this package does not allow the aliases used by `Plots.jl`. Eg, `:d` for `:diamond` or `:hex` for `:hexagon`.)
+A "magic" specification like `marker=(:diamond, 20, :blue, 0.75)` will set the four attributes above with matching by type. (The set of marker shapes is extensive, but this package does not allow the aliases used by `Plots.jl`. E.g., `:d` for `:diamond` or `:hex` for `:hexagon`.)
 
 
 ### Text and arrows
@@ -189,7 +186,7 @@ The `annotate!` function takes a a tuple of `(x,y,txt)` points or vectors of eac
 
 The `quiver!` function plots arrows with optional text labels. Due to the underlying use of `Plotly`, `quiver` is restricted to 2 dimensions. The arguments to quiver are tail position(s) in `x` and `y` and arrow lengths, passed to `quiver` as `dx` and `dy`. The optional `txt` argument can be used to label the anchors.
 
-The `BinderPlots.arrow!` function is not from `Plots.jl`. It provides a different interface to arrow drawing than `quiver`. For `BinderPlots.arrow!` the tail and vectors are passed in as vectors. (so for a single arrow from `p=[1,2]` with direction `v=[3,1]` one call would be `arrow!(p, v)` (as compared with `quiver([1],[2], quiver=([3],[1]))`). The latter more efficient for many arrows.
+The `BinderPlots.arrow!` function is not from `Plots.jl`. It provides a different interface to arrow drawing than `quiver`. For `BinderPlots.arrow!` the tail and vectors are passed in as vectors. (so for a single arrow from `p=[1,2]` with direction `v=[3,1]` one call would be `arrow!(p, v)` (as compared with `quiver([1],[2], quiver=([3],[1]))`). The `quiver` style is more efficient for many arrows.
 
 The `BinderPlots.arrows!` function borrows the `Makie.jl` interface to specify an arrow (basically `arrows!(x,y,u,v)` is `quiver!(x,y,quiver=(u,v))`.
 
@@ -205,7 +202,7 @@ For labels and annotations, the call `text(str, args...)` can be used to specify
 
 ### Shapes
 
-The `Shape` constructor can be used to specify a polygon, as with `Shape(xs, ys)`. There are a few built-in shapes available by specifying symbol (e.g. `Shape(:diamond)` or `Shape(:unitsquare)`.
+The `Shape` constructor can be used to specify a polygon, as with `Shape(xs, ys)`. There are a few built-in shapes available by specifying a symbol (e.g. `Shape(:diamond)` or `Shape(:unitsquare)`.
 
 These `Shape` instances can be manipulated by `translate`, `rotate`, `scale`, `shear`, and their mutating versions. As well there is `invert!` and `center!`.
 
@@ -216,7 +213,7 @@ import BinderPlots: translate, translate!, rotate, rotate!, scale, scale!, shear
 ```
 
 
-The following create regions which can be filled.  Shapes have an interior and exterior boundary. The exterior line has attributes that can be adjusted with `linecolor`, `linewidth`, and `linestyle`.
+The following create regions which can be filled.  Shapes have an interior and exterior boundary.
 
 The following `Plots.jl` fill attributes are supported:
 
@@ -224,7 +221,7 @@ The following `Plots.jl` fill attributes are supported:
 
 * `fillrange` one of `:none`, `:tozerox`, `:tonextx`, `:tozeroy` (or `0`), `:tonexty`, `:toself`, `:tonext`. The default for `Shape` instances is `:toself`.
 
-Use `stroke` to specify attributes for the enclosing polygonal line.
+Use `stroke` to specify attributes for the enclosing polygonal line. The `stroke` function matches by type: strings and symbols are matched to the lines styles, if no match a color is assumed; values in `(0,1)` are identified as transparency levels,  integers are identified as line widths.
 
 !!! note
     Unlike `Plots.jl` `Shape` instances can not be used directly as marker shapes.
@@ -238,6 +235,9 @@ Other plotting commands that create 2d-regions are:
 * `poly!(points; kwargs...)` where points is a container of ``(x,y)`` or ``(x,y,z)`` coordinates. Alternate to `Shape`.
 * `band!(lower, upper, args...; kwargs...)` draws a ribbon or band between `lower` and `upper`. These are either containers of `(x,y)` points or functions, in which case `args...` is read as `a, b, n = 251` to specify a range of values to plot over. The function can be scalar valued or parameterizations of a space curve in ``2`` or ``3`` dimensions. The `ribbon` argument of `Plots` is not supported.
 
+The series type `:ribbon` is used to draw a band around a function. The band is defined by the `ribbon` argument.
+
+
 There are just mutating versions of the above.
 
 In addition, there are a few, simple, non-polygonal shapes, including lines:
@@ -246,7 +246,7 @@ In addition, there are a few, simple, non-polygonal shapes, including lines:
 * `vline(x; ymin=0.0, ymax=1.0)`  draws a vertical line at  `x` across the computed axis, or adjusted via `ymin` and `ymax`. The `extrema` function computes the axis sizes. If `x` is a container, multiple lines are drawn.
 * `abline!(intercept, slope)` for drawing lines `a + bx` in the current frame.
 
-(There are also `Shape(:hline)` and `Shape(:vline)` that can be used, though typically would require some translation and scaling.)
+There are also `Shape(:hline)` and `Shape(:vline)` that can be used, though typically would require some translation and scaling. These are used by the series types `:xerror` and `:yerror` for creating error bars; see below.
 
 ----
 
@@ -257,7 +257,7 @@ For example, this shows how one could visualize the points chosen in a plot, sho
 f(x) = x^2 * (108 - 2x^2)/4x
 x, y = BinderPlots.unzip(f, 0, sqrt(108/2))
 plot(x, y; legend=false)
-scatter!(x, y, markersize=10)
+scatter!(x, y, markersize=10) #  or plot(f, 0, sqrt(108/2); seriestype=(:lines, :scatter), legend=false, markersize=10)
 
 quiver!([2,4.3,6],[10,50,10], ["sparse","concentrated","sparse"],
         quiver=([-1,0,1/2],[10,15,5]))
@@ -282,7 +282,7 @@ As seen in this overblown example, there are other methods besides `plot` for ot
 
 * `quiver!` is used to add arrows to a plot. These can optionally have their tails labeled, so this method can be repurposed to add annotations.  The `quiver` command allows for text rotation. Also `arrow` and `arrows` for different interfaces for drawing arrows. The `annotate!` function is used to add annotations at a given point. There are keyword arguments to adjust the text size, color, font-family, etc.
 
-* `rect!` is used to make a rectangle. There are also `hspan!` and `vspan!`. For lines, there are `hline!` and `vline!` to draw horizontal or vertical lines across the extent of the plotting region. There is also `abline!` to draw lines specified in intercept-slope form across the extent of the plotting region. Other regions can be draws. For example, `circle!` to draw a circle, and, more generally, `poly` can be used to draw a polygonal region.
+* `rect!` is used to make a rectangle. There are also `hspan!` and `vspan!`. For lines, there are `hline!` and `vline!` to draw horizontal or vertical lines across the extent of the plotting region. There is also `abline!` to draw lines specified in intercept-slope form across the extent of the plotting region. Other regions can be drawn. For example, `circle!` to draw a circle, and, more generally, `poly` can be used to draw a polygonal region, though `Shape` would be suggested.
 
 
 For another example, shapes can be used to create error bars. For example, suppose at a pair of points, error bars with width ``\sigma`` are to be drawn:
@@ -306,7 +306,7 @@ To adjust the width of the bar, we pass the value through `stroke`. Error bars c
 
 ## Attributes
 
-Attributes of a plot are modified through keyword arguments. The `Plots.jl` interface allows many aliases and has magic arguments. No attempt to cover all of these is made.
+Attributes of a plot or its series are modified through keyword arguments. The `Plots.jl` interface allows many aliases and has magic arguments to ease this specification. No attempt to cover all of these conveniences is made.
 
 ### Keyword arguments
 
@@ -372,7 +372,7 @@ The container passed to `line` has the following mappings:
 * symbols and strings are matched against the possible linestyles, then the possible lineshapes; if there is no match, then the value is assumed to specify a color
 * a number in `(0,1)` indicates a transparency level
 * an integer specifies the scale for the line width
-* `rgb` values are passed to the `linecolor` attribute
+* `rgb` values are passed to the `linecolor` attribute (as are the widely used `RGB` values from `PlotUtils`)
 * a `Stroke` object, produced by `stroke`, can alternatively be used to specify these values
 
 
@@ -398,7 +398,7 @@ The `font` function (which can be called directly or indirectly through `text` o
 * integers specify point sizes
 * non integers (e.g. `pi/4`) indicate rotation
 
-The `legend` argument can be a boolean or a container. When a container the values are magically transformed with:
+The `legend` argument can be a Boolean or a container. When a container the values are magically transformed with:
 
 * symbols are checked for correspondence with a legend position; if the symbol is `:reverse`, otherwise the symbol is assumed to be a color specification.
 * tuples indicate the placement position
@@ -510,7 +510,7 @@ To remark on the differences:
 
 1) The `translate` and `scale` methods for `Shape` instances and the `BezierCurve` constructor (lifted directly for `Plots.jl`) are not exported.
 
-2) the use of `RGB` from `Colors.jl` is not supported in `PlotlyLight` and hence `BinderPlots`. The `rgb` function is a replacement which also replaces the `plot_color` function used above to add an alpha transparency to a color specified by a symbol.
+2) the use of `RGB` from `Colors.jl` is not supported in `PlotlyLight` and hence `BinderPlots`. The `rgb` function is a replacement which also replaces the `plot_color` function used above to add an alpha transparency to a color specified by a symbol. (For magic arguments, `RGB` values are converted to `rgb` instances.)
 
 3) The illustrated use of `xaxis!` and `yaxis!` is needed to make a blank canvas. There is also an unexported `blank_canvas` function to avoid this detail.
 
@@ -533,8 +533,8 @@ The last example highlighted a few differences between `Plots.jl` and less featu
 * Some markers are not supported, and if passed as a magic argument will be identified as a color (e.g., `:hex`,`:d`, `:rect`, ...)
 
 * Several shorthands are not defined (e.g. `histogram`, `histogram2d`, `bar`, `OHLC`, `pie`, `boxplot`, `violin`, `spy`, `portfoliocomposition`, `areaplot`, `curves`)
-
-The `seriestype` might be defined. If not, defining a method for `SeriesType`, like `SeriesType(::Val{:histogram}) = (:histogram, :histogram)` where the return lists a `type` and a `mode` value for `plotly`, may work.
+x
+The `seriestype` might be defined. If not, defining a method for `SeriesType`, like `BinderPlots.SeriesType(::Val{:histogram2d}) = (:histogram2d, :histogram2d)` where the return lists a `type` and a `mode` value for `plotly`, may work.
 
 * The `@layout` macro is not supported
 
@@ -542,7 +542,7 @@ The only grid layout is to put the plots into an array, one plot per cell. For s
 
 A PR would be most welcome.
 
-* Shapes can not be used as custom  markers
+* Shapes cannot be used as custom markers
 
 `Plots.jl` allows custom shapes as markers. This is not supported, though can be mimicked, as in the following:
 
