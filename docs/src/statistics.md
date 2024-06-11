@@ -9,15 +9,14 @@ PlotlyDocumenter.change_default_plotly_version(version) # hide
 nothing # hide
 ```
 
-
 Both `Plots.jl` (through `StatsPlots`) and `Plotly` have the ability to easily create some of the basic graphics of statistics. `BinderPlots` does not attempt to provide an interface for these graphics, rather the underlying `Plotly` interface would be used. This section shows some example usage.
 
-The basic graphics of statistics show distributions (what can be and how often is is) and basic relationships (especially between an explanatory and response variable).
+The basic graphics of statistics show distributions (what can be and how often that something occurs) and basic relationships (especially between an explanatory and response variable).
 
 In the following the data is either numeric or categorical. The data may be passed along via the positional arguments of `plot` or as named arguments to pass directly to `PlotlyLight`. The `plot` interface allows for a grouping value, to be described later. Series attributes are passed along through keywords. Some of the graphics require adjustments to the underlying layout.
 
 
-The different grqphics we discuss are defined by the `seriestype`. We have `:histogram`, `:bar`, `:pie`, `:boxplot`, in addition to `:scatter`.
+The different grqphics we discuss are defined by the `seriestype`. We have `:histogram`, `:histogram2d`, `:bar`, `:pie`, `:boxplot`, in addition to `:scatter`.
 
 A histogram is a familiar graphic to illustrate the distribution of a single numeric data set. By passing the data in as the `x` argument the graphic is easy to construct:
 
@@ -28,7 +27,8 @@ plot(x; seriestype=:histogram)
 to_documenter(current())           # hide
 ```
 
-Later, as an example, many variants of histograms are shown.
+Later, as an example of translating `plotly`'s JavaScript examples,
+many variants of histograms are shown.
 
 Bar charts show the distribution of categorical variables. The `:bar` type expects the `x` value to get the levels and the `y` value to be the counts. In this example, two such bar charts are made:
 
@@ -44,19 +44,19 @@ to_documenter(current())           # hide
 The last command sets the `:barmode` attribute to `"group"` to specify how the two series are presented together.
 
 
-The pie chart is a lesser used graphic to illustrate a categorical variable by the the relative proportion of the categories. The underlying percentage can be computed. The bar chart used `x` and `y` values; the `Plotly` [pie chart](https://plotly.com/javascript/pie-charts/) uses named arguments `labels` and `values`:
+The pie chart is a lesser used graphic to illustrate a categorical variable, showing the relative proportion of the categories. The underlying percentage will be computed, so raw counts may be used. The bar chart above use  the generic `x` and `y` names for its data; howeverthe `Plotly` [pie chart](https://plotly.com/javascript/pie-charts/) uses named arguments `labels` and `values`:
 
 ```@example lite
 labels =["a","b", "c"]
 values = [19, 26, 55]
-plot(; values , labels, seriestype=:pie, hole=0.4)
+plot(; labels, values, seriestype=:pie, hole=0.4)
 
 to_documenter(current())           # hide
 ```
 
 The graphic above used the `hole` argument to make donut.
 
-The [box plot](https://plotly.com/javascript/box-plots/), like a histogram, is a graphic to show the distribution of a single numeric variable. It uses a style that highlights the
+The [box plot](https://plotly.com/javascript/box-plots/), like a histogram, is a graphic to show the distribution of a single numeric variable. It uses a style that highlights just the basic descriptions of a distribution (center, spread, symmetry, skew, ...).
 
 
 ```@example lite
@@ -66,7 +66,7 @@ plot(nothing, x; seriestype=:boxplot)
 to_documenter(current())           # hide
 ```
 
-Passing the data into the first argument position instructs the drawing of vertical box plots, using the second argument (by padding the first position with `nothing`) led to a vertical box plot.
+Passing the data into the first, `x`,  argument position instructs the drawing of vertical box plots, using the second, `y`, argument (by padding the first position with `nothing`) produces  a vertical box plot.
 
 ## Relationships, grouping
 
@@ -160,7 +160,7 @@ to_documenter(current())           # hide
 
 ### Horizontal
 
-This examples uses `marker` to specify a color to the histogram. A `Config` object is needed to bypass the magic constructors.
+This example uses `marker` to specify a color to the histogram. A `Config` object is needed to avoid the magic processing of the `marker` arguments.
 
 ```@example lite
 y = rand(500)
@@ -187,7 +187,7 @@ to_documenter(current())           # hide
 
 ### Stacked Histograms
 
-This uses the `:stack` style of display:
+The `:stack` style for `barmode` has a different display:
 
 ```@example lite
 x = rand(500)
@@ -202,7 +202,7 @@ to_documenter(current())           # hide
 
 ### Colored and Styled Histograms
 
-This example passes more style arguments to `marker`. It also has to workaround the fact that the `Config` constructor has some issues when a reserved keyword, like `end`, is used.
+This example passes more style arguments to `marker`. It also has to work around the fact that the `Config` constructor has some issues when a reserved keyword, like `end`, is used.
 
 ```@example lite
 k = rand(500)
@@ -212,7 +212,7 @@ y1 = k
 y2 = 2k
 
 xbins = Config(start=0.5, size=0.06)
-xbins.end=2.8 # <-- why we cant Config(start=0.5, size=0.06, end=2.8)
+xbins.end=2.8 # <-- why we can't use Config(start=0.5, size=0.06, end=2.8)
 
 p = plot(x1, y1;
 seriestype=:histogram,
@@ -260,7 +260,8 @@ to_documenter(current())           # hide
 
 ```@example lite
 x = rand(500)
-plot(x; seriestype=:histogram, histnorm="probability",
+plot(x; seriestype=:histogram,
+        histnorm="probability",
         marker = Config(color=rgb(255,255,100)))
 
 to_documenter(current())           # hide
