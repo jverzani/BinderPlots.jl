@@ -50,7 +50,8 @@ end
 _levels_fnt = Config(weight="bold", size=20, color=:gray)
 
 function _facet_row(x=nothing, y=nothing, z=nothing;
-                    facet=nothing, group,
+                    facet=nothing,
+                    group = nothing, legend=true,
                     xlabel=nothing, ylabel=nothing,
                     kwargs...)
     ks = nothing
@@ -73,7 +74,7 @@ function _facet_row(x=nothing, y=nothing, z=nothing;
 
         pᵢ = plot(x′,y′,z′;
                   group = g,
-                  showlegend=legend && !isnothing(group) && axis_ctr <= 2,
+                  showlegend=legend && !isnothing(group) && i <= 1,
                   xaxis = "x"*cnt,
                   yaxis = "y"*cnt,
                   kwargs...)
@@ -128,7 +129,7 @@ function _facet_grid(x=nothing, y=nothing, z=nothing;
 
     axis_ctr = 1
 
-    for (i, k₁) ∈ enumerate(sort(ks1; rev=true)) # row
+    for (i, k₁) ∈ enumerate(sort(ks1)) # row
         for (j, k₂) ∈ enumerate(sort(ks2))       # column
             axis_cnt = axis_ctr == 1 ? "" : string(axis_ctr)
             axis_cnt₋ = axis_ctr <= 2 ? "" : string(axis_ctr-1)
@@ -154,12 +155,12 @@ function _facet_grid(x=nothing, y=nothing, z=nothing;
 
     # add annotations for levels of facet variables
     annotations = Config[]
-    for (i, kᵢ) ∈ enumerate(sort(ks1; rev=true))
+    for (i, kᵢ) ∈ enumerate(sort(ks1))
         c = Config(
             xref="paper", yref="paper",
             x=(2i-1)/(2*nc), y=1,
             xanchor="right", yanchor="bottom",
-            text=kᵢ, font=_levels_fnt,
+            text=string(kᵢ), font=_levels_fnt,
             showarrow=false)
         push!(annotations, c)
     end
@@ -168,7 +169,7 @@ function _facet_grid(x=nothing, y=nothing, z=nothing;
             xref="paper", yref="paper",
             x=1, y=(2i-1)/(2*nr),
             xanchor="left", yanchor="top",
-            text=kᵢ, font=_levels_fnt,
+            text=string(kᵢ), font=_levels_fnt,
             showarrow=false)
         push!(annotations, c)
     end
@@ -192,7 +193,8 @@ function make_cells(x, g, ks)
     isnothing(x) && return (x, ks)
     xx = SplitApplyCombine.group(g, x)
     x = collect(xx)
-    ks = something(ks, collect(string.(keys(xx))))
+    #ks = something(ks, collect(string.(keys(xx))))
+    ks = something(ks, collect(keys(xx)))
     xx, ks
 end
 
@@ -200,7 +202,9 @@ function make_cells(x, g₁, g₂, ks₁, ks₂)
     isnothing(x) && return (x, ks₁, ks₂)
     xx = SplitApplyCombine.group(g₁, collect(zip(x,g₂)))
     xxx = map(u -> SplitApplyCombine.group(last.(u), first.(u)), xx)
-    ks₁ = something(ks₁, collect(string.(keys(xx))))
-    ks₂ = something(ks₂, collect(string.(keys(xxx[first(keys(xxx))]))))
+#    ks₁ = something(ks₁, collect(string.(keys(xx))))
+#    ks₂ = something(ks₂, collect(string.(keys(xxx[first(keys(xxx))]))))
+    ks₁ = something(ks₁, collect(keys(xx)))
+    ks₂ = something(ks₂, collect(keys(xxx[first(keys(xxx))])))
     xxx, ks₁, ks₂
 end
