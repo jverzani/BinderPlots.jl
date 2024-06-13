@@ -49,7 +49,6 @@ function plot!(::Val{:statistics}, p::Plot, x=nothing, y=nothing, z=nothing;
     label = Recycler(label)
 
     for (i, xyzₛ) ∈ enumerate(xyz(x,y,z))
-        @show xyzₛ
         plot!(M, M, p, xyzₛ...;
               label = label[i],
               KWs[i]...)

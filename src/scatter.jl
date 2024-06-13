@@ -1,4 +1,3 @@
-# scatter shorthand just relies on lineplot to do the work
 SeriesType(::Val{:scatter}) = (:scatter, :markers)
 
 """
@@ -14,10 +13,7 @@ Place points on a plot.
 
 The `marker` keyword has some magic arguments.
 """
-function scatter(args...; kwargs...)
-    p, kws = _new_plot(; kwargs...)
-    scatter!(p, args...; kwargs...)
-end
+scatter(args...; kwargs...) = plot(args...; seriestype=:scatter, kwargs...)
 
 """
     scatter!([p::Plot], x, y, [z]; kwargs...)

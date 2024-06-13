@@ -60,7 +60,8 @@ p
 !!! note "Warning"
     You may need to run the first plot cell twice to see an image.
 """
-function plot(args...; kwargs...)
+function plot(args...; facet=nothing, kwargs...)
+    !isnothing(facet) && return _facet(args...; facet, kwargs...)
     p, kws = _new_plot(; kwargs...) # new_plot adjust Config aspects
     plot!(p, args...; kwargs...)
 end
