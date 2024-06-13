@@ -142,6 +142,12 @@ plot(df.bill_depth_mm, df.bill_length_mm; group = df.species,
 to_documenter(current())           # hide
 ```
 
+## Facets
+
+Facet plots show the data using different subplots, where the data is split by faceting variables, similar to `group` variables.
+
+The implementation is a bit primitive, but passing one variable to the `facet` argument, will produce a row of the same graphic for the data subsetted by the levels of the `facet` variable. Passing two variables in a tuple to the `facet` argument, will produce a grid of subplots, the columns following levels of the first facetting variable, the rows the levels of the second.
+
 
 ## Histogram examples
 
