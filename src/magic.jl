@@ -31,7 +31,10 @@ function _axis_magic!(cfg, args...)
         elseif a ∈ (:flip, :invert, :inverted)
             cfg.autorange = "reversed"
         elseif (isa(a, Tuple) || isa(a, AbstractVector))
-            if length(a) == 2
+            N = length(a)
+            if iszero(N)
+                @warn "look this up"
+            elseif N == 2
                 cfg.range = a
             else
                 x₁ = first(a)
@@ -43,6 +46,8 @@ function _axis_magic!(cfg, args...)
             end
         elseif isa(a, Bool)
             cfg.showgrid = a
+            cfg.zeroline = a
+            cfg.showticklabels=a
         elseif isa(a, AbstractString)
             _labelstyle!(cfg, a)
         elseif isa(a, TextFont)
@@ -83,7 +88,8 @@ function _legend_magic!(p, legend)
 end
 
 
-function _color_magic(; palette=nothing, color_palette=palette,
+function _color_magic(;
+                      seriescolor=nothing, palette=seriescolor, color_palette=palette,
                       kwargs...)
     d = Config()
     for a ∈ something(_expand_color(color_palette), tuple())

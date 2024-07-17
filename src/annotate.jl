@@ -49,6 +49,22 @@ function annotate!(p::Plot, anns::Vector; kwargs...)
 end
 
 
+"""
+    label!(str, x, y, args...)
+
+A convenience when adding a single annotation:
+
+* `x`,`y` are coordinates
+* label is formed by `text(str, args...)`
+
+## Example
+```{julia}
+plot(sin, 0, pi)
+BinderPlots.label!("hi there", 2, 0.9, :bottom, :right, 20)
+```
+"""
+label!(str, x::Real, y::Real, args...) = annotate!([(x,y,text(str, args...))])
+
 ## ----
 
 # arrow from u to u + du with optional text at tail

@@ -19,7 +19,7 @@ Create surface plot. Pass `zcontour=true` to add contour plot projected onto the
 ```
 f(x,y) = 4 - x^2 - y^2
 xs = ys = range(-2, 2, length=50)
-surface(xs, ys, f; palette=cgrad(:acton))  # zs = f.(xs', ys)
+surface(xs, ys, f; palette=cgrad(:acton))  # zs = f.(xs', ys); can use seriescolor for palette
 ```
 
 ## Extended help

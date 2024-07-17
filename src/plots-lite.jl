@@ -116,6 +116,7 @@ function plot!(t::Val{T}, m::Val{M}, p::Plot, x=nothing, y=nothing, z=nothing;
 end
 
 # create a blank canvas with a given size, etc.
+# alternatively just `plot(; axis=([], false))`, as with Plots.
 function blank_canvas(;
                       xlim=nothing, xlims=xlim,
                       ylim=nothing, ylims=ylim,
@@ -154,7 +155,8 @@ current() = current_plot[]
 # make a new plot by calling `PlotlyLight.Plot`
 # doesn't consume
 function _new_plot(;
-                   windowsize=nothing, size=windowsize, # named tuple (width=, height=)
+                   windowsize=nothing, size=windowsize, # named tuple (width=, height=),
+                   axis = nothing,
                    kwargs...)
 
     p = Plot(Config[],
@@ -167,6 +169,12 @@ function _new_plot(;
     end
 
     size!(p, size)
+    if !isnothing(axis)
+        @show axis
+        for ax ∈ (:xaxis, :yaxis, :zaxis)
+            _axis_magic!(p.layout[ax], axis...)
+        end
+    end
     p, kwargs
 end
 
