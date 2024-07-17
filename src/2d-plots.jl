@@ -37,8 +37,24 @@ end
     contour!([p::Plot], x, y, z; kwargs...)
     contour(x, y, f::Function; kwargs...)
     contour!(x, y, f::Function; kwargs...)
+    contourf(x, y, z; kwargs...)
+    contourf!([p::Plot], x, y, z; kwargs...)
+    contourf(x, y, f::Function; kwargs...)
+    contourf!(x, y, f::Function; kwargs...)
 
 Create contour map.
+
+* Use `contourf` variants for filled contour plot.
+* Use `seriescolor` or `palette` to pass different colorschemes, e.g. `seriescolor=cgrad(:acton)`.
+
+## Example
+
+```{julia}
+f(x,y) = sinpi(x*y)*sinpi(x/2 + y)
+ys = xs = range(-1,1,200)
+contourf(xs, ys, f; seriescolor=cgrad(:algae))
+```
+
 """
 function contour(args...; kwargs...)
     p, kws = _new_plot(; kwargs...)
