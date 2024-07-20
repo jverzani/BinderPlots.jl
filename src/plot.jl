@@ -113,7 +113,7 @@ function plot!(t::Val{:scatter}, m::Val{M}, p::Plot,
 end
 
 function plot!(t::Val{T}, p::Plot, x, y, f::Function; kwargs...) where {T}
-    plot!(t, p, x, y, f.(x, y'); kwargs...)
+    plot!(t, p, x, y, f.(x', y); kwargs...)
 end
 
 ## parametric

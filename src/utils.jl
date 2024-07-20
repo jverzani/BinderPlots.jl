@@ -221,6 +221,7 @@ function unzip(f::Function, a, b)
 
 end
 # return matrices for x, y, [z]
+# F: R² → R³
 unzip(as, bs, F::Function) = unzip(F.(as', bs))
 
 

@@ -89,6 +89,10 @@ y(t) = (d - a*t) / b
 surface(xs, ys, zs)
 surface!(Xs, Ys, Zs, opacity=0.2)
 plot!(unzip(γ.(xs))...; linewidth=3)
+
+# single transparent color
+cs =  cgrad([parse(Colorant, :seagreen)], alpha=0.25)
+surface(xs, ys, zs; seriescolor=cs)
 ```
 """
 function surface(args...; kwargs...)
