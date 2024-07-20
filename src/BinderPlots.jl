@@ -89,8 +89,10 @@ import PlotlyLight: Plot, Config
 
 using PlotUtils
 RGB,RGBA = PlotUtils.RGB, PlotUtils.RGBA
-import PlotUtils: cgrad, ContinuousColorGradient, CategoricalColorGradient
-export cgrad
+import PlotUtils: cgrad,
+    Colorant, @colorant_str,
+    ContinuousColorGradient, CategoricalColorGradient
+export cgrad, Colorant, @colorant_str
 
 import SplitApplyCombine
 import SplitApplyCombine: invert, invert!
