@@ -170,7 +170,6 @@ function _new_plot(;
 
     size!(p, size)
     if !isnothing(axis)
-        @show axis
         for ax ∈ (:xaxis, :yaxis, :zaxis)
             _axis_magic!(p.layout[ax], axis...)
         end
