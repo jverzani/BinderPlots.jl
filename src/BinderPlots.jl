@@ -87,6 +87,23 @@ module BinderPlots
 import PlotlyLight
 import PlotlyLight: Plot, Config
 
+# PlotlyLight looks odd in a Jupyter notebook
+"""
+    default_size!(w::Integer,h::Integer)
+
+Specify default size as percent of allotted screen.
+
+PlotlyLight uses 100, 100 which looks odd in a Jupyter notebook. We set this to 60,120 (so width is 60% of screen size), which seems to look better.
+"""
+function default_size!(w::Int, h::Int)
+    BinderPlots.PlotlyLight.settings.div.style="height=$h%;width:$w%"
+end
+function __init__()
+    default_size!(60, 120)
+end
+export default_size!
+
+
 using PlotUtils
 RGB,RGBA = PlotUtils.RGB, PlotUtils.RGBA
 import PlotUtils: cgrad,
