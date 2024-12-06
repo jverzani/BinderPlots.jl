@@ -106,7 +106,7 @@ end
 
 function __init__()
     default_size!(60, 120)
-    StructType(::Type{BinderPlots._RGB}) = StringType()
+    @eval StructType(::Type{BinderPlots._RGB}) = StringType()
 end
 export default_size!
 
