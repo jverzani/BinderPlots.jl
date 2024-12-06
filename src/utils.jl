@@ -302,7 +302,6 @@ rgb(r::_RGB, α=1.0) = _RGB(r.r,r.g,r.b,α)
 rgb(r::_RGB, ::Nothing) = r
 rgb(::Nothing, ::Any) = nothing
 
-StructType(::Type{_RGB}) = StringType()
 
 function Base.string(c::_RGB)
     (;r,g,b,α) = c

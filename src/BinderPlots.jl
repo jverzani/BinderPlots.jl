@@ -105,6 +105,7 @@ function default_size!(w::Int, h::Int)
 end
 function __init__()
     default_size!(60, 120)
+    StructType(::Type{_RGB}) = StringType()
 end
 export default_size!
 
