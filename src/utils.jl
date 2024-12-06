@@ -302,7 +302,9 @@ rgb(r::_RGB, α=1.0) = _RGB(r.r,r.g,r.b,α)
 rgb(r::_RGB, ::Nothing) = r
 rgb(::Nothing, ::Any) = nothing
 
-PlotlyLight.StructTypes.StructType(::Type{_RGB}) = PlotlyLight.StructTypes.StringType()
+PlotlyLight.JSON3.StructTypes.StructType(::Type{_RGB}) =
+    PlotlyLight.JSON3.StructTypes.StringType()
+
 function Base.string(c::_RGB)
     (;r,g,b,α) = c
     "rgba($r,$g,$b,$α)"
