@@ -21,7 +21,7 @@ BinderPlotsSymPyCoreExt = "SymPyCore"
 [compat]
 CalculusWithJulia = "0.2"
 PlotUtils = "1"
-PlotlyLight = "0.8, 0.9"
+PlotlyLight = "0.8, 0.9, 0.10, 0.11"
 SimpleExpressions = "1"
 SplitApplyCombine = "1"
 SymPyCore = "0.2"
