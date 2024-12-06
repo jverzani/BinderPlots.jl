@@ -87,7 +87,10 @@ module BinderPlots
 
 import PlotlyLight
 import PlotlyLight: Plot, Config
-import PlotlyLight.JSON3.StructTypes: StructType, StringType
+import StructTypes: StructType, StringType
+
+
+
 
 # PlotlyLight looks odd in a Jupyter notebook
 """
@@ -102,10 +105,6 @@ function default_size!(w::Int, h::Int)
 end
 function __init__()
     default_size!(60, 120)
-    eval(quote
-         StructType(::Type{_RGB}) = StringType()
-         end)
-
 end
 export default_size!
 
