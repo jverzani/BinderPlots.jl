@@ -83,6 +83,7 @@ There are also numerous functions to modify attributes of an existing plot.
 
 """
 module BinderPlots
+__precompile__(false)
 
 import PlotlyLight
 import PlotlyLight: Plot, Config
@@ -154,5 +155,12 @@ export current
 #shapes; maybe modify
 export arrows, arrows!, poly, poly!, band, band!, hspan!, vspan!, abline!, image!
 export rgb, colormap
+
+
+function __init__()
+    eval(quote
+         PlotlyLight.JSON3.StructTypes.StructType(::Type{_RGB}) = PlotlyLight.JSON3.StructTypes.StringType()
+         end)
+end
 
 end
