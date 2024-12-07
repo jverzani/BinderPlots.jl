@@ -103,11 +103,12 @@ PlotlyLight uses 100, 100 which looks odd in a Jupyter notebook. We set this to 
 function default_size!(w::Int, h::Int)
     BinderPlots.PlotlyLight.settings.div.style="height=$h%;width:$w%"
 end
-
-#function __init__()
-#    #default_size!(60, 120)
-#end
 export default_size!
+
+function __init__()
+    default_size!(60, 120)
+end
+
 
 
 using PlotUtils
