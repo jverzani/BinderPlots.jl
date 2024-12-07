@@ -104,9 +104,9 @@ function default_size!(w::Int, h::Int)
     BinderPlots.PlotlyLight.settings.div.style="height=$h%;width:$w%"
 end
 
-function __init__()
-    #default_size!(60, 120)
-end
+#function __init__()
+#    #default_size!(60, 120)
+#end
 export default_size!
 
 
