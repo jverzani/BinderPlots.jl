@@ -84,8 +84,13 @@ There are also numerous functions to modify attributes of an existing plot.
 """
 module BinderPlots
 
+
 import PlotlyLight
 import PlotlyLight: Plot, Config
+import StructTypes: StructType, StringType
+
+
+
 
 # PlotlyLight looks odd in a Jupyter notebook
 """
@@ -98,10 +103,12 @@ PlotlyLight uses 100, 100 which looks odd in a Jupyter notebook. We set this to 
 function default_size!(w::Int, h::Int)
     BinderPlots.PlotlyLight.settings.div.style="height=$h%;width:$w%"
 end
+export default_size!
+
 function __init__()
     default_size!(60, 120)
 end
-export default_size!
+
 
 
 using PlotUtils
@@ -154,5 +161,7 @@ export current
 #shapes; maybe modify
 export arrows, arrows!, poly, poly!, band, band!, hspan!, vspan!, abline!, image!
 export rgb, colormap
+
+
 
 end
