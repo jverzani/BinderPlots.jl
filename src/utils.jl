@@ -303,6 +303,10 @@ rgb(r::_RGB, ::Nothing) = r
 rgb(::Nothing, ::Any) = nothing
 
 
+
+
+StructType(::Type{BinderPlots._RGB}) = StringType()
+
 function Base.string(c::_RGB)
     (;r,g,b,α) = c
     "rgba($r,$g,$b,$α)"
