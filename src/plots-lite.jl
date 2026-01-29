@@ -657,7 +657,7 @@ function _markerstyle!(cfg::Config; # .marker
                        ms=nothing, markersize  = ms,
                        mc=nothing, markercolor = mc,
                        malpha=nothing, markeralpha = malpha,
-                       # no makr opacity; pass `rgba(r,g,b,α)` to color
+                       # no marker opacity; pass `rgba(r,g,b,α)` to color
                        #ma=nothing, markeralpha=ma,opacity=markeralpha,
                        kwargs...)
     if !isnothing(markeralpha)

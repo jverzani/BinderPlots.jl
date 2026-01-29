@@ -1,4 +1,4 @@
-# Three dimesional shapes
+# Three dimensional shapes
 
 ```@example lite
 using BinderPlots
