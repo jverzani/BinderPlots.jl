@@ -28,7 +28,7 @@ end
 
 function _add_shapes!(p::Plot, ps; kwargs...)
     if isa(ps, Config)
-        _add_shape!(p, ps; kwargs...)
+        _add_shape!(p, ps)
     else
         for (i, s) ∈ enumerate(ps)
             _add_shape!(p, s)
@@ -342,7 +342,7 @@ function band!(p::Plot, ::Val{2}, lower, upper;
     x,y = unzip(lower)
     x, y = _replace_infinite(x), _replace_infinite(y)
     l1 = Config(;x,y)
-    kws = _make_magic(kwargs)
+    kws = _make_magic(;kwargs...)
     _linestyle!(l1; kws...)
 
     x,y = unzip(upper)

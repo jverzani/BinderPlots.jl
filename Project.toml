@@ -1,7 +1,7 @@
 name = "BinderPlots"
 uuid = "5e41213d-62ae-4ae0-a5b0-867e743d03c0"
 authors = ["jverzani <jverzani@gmail.com> and contributors"]
-version = "1.0.16"
+version = "1.0.17"
 
 [deps]
 PlotUtils = "995b91a9-d308-5afd-9ec6-746e21dbc043"
@@ -21,6 +21,8 @@ BinderPlotsSymPyCoreExt = "SymPyCore"
 
 [compat]
 CalculusWithJulia = "0.2,0.3"
+JET = "0.9, 0.10, 0.11"
+LinearAlgebra = "<0.0.1, 1"
 PlotUtils = "1"
 PlotlyLight = "0.13"
 SimpleExpressions = "1"
@@ -31,7 +33,9 @@ julia = "1.9"
 
 [extras]
 CalculusWithJulia = "a2e0e22d-7d4c-5312-9169-8b992201a882"
+JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Test", "JET", "LinearAlgebra"]

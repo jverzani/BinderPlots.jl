@@ -219,7 +219,7 @@ annotate!(p, [(pi, 0, text("Zero", f))])
 quiver!(p, [pi],[1/2], [text("zero",f)], quiver=([0],[-1/2]))
 ```
 """
-title!(p::Plot, ::Nothing) = nothing
+title!(p::Plot, ::Nothing) = p
 function title!(p::Plot, txt)
     p.layout.title = txt
     p
@@ -449,7 +449,7 @@ function size!(p::Plot; width=nothing, height=nothing)
 end
 size!(;width=nothing, height=nothing) = size!(current_plot[]; width, height)
 
-size!(s) = size!(current_plot[], size)
+size!(s) = size!(current_plot[], s)
 size!(p::Plot, ::Nothing) = p
 function size!(p::Plot, s)
     width = get(s, :width, nothing)
@@ -812,7 +812,7 @@ function _trace_styles!(c; label=nothing,
 end
 
 # XXX this needs work
-function _layout_styles!(p;
+function _layout_styles!(p::Plot;
                          xlims=nothing, ylims=nothing,
                          xticks=nothing, yticks=nothing, zticks=nothing,
                          title=nothing,
