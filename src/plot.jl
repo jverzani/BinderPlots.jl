@@ -142,7 +142,7 @@ function plot!(p::Plot,
     plot!(p, (f,g), as...; kwargs...)
 end
 function plot!(p::Plot,
-               f::Function, g::Function, h::Function , as...)
+               f::Function, g::Function, h::Function , as...; kwargs...)
     @warn "use a tuple, `(f,g,h)`, to specify a parametric plot"
     plot!(p, (f,g,h), as...; kwargs...)
 end

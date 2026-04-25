@@ -38,7 +38,7 @@ function _facet(x=nothing, y=nothing, z=nothing;
                 kwargs...)
     if isa(facet, Tuple)
         n = length(facet)
-        n > 1 && return _facet_grid(x, y, z; facet1=facet[1], facet2=facet[2],
+        n > 1 && return _facet_grid(x, y, z; facet,
                                     group,
                                     kwargs...)
         facet = first(facet)
@@ -54,6 +54,7 @@ function _facet_row(x=nothing, y=nothing, z=nothing;
                     group = nothing, legend=true,
                     xlabel=nothing, ylabel=nothing,
                     kwargs...)
+    isnothing(facet) && throw(ArgumentError("facet argument not set"))
     ks = nothing
     x, ks = make_cells(x, facet, ks)
     y, ks = make_cells(y, facet, ks)
@@ -110,11 +111,13 @@ function _facet_row(x=nothing, y=nothing, z=nothing;
 end
 
 function _facet_grid(x=nothing, y=nothing, z=nothing;
-                     facet1=facet[1], facet2=facet[2], # column, row
+                     facet=nothing,
                      group = nothing, legend=true,
                      xlabel=nothing, ylabel=nothing,
                      kwargs...)
 
+    isnothing(facet) && throw(ArgumentError("Need facet"))
+    facet1, facet2 = facet
     ks1 = ks2 = nothing
     x, ks1, ks2 = make_cells(x, facet1, facet2, ks1, ks2)
     y, ks1, ks2 = make_cells(y, facet1, facet2, ks1, ks2)

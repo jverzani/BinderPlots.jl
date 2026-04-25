@@ -100,7 +100,7 @@ function _color_magic(;
         if T <: Symbol
             if a ∈ _color_scales
                 _set(d, :colorscale, a)
-                cfg.colorscale = a
+                d.colorscale = a
             else
                 a = cgrad(a)
                 T = typeof(a)

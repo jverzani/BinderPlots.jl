@@ -205,6 +205,7 @@ This uses the `invert` function of `SplitApplyCombine`.
 """
 unzip(vs) = invert(vs) # use SplitApplyCombine.invert (copied below)
 unzip(vs::Base.Iterators.Zip) = vs.is
+unzip(::Nothing) = (nothing,)
 #unzip(v,vs...) = unzip([v, vs...])
 unzip(@nospecialize(r::Function), a, b, n) = unzip(r.(range(a, stop=b, length=n)))
 # return (xs, f.(xs)) or (f₁(xs), f₂(xs), ...)
