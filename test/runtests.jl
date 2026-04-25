@@ -238,3 +238,5 @@ end
     @test_throws MethodError nseries(plot([(x1,y1), (x2,y2)]) ) == 2
 
 end
+
+VERSION >= v"1.12" && include("test-jet.jl")
