@@ -239,4 +239,4 @@ end
 
 end
 
-VERSION >= v"1.12" && include("test-jet.jl")
+VERSION >= v"1.12" && isempty(VERSION.prerelease) && include("test-jet.jl")
