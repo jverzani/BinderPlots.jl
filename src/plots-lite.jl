@@ -90,7 +90,7 @@ function plot!(p::Plot, x=nothing, y=nothing, z=nothing;
         type, mode =  SeriesType(seriestype)
         plot!(Val(type), p, x, y, z; seriestype, kws...)
     end
-    p
+    _scene_axes!(p) # layout keywords were applied before any 3d traces existed
 end
 
 
@@ -170,7 +170,7 @@ function _new_plot(;
 
     size!(p, size)
     if !isnothing(axis)
-        for cfg ∈ (p.layout.xaxis, p.layout.yaxis, p.layout.scene.zaxis)
+        for cfg ∈ (_axis(p, :xaxis), _axis(p, :yaxis), _axis(p, :zaxis))
             _axis_magic!(cfg, axis...)
         end
     end
@@ -241,21 +241,21 @@ Set axis label. Use a `text` object to specify font information.
 """
 xlabel!(p::Plot, ::Nothing) = nothing
 function xlabel!(p::Plot, txt; kwargs...)
-    _labelstyle!(p.layout.xaxis, txt; kwargs...)
+    _labelstyle!(_axis(p, :xaxis), txt; kwargs...)
     p
 end
 xlabel!(txt) = xlabel!(current_plot[], txt)
 
 ylabel!(p::Plot, ::Nothing) = nothing
 function ylabel!(p::Plot, txt; kwargs...)
-    _labelstyle!(p.layout.yaxis, txt; kwargs...)
+    _labelstyle!(_axis(p, :yaxis), txt; kwargs...)
     p
 end
 ylabel!(txt) = ylabel!(current_plot[], txt)
 
 zlabel!(p::Plot, ::Nothing) = nothing
 function zlabel!(p::Plot, txt; kwargs...)
-    _labelstyle!(p.layout.scene.zaxis, txt; kwargs...)
+    _labelstyle!(_axis(p, :zaxis), txt; kwargs...)
     p
 end
 zlabel!(txt) = zlabel!(current_plot[], txt)
@@ -315,11 +315,11 @@ zticks!(ticks, ticklabels; kwargs...) =
 
 
 xscale!(p, ::Nothing) = nothing
-xscale!(p, scale) = _scale!(p.layout.xaxis, scale)
+xscale!(p, scale) = _scale!(_axis(p, :xaxis), scale)
 yscale!(p, ::Nothing) = nothing
-yscale!(p, scale) = _scale!(p.layout.yaxis, scale)
+yscale!(p, scale) = _scale!(_axis(p, :yaxis), scale)
 zscale!(p, ::Nothing) = nothing
-zscale!(p, scale) = _scale!(p.layout.scene.zaxis, scale)
+zscale!(p, scale) = _scale!(_axis(p, :zaxis), scale)
 
 # only :log10
 function _scale!(cfg, scale)
@@ -343,17 +343,17 @@ Adjust properties of an axis on a chart using `Plotly` keywords.
 * `showgrid`, `gridcolor`, `gridwidth`
 * `zeroline`, `zerolinecolor`, `zerolinewidth`
 """
-xaxis!(p::Plot, args...; kwargs...) = (_xyzaxis!(p.layout.xaxis, args...; kwargs...); p)
+xaxis!(p::Plot, args...; kwargs...) = (_xyzaxis!(_axis(p, :xaxis), args...; kwargs...); p)
 #xaxis!(p::Plot, args...) = (_axis_magic!(p.layout.xaxis, args...); p)
 xaxis!(args...;kwargs...) = xaxis!(current_plot[], args...; kwargs...)
 #xaxis!(args...) = xaxis!(current_plot[], args...)
 
-yaxis!(p::Plot, args...; kwargs...) = (_xyzaxis!(p.layout.yaxis, args...; kwargs...); p)
+yaxis!(p::Plot, args...; kwargs...) = (_xyzaxis!(_axis(p, :yaxis), args...; kwargs...); p)
 #yaxis!(p::Plot, args...) = (_axis_magic!(p.layout.yaxis, args...); p)
 yaxis!(args...;kwargs...) = yaxis!(current_plot[], args...; kwargs...)
 #yaxis!(args...) = yaxis!(current_plot[], args...)
 
-zaxis!(p::Plot, args...; kwargs...) = (_xyzaxis!(p.layout.scene.zaxis, args...; kwargs...);p)
+zaxis!(p::Plot, args...; kwargs...) = (_xyzaxis!(_axis(p, :zaxis), args...; kwargs...);p)
 #zaxis!(p::Plot, args...) = (_axis_magic!(p.layout.zaxis, args...); p)
 zaxis!(args...;kwargs...) = zaxis!(current_plot[], args...; kwargs...)
 #zaxis!(args...) = zaxis!(current_plot[], args...)
@@ -461,7 +461,7 @@ size!(p::Plot, s::Tuple{Int64, Int64}) = size!(p; width=first(s), height=last(s)
 
 "`xlims!(p, lims)` set `x` limits of plot"
 function xlims!(p::Plot, lims)
-    p.layout.xaxis.range = lims
+    _axis(p, :xaxis).range = lims
     p
 end
 xlims!(p::Plot, ::Nothing) = p
@@ -471,7 +471,7 @@ xlims!(p::Plot, a::Real, b::Real) = xlims!(p, (a,b))
 
 "`ylims!(p, lims)` set `y` limits of plot"
 function ylims!(p::Plot, lims)
-    p.layout.yaxis.range = lims
+    _axis(p, :yaxis).range = lims
     p
 end
 ylims!(p::Plot, ::Nothing) = p
@@ -481,7 +481,7 @@ ylims!(p::Plot, a::Real, b::Real) = ylims!(p, (a,b))
 
 "`zlims!(p, lims)` set `z` limits of plot"
 function zlims!(p::Plot, lims)
-    p.layout.scene.zaxis.range = lims
+    _axis(p, :zaxis).range = lims
     p
 end
 zlims!(p::Plot, ::Nothing) = p
