@@ -5,3 +5,7 @@ Manifest.toml
 /docs/Manifest.toml
 /docs/build/
 default.profraw
+# IDE / editor files
+.idea/
+*.iml
+.vscode/
