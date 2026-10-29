@@ -87,7 +87,6 @@ module BinderPlots
 
 import PlotlyLight
 import PlotlyLight: Plot, Config
-import StructTypes: StructType, StringType
 
 
 
