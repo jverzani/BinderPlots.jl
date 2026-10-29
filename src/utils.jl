@@ -128,7 +128,7 @@ function Base.extrema(p::Plot)
             a,b = extrema(filter(!isnothing, d.y))
             my = min(a, my); My = max(b, My)
         end
-        if !haskey(d, :z) && !isnothing(d.z)
+        if haskey(d, :z) && !isnothing(d.z)
             a,b = extrema(filter(!isnothing, d.z))
             mz = min(a, mz); Mz = max(b, Mz)
         end
