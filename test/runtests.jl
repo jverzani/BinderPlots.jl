@@ -239,4 +239,23 @@ end
 
 end
 
+@testset "axis helpers" begin
+    # ticks and limits go to the named axis
+    p = plot(1:3, [1,2,3])
+    yticks!(p, 0:1:2)
+    @test p.layout.yaxis.dtick == 1
+    @test !haskey(p.layout.xaxis, :dtick)
+    zticks!(p, 0:2:4)
+    @test p.layout.zaxis.dtick == 2
+    xticks!(p, [1,2,3], ["a","b","c"])
+    @test p.layout.xaxis.ticktext == ["a","b","c"]
+    zlims!(p, (0, 1))
+    @test p.layout.zaxis.range == (0, 1)
+    @test isempty(p.layout.xaxis.range)
+
+    # extrema includes z values of 3d traces
+    p = plot([1,2], [3,4], [5,6])
+    @test extrema(p).z == (5, 6)
+end
+
 VERSION >= v"1.12" && isempty(VERSION.prerelease) && include("test-jet.jl")

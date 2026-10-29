@@ -290,25 +290,25 @@ xticks!(p::Plot, ::Nothing; kwargs...) = p
 xticks!(p::Plot, ticks; kwargs...) = xaxis!(p; ticks, kwargs...)
 xticks!(p::Plot, ticks, ticklabels;
         tickfont=nothing, kwargs... ) =
-    xaxis!(;ticks, ticklabels, tickfont, kwargs...)
+    xaxis!(p; ticks, ticklabels, tickfont, kwargs...)
 xticks!(ticks; kwargs...) = xticks!(current_plot[], ticks; kwargs...)
 xticks!(ticks, ticklabels; kwargs...) =
     xticks!(current_plot[], ticks, ticklabels; kwargs...)
 
 yticks!(p::Plot, ::Nothing; kwargs...) = p
-yticks!(p::Plot, ticks; kwargs...) = xaxis!(p; ticks, kwargs...)
+yticks!(p::Plot, ticks; kwargs...) = yaxis!(p; ticks, kwargs...)
 yticks!(p::Plot, ticks, ticklabels;
         tickfont=nothing, kwargs... ) =
-    xaxis!(;ticks, ticklabels, tickfont, kwargs...)
+    yaxis!(p; ticks, ticklabels, tickfont, kwargs...)
 yticks!(ticks; kwargs...) = yticks!(current_plot[], ticks; kwargs...)
 yticks!(ticks, ticklabels; kwargs...) =
     yticks!(current_plot[], ticks, ticklabels; kwargs...)
 
 zticks!(p::Plot, ::Nothing; kwargs...) = p
-zticks!(p::Plot, ticks; kwargs...) = xaxis!(p; ticks, kwargs...)
+zticks!(p::Plot, ticks; kwargs...) = zaxis!(p; ticks, kwargs...)
 zticks!(p::Plot, ticks, ticklabels;
         tickfont=nothing, kwargs... ) =
-    xaxis!(;ticks, ticklabels, tickfont, kwargs...)
+    zaxis!(p; ticks, ticklabels, tickfont, kwargs...)
 zticks!(ticks; kwargs...) = zticks!(current_plot[], ticks; kwargs...)
 zticks!(ticks, ticklabels; kwargs...) =
     zticks!(current_plot[], ticks, ticklabels; kwargs...)
@@ -481,7 +481,7 @@ ylims!(p::Plot, a::Real, b::Real) = ylims!(p, (a,b))
 
 "`zlims!(p, lims)` set `z` limits of plot"
 function zlims!(p::Plot, lims)
-    p.layout.xaxis.range = lims
+    p.layout.zaxis.range = lims
     p
 end
 zlims!(p::Plot, ::Nothing) = p

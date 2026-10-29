@@ -107,6 +107,9 @@ export default_size!
 
 function __init__()
     default_size!(60, 120)
+    # discard any plot left over from the precompile workload
+    current_plot[] = Plot()
+    first_plot[] = true
 end
 
 
@@ -162,6 +165,19 @@ export current
 export arrows, arrows!, poly, poly!, band, band!, hspan!, vspan!, abline!, image!
 export rgb, colormap
 
-
+# compile common code paths ahead of time to cut time-to-first-plot
+using PrecompileTools: @setup_workload, @compile_workload
+@setup_workload begin
+    xs = range(0, 5, length=10)
+    f(x, y) = sin(x) * sin(y)
+    @compile_workload begin
+        p = plot(sin, 0, 2pi)
+        plot!(cos, 0, 2pi; label="cos", linecolor=:red)
+        scatter(1:5, rand(5); marker=(:diamond, 10, 0.5, :red))
+        surface(xs, xs, f)
+        contour(xs, xs, f)
+        sprint(show, MIME("text/html"), p)
+    end
+end
 
 end
