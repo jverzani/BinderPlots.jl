@@ -298,6 +298,36 @@ end
     @test !haskey(p.layout, :scene)
 end
 
+@testset "3d shape keywords" begin
+    q, xs, ys, zs = [0, 0, 0], [1, 0, -1], [0, 1, 0], [0, 0, 1]
+
+    # layout keywords go to the layout; the rest stay on the trace
+    p = ★(q, xs, ys, zs; xlims=(-2, 2), title="star", aspect_ratio=:equal, color=:red)
+    @test p.layout.scene.xaxis.range == (-2, 2)
+    @test p.layout.title == "star"
+    @test p.layout.scene.aspectmode == "data"
+    @test p.data[1].color == :red
+    @test !any(haskey(p.data[1], k) for k in (:xlims, :title, :aspect_ratio))
+
+    p = parallelogram(q, [1, 0, 0], [0, 1, 0]; zlabel="z")
+    @test p.layout.scene.zaxis.title.text == "z"
+
+    p = BinderPlots.arrow([0, 0, 0], [1, 1, 1]; ylims=(0, 2))
+    @test p.layout.scene.yaxis.range == (0, 2)
+    @test !any(haskey(d, :ylims) for d in p.data)
+
+    # skirt passes its keywords along
+    f(x, y) = 4 - x^2 - y^2
+    p = skirt([0, 0.5, 1], [0, 0.5, 1], zeros(3), f; color="blue", xlabel="X")
+    @test p.data[1].color == "blue"
+    @test p.layout.scene.xaxis.title.text == "X"
+
+    # ★! without a plot adds to the current plot
+    p = circ3d(q, 1, [0, 0, 1])
+    ★!(q, xs, ys, zs)
+    @test length(p.data) == 2
+end
+
 @testset "keyword handling" begin
     # magic arguments expand to plotly settings
     p = plot(1:3, [1,2,3]; line=(:dot, 2, :blue), label="a")
