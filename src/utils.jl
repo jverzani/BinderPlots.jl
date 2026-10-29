@@ -115,6 +115,42 @@ end
 
 
 ## ----
+# plotly places the axes of 3d plots in `layout.scene`
+const _3d_types = ("scatter3d", "surface", "mesh3d", "cone", "streamtube", "volume", "isosurface")
+_is3d(p::Plot) = any(d -> string(get(d, :type, "")) ∈ _3d_types, p.data)
+
+# axis configuration for `ax` (:xaxis, :yaxis, :zaxis) where plotly reads it
+_axis(p::Plot, ax::Symbol) =
+    ax == :zaxis || _is3d(p) ? p.layout.scene[ax] : p.layout[ax]
+
+# user-set range of an axis, if any; does not create empty layout entries
+function _axis_range(p::Plot, ax::Symbol)
+    lyt = ax == :zaxis || _is3d(p) ? get(p.layout, :scene, Config()) : p.layout
+    r = get(get(lyt, ax, Config()), :range, Config())
+    isempty(r) ? nothing : r
+end
+
+# move x and y axis settings made before 3d traces were added into the scene
+function _scene_axes!(p::Plot)
+    _is3d(p) || return p
+    for ax ∈ (:xaxis, :yaxis)
+        haskey(p.layout, ax) || continue
+        settings = filter(kv -> first(kv) != :scaleanchor, p.layout[ax]) # 2d only
+        delete!(p.layout, ax)
+        isempty(settings) && continue
+        cfg = p.layout.scene[ax]
+        for (k, v) ∈ settings
+            haskey(cfg, k) || (cfg[k] = v)
+        end
+    end
+    p
+end
+
+# extrema of trace values, skipping `nothing`; surfaces store rows as vectors
+_extrema(x) = extrema((v for v ∈ _flat(x) if !isnothing(v)); init=(Inf, -Inf))
+_flat(x::AbstractVector{<:AbstractVector}) = Iterators.flatten(x)
+_flat(x) = x
+
 """
     extrema(p::Plot)
 
@@ -129,25 +165,22 @@ function Base.extrema(p::Plot)
     mz,Mz = (Inf, -Inf)
     for d ∈ p.data
         if haskey(d, :x) && !isnothing(d.x)
-            a,b = extrema(d.x)
+            a,b = _extrema(d.x)
             mx = min(a, mx); Mx = max(b, Mx)
         end
         if haskey(d, :y)  && !isnothing(d.y)
-            a,b = extrema(filter(!isnothing, d.y))
+            a,b = _extrema(d.y)
             my = min(a, my); My = max(b, My)
         end
         if haskey(d, :z) && !isnothing(d.z)
-            a,b = extrema(filter(!isnothing, d.z))
+            a,b = _extrema(d.z)
             mz = min(a, mz); Mz = max(b, Mz)
         end
 
     end
-    x = isempty(p.layout.xaxis.range) ? (mx,Mx) : p.layout.xaxis.range
-    y = isempty(p.layout.yaxis.range) ? (my,My) : p.layout.yaxis.range
-    # 3d axes live in the scene; look up without creating empty entries
-    scene = get(p.layout, :scene, Config())
-    zrange = get(get(scene, :zaxis, Config()), :range, Config())
-    z = isempty(zrange) ? (mz,Mz) : zrange
+    x = something(_axis_range(p, :xaxis), (mx,Mx))
+    y = something(_axis_range(p, :yaxis), (my,My))
+    z = something(_axis_range(p, :zaxis), (mz,Mz))
     (; x, y, z)
 end
 
@@ -307,7 +340,13 @@ rgb(c::PlotUtils.Colors.RGBA) = convert(_RGB, c)
 # color_names holds 0-255 values; _RGB holds values in [0,1]
 rgb(c::Symbol, α=1.0) = _RGB((PlotUtils.Colors.color_names[string(c)] ./ 255)..., α)
 rgb(c::Symbol, ::Nothing) = rgb(c, 1.0)
-rgb(c::AbstractString, α=1.0) = startswith(c, r"#|rgb") ? c * string(round(Int, 255*α), base=16, pad=2) : rgb(Symbol(c), α)
+function rgb(c::AbstractString, α=1.0)
+    startswith(c, "#") && return c * string(round(Int, 255*α), base=16, pad=2)
+    # CSS "rgb(r,g,b)" or "rgba(r,g,b,a)": replace any alpha
+    m = match(r"^rgba?\(([^,]+),([^,]+),([^,)]+)", replace(c, " " => ""))
+    isnothing(m) || return "rgba($(m[1]),$(m[2]),$(m[3]),$α)"
+    rgb(Symbol(c), α)
+end
 rgb(c::AbstractString, ::Nothing) = startswith(c, r"#|rgb") ? c : rgb(Symbol(c), nothing)
 rgb(r::_RGB, α=1.0) = _RGB(r.r,r.g,r.b,α)
 rgb(r::_RGB, ::Nothing) = r

@@ -268,6 +268,36 @@ end
     @test !haskey(p.layout, :zaxis)
 end
 
+@testset "3d axes" begin
+    # x/y settings given as keywords move into the scene once 3d traces exist
+    p = surface(1:3, 1:3, rand(3, 3); xlims=(0, 5), xlabel="x", aspect_ratio=:equal)
+    @test p.layout.scene.xaxis.range == (0, 5)
+    @test p.layout.scene.xaxis.title.text == "x"
+    @test !haskey(p.layout, :xaxis)
+    @test !haskey(p.layout, :yaxis)   # 2d-only scaleanchor is dropped
+    @test extrema(p).x == (0, 5)
+    p = surface(1:3, 1:3, [1 2 3; 4 5 6; 7 8 9])
+    @test extrema(p).z == (1, 9)
+
+    # helpers called on a 3d plot write to the scene
+    p = plot([1, 2], [3, 4], [5, 6])
+    xlims!(p, (0, 1)); ylabel!(p, "Y"); yaxis!(p; showgrid=false)
+    @test p.layout.scene.xaxis.range == (0, 1)
+    @test p.layout.scene.yaxis.title.text == "Y"
+    @test p.layout.scene.yaxis.showgrid == false
+    @test !haskey(p.layout, :xaxis)
+
+    # including 3d shapes built without plot!
+    p = ★([0, 0, 0], [1, 0, -1], [0, 1, 0], [0, 0, 1])
+    xlims!(p, (-1, 1))
+    @test p.layout.scene.xaxis.range == (-1, 1)
+
+    # 2d plots are unchanged
+    p = plot(1:3, [1, 2, 3]; xlims=(0, 4), xlabel="t")
+    @test p.layout.xaxis.range == (0, 4)
+    @test !haskey(p.layout, :scene)
+end
+
 @testset "keyword handling" begin
     # magic arguments expand to plotly settings
     p = plot(1:3, [1,2,3]; line=(:dot, 2, :blue), label="a")
@@ -300,6 +330,9 @@ end
     @test string(rgb(BinderPlots.RGB(1, 0, 0))) == "rgba(255,0,0,1.0)"
     @test string(rgb(BinderPlots.RGBA(0, 0, 1, 0.5))) == "rgba(0,0,255,0.5)"
     @test rgb("#ff0000", 0.02) == "#ff000005"
+    @test rgb("rgb(255, 0, 0)", 0.5) == "rgba(255,0,0,0.5)"
+    @test rgb("rgba(1,2,3,0.9)", 0.2) == "rgba(1,2,3,0.2)"
+    @test rgb("rgb(1,2,3)", nothing) == "rgb(1,2,3)"
     @test string(range(rgb(0, 0, 0), rgb(200, 100, 0), 3)[2]) == "rgba(100,50,0,1.0)"
 
     # colors are written to plotly as CSS strings
