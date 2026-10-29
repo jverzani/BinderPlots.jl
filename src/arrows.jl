@@ -181,7 +181,8 @@ function arrow!(p::Plot, ::Val{3}, tails, vs; λ = 0.1, showscale=false, kwargs.
     y = collect(Iterators.flatten([[a,b,nothing] for (a,b) ∈ zip(y0,y1)]))
     z = collect(Iterators.flatten([[a,b,nothing] for (a,b) ∈ zip(z0,z1)]))
 
-    d1 = Config(;x,y,z, type="scatter3d", mode="lines", showscale, kwargs...)
+    kws = _3d_layout_styles!(p; kwargs...)
+    d1 = Config(;x,y,z, type="scatter3d", mode="lines", showscale, kws...)
     push!(p.data, d1)
 
     x,y,z = unzip(tips)
@@ -204,7 +205,7 @@ function arrow!(p::Plot, ::Val{3}, tails, vs; λ = 0.1, showscale=false, kwargs.
                 sizemode="absolute",
                 sizeref=  λ*M,
                 showscale,
-                kwargs...)
+                kws...)
     push!(p.data,  d2)
-    p
+    _scene_axes!(p)
 end

@@ -1,3 +1,11 @@
+# 3d shapes build their traces directly from keywords; apply any layout
+# keywords to the plot and return the rest for the trace
+function _3d_layout_styles!(p::Plot; kwargs...)
+    kws = _layout_styles!(p; kwargs...)
+    kws = _aspect_ratio!(p; kws...)
+    _camera_styles!(p; kws...)
+end
+
 """
     ★(q, xs, ys, zs; kwargs...)
     ★!([p::Plot], q, xs, ys, zs; kwargs...)
@@ -24,7 +32,7 @@ function ★(q, xs, ys, zs; kwargs...)
 end
 
 ★!(q, xs, ys, zs; kwargs...) =
-    ★!(current_plot[], xs, ys, zs; kwargs...)
+    ★!(current_plot[], q, xs, ys, zs; kwargs...)
 
 function ★!(p::Plot, q, xs, ys, zs; kwargs...)
     x = copy(xs); pushfirst!(x, q[1])
@@ -36,9 +44,10 @@ function ★!(p::Plot, q, xs, ys, zs; kwargs...)
     j = 1:n-1
     k = mod.(1 .+ j, n)
 
-    d = Config(;x,y,z,i,j,k, type="mesh3d", kwargs...)
+    kws = _3d_layout_styles!(p; kwargs...)
+    d = Config(;x,y,z,i,j,k, type="mesh3d", kws...)
     push!(p.data, d)
-    p
+    _scene_axes!(p)
 end
 
 """
@@ -76,9 +85,10 @@ function ziptie!(p::Plot, xs, ys, zs, xs′, ys′, zs′; kwargs...)
     i = collect(Base.Iterators.flatten(zip(iₛ, iₛ .+ 1)))
     j = i .+ 1
     k = i .+ 2
-    d = Config(; x, y, z, i, j, k, type="mesh3d", kwargs...)
+    kws = _3d_layout_styles!(p; kwargs...)
+    d = Config(; x, y, z, i, j, k, type="mesh3d", kws...)
     push!(p.data, d)
-    p
+    _scene_axes!(p)
 end
 
 ## ----
@@ -205,8 +215,8 @@ end
 
 # xs, ys, zs are path in space
 function skirt(xs, ys, zs, f::Function; kwargs...)
-    p, kwargs = _new_plot()
-    skirt!(p, xs, ys, zs, f)
+    p, kwargs = _new_plot(; kwargs...)
+    skirt!(p, xs, ys, zs, f; kwargs...)
 end
 skirt!(xs, ys, zs, f::Function; kwargs...) =
     skirt!(current_plot[], xs, ys, zs, f; kwargs...)
