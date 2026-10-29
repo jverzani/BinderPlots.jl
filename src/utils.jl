@@ -46,7 +46,7 @@ struct XYZ{X,Y,Z}
     x::X
     y::Y
     z::Z
-    n::Integer
+    n::Int
 end
 
 """
@@ -61,9 +61,9 @@ scatter(BinderPlots.Series(1:3, 1:5), markersize=(20,10))
 
 Not exported.
 """
-struct Series
-    ss
-    Series(as...) = new(as)
+struct Series{T<:Tuple}
+    ss::T
+    Series(as...) = new{typeof(as)}(as)
 end
 
 # how many traces does the data represent
@@ -115,6 +115,14 @@ end
 
 
 ## ----
+"""
+    extrema(p::Plot)
+
+Return a named tuple `(; x, y, z)` with the extent of the data in plot `p` along each axis. An axis range set by the user (e.g. through `xlims!`) takes precedence over the data.
+
+!!! note
+    This is type piracy: `extrema` is owned by `Base` and `Plot` by `PlotlyLight`. It is kept for convenience (e.g. `y0, y1 = extrema(current()).y`), but if it causes conflicts it should be renamed to a function owned by this package.
+"""
 function Base.extrema(p::Plot)
     mx,Mx = (Inf, -Inf)
     my,My = (Inf, -Inf)
@@ -136,7 +144,10 @@ function Base.extrema(p::Plot)
     end
     x = isempty(p.layout.xaxis.range) ? (mx,Mx) : p.layout.xaxis.range
     y = isempty(p.layout.yaxis.range) ? (my,My) : p.layout.yaxis.range
-    z = isempty(p.layout.zaxis.range) ? (mz,Mz) : p.layout.zaxis.range
+    # 3d axes live in the scene; look up without creating empty entries
+    scene = get(p.layout, :scene, Config())
+    zrange = get(get(scene, :zaxis, Config()), :range, Config())
+    z = isempty(zrange) ? (mz,Mz) : zrange
     (; x, y, z)
 end
 
@@ -168,15 +179,13 @@ end
 
 
 function Recycler(kw::Base.Pairs)
-    rs = [KWRecycler(Val(k), kw[k]) for k in keys(kw)]
-    y = Base.Pairs((;zip(keys(kw), rs)...), keys(kw))
-    Recycler(y, 0)
+    nt = values(kw)
+    rs = map(KWRecycler, keys(nt), values(nt))
+    Recycler(pairs(NamedTuple{keys(nt)}(rs)), 0)
 end
 
 function Base.getindex(R::Recycler{T}, i::Int) where {T <: Base.Pairs}
-    ks = keys(R.itr)
-    vals = [R.itr[k][i] for k in ks]
-    Base.Pairs((; zip(ks, vals)...), ks)
+    pairs(map(r -> r[i], values(R.itr)))
 end
 
 
@@ -363,14 +372,13 @@ Construct a *polygon* to be plotted.
 When plotting shapes, use `stroke` argument to `fill` to adjust bounding
 line properties.
 """
-struct Shape{X, Y}
-    x::AbstractVector{X}
-    y::AbstractVector{Y}
-    function Shape(x::X,y::Y) where {X, Y}
+struct Shape{X, Y, VX<:AbstractVector{X}, VY<:AbstractVector{Y}}
+    x::VX
+    y::VY
+    function Shape(x,y)
         length(x) == length(y) || throw(ArgumentError("Need same length objects"))
         x′, y′ = float(x), float(y)
-        X′, Y′ = eltype(x′), eltype(y′)
-        new{X′,Y′}(x′, y′)
+        new{eltype(x′),eltype(y′),typeof(x′),typeof(y′)}(x′, y′)
     end
 end
 

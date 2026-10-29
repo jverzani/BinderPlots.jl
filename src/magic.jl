@@ -10,6 +10,10 @@
 _set(d, key, value) = (d[key] = value)
 _set(d, key, ::Nothing) = d
 
+# merge magic settings in `d` into the keyword arguments
+_merge_kws(kwargs, d::Config) =
+    isempty(d) ? kwargs : pairs(merge(values(kwargs), NamedTuple(d)))
+
 
 
 ## --- Magic
@@ -91,8 +95,9 @@ end
 function _color_magic(;
                       seriescolor=nothing, palette=seriescolor, color_palette=palette,
                       kwargs...)
+    isnothing(color_palette) && return kwargs
     d = Config()
-    for a ∈ something(_expand_color(color_palette), tuple())
+    for a ∈ _expand_color(color_palette)
         T = typeof(a)
         if T <: AbstractString
             a,T = Symbol(a), Symbol
@@ -121,10 +126,7 @@ function _color_magic(;
         end
     end
 
-    # covert back
-    kws = merge(Dict(kwargs...), d)
-    nt = NamedTuple(kws)
-    Base.Pairs(nt, keys(nt))
+    _merge_kws(kwargs, d)
 end
 
 function _line_magic(; line=nothing, kwargs...)
@@ -169,10 +171,7 @@ function _line_magic(; line=nothing, kwargs...)
     _set(d, :linecolor, linecolor)
 
     # ---
-    # covert back
-    kws = merge(Dict(kwargs...), d)
-    nt = NamedTuple(kws)
-    Base.Pairs(nt, keys(nt))
+    _merge_kws(kwargs, d)
 
 end
 
@@ -221,10 +220,7 @@ function _fill_magic(; fill=nothing, kwargs...)
 
 
     # ---
-    # covert back
-    kws = merge(Dict(kwargs...), d)
-    nt = NamedTuple(kws)
-    Base.Pairs(nt, keys(nt))
+    _merge_kws(kwargs, d)
 
 end
 
@@ -264,146 +260,15 @@ function _marker_magic(; marker=nothing, kwargs...)
     _set(d, :markercolor, markercolor)
 
     # ---
-    # covert back
-    kws = merge(Dict(kwargs...), d)
-    nt = NamedTuple(kws)
-    Base.Pairs(nt, keys(nt))
+    _merge_kws(kwargs, d)
 
 end
 
 
 
-# too much heere
-function _make_magic(;
-                     #line = nothing,
-                     #marker = nothing,
-                     #fill = nothing,
-                     kwargs...)
-
-    d = Config()
-
-    #=
-    # fill = ...
-    fillcolor = nothing
-    fillalpha = nothing
-    fillstyle = get(kwargs, :fillstyle, nothing)
-
-    for a ∈ something(fill, tuple())
-        T = typeof(a)
-        if T <: Symbol || T <: AbstractString
-            a′ = Symbol(a)
-            if a′ ∈ _fillstyles
-                fillstyle = a′
-            else
-                fillcolor = a′
-            end
-        elseif T <: _RGB
-            fillcolor = a
-        elseif T <: Bool
-            a && (fillstyle = :toself) # true false
-        elseif T <: Real
-            if 0 < a < 1
-                fillalpha =a
-            elseif iszero(a)
-                fillstyle = :tozeroy
-            elseif isa(a, Integer)
-                @warn "Fill to a non-zero y value is not implemented"
-            end
-        elseif T <: Stroke
-            # adjust line properties
-            _set(d, :linewidth, a.width)
-            _set(d, :linecolor, rgb(a.color, a.alpha))
-            _set(d, :linestyle, a.style)
-        end
-    end
-    if isa(fillcolor, Union{String,Symbol}) && !isnothing(fillalpha)
-        fillcolor = rgb(fillcolor, fillalpha)
-    end
-    _set(d, :fillcolor, fillcolor)
-    !isnothing(fillcolor) && _set(d, :fill, fillstyle)
-
-
-    ## line = ...
-    linecolor = nothing
-    linealpha = nothing
-    for a ∈ something(line, tuple())
-        T = typeof(a)
-        if T <: Stroke
-            _set(d, :linewidth, a.width)
-            _set(d, :linecolor, rgb(a.color, a.alpha))
-            _set(d, :linestyle, a.style)
-        elseif T <: Symbol || T <: AbstractString
-            a′ = Symbol(a)
-            if a′ ∈ _linestyles
-                _set(d, :linestyle, a′)
-            elseif a′ ∈ keys(_lineshapes)
-                _set(d, :lineshape, _lineshapes[a′])
-            else
-                linecolor = a′
-            end
-        elseif T <: _RGB
-            linecolor = a
-            _set(d, :linecolor, a)
-        elseif T <: RGB || T <: RGBA
-            linecolor = rgb(a)
-            _set(d, :linecolor, rgb(a))
-        elseif T <:  Number
-            T <: Integer && _set(d, :linewidth, a)
-            0 < a < 1 && (linealpha = a)
-        end
-    end
-    if !isnothing(linealpha)
-        if isa(linecolor, Union{String,Symbol})
-            linecolor = rgb(linecolor, linealpha)
-        else
-            _set(d, :opacity, linealpha)
-        end
-    end
-    _set(d, :linecolor, linecolor)
-
-
-    ## marker = ...
-    markercolor = nothing
-    markeralpha = nothing
-    for a ∈ something(marker, tuple())
-        T = typeof(a)
-        if T <: Symbol || T <: AbstractString
-            a′ = Symbol(a)
-            if a′ ∈ _marker_shapes
-                _set(d, :markershape, replace(string(a), "_" => "-"))
-            else
-                markercolor = a′
-            end
-        elseif T <:  _RGB
-            markercolor = a
-        elseif T <: RGB || T <: RGBA
-            markercolor = rgb(a)
-        elseif T <: Number
-            if T <: Integer
-                _set(d, :markersize, a)
-            end
-            0 < a < 1 && (markeralpha = a)
-        end
-    end
-    if  !isnothing(markeralpha)
-        if isa(markercolor, Union{String,Symbol})
-            markercolor = rgb(markercolor, markeralpha)
-        else
-            _set(d, :opacity, markeralpha)
-        end
-    end
-    _set(d, :markercolor, markercolor)
-    =#
-
-    kws = kwargs
-    kws = _line_magic(; kws...)
+function _make_magic(; kwargs...)
+    kws = _line_magic(; kwargs...)
     kws = _fill_magic(; kws...)
     kws = _marker_magic(; kws...)
-    kws = _color_magic(; kws...)
-
-    # covert back
-    kws = merge(Dict(kws...), d)
-    nt = NamedTuple(kws)
-    Base.Pairs(nt, keys(nt))
-
+    _color_magic(; kws...)
 end

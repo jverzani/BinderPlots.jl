@@ -170,8 +170,8 @@ function _new_plot(;
 
     size!(p, size)
     if !isnothing(axis)
-        for ax ∈ (:xaxis, :yaxis, :zaxis)
-            _axis_magic!(p.layout[ax], axis...)
+        for cfg ∈ (p.layout.xaxis, p.layout.yaxis, p.layout.scene.zaxis)
+            _axis_magic!(cfg, axis...)
         end
     end
     p, kwargs
@@ -255,7 +255,7 @@ ylabel!(txt) = ylabel!(current_plot[], txt)
 
 zlabel!(p::Plot, ::Nothing) = nothing
 function zlabel!(p::Plot, txt; kwargs...)
-    _labelstyle!(p.layout.zaxis, txt; kwargs...)
+    _labelstyle!(p.layout.scene.zaxis, txt; kwargs...)
     p
 end
 zlabel!(txt) = zlabel!(current_plot[], txt)
@@ -319,7 +319,7 @@ xscale!(p, scale) = _scale!(p.layout.xaxis, scale)
 yscale!(p, ::Nothing) = nothing
 yscale!(p, scale) = _scale!(p.layout.yaxis, scale)
 zscale!(p, ::Nothing) = nothing
-zscale!(p, scale) = _scale!(p.layout.zaxis, scale)
+zscale!(p, scale) = _scale!(p.layout.scene.zaxis, scale)
 
 # only :log10
 function _scale!(cfg, scale)
@@ -353,7 +353,7 @@ yaxis!(p::Plot, args...; kwargs...) = (_xyzaxis!(p.layout.yaxis, args...; kwargs
 yaxis!(args...;kwargs...) = yaxis!(current_plot[], args...; kwargs...)
 #yaxis!(args...) = yaxis!(current_plot[], args...)
 
-zaxis!(p::Plot, args...; kwargs...) = (_xyzaxis!(p.layout.zaxis, args...; kwargs...);p)
+zaxis!(p::Plot, args...; kwargs...) = (_xyzaxis!(p.layout.scene.zaxis, args...; kwargs...);p)
 #zaxis!(p::Plot, args...) = (_axis_magic!(p.layout.zaxis, args...); p)
 zaxis!(args...;kwargs...) = zaxis!(current_plot[], args...; kwargs...)
 #zaxis!(args...) = zaxis!(current_plot[], args...)
@@ -481,7 +481,7 @@ ylims!(p::Plot, a::Real, b::Real) = ylims!(p, (a,b))
 
 "`zlims!(p, lims)` set `z` limits of plot"
 function zlims!(p::Plot, lims)
-    p.layout.zaxis.range = lims
+    p.layout.scene.zaxis.range = lims
     p
 end
 zlims!(p::Plot, ::Nothing) = p
@@ -496,11 +496,11 @@ scroll_zoom!(x::Bool) = scroll_zoom!(current_plot[], x)
 ## ---- configuration
 # These gather specific values for lines, marker and text style
 # match Plots stroke
-struct Stroke
-    width
-    color
-    alpha
-    style
+struct Stroke{W,C,A,S}
+    width::W
+    color::C
+    alpha::A
+    style::S
 end
 Recycler(x::Stroke) = Recycler((x,))
 
@@ -847,7 +847,7 @@ function _layout_styles!(p::Plot;
     # axis
     isa(xaxis, Tuple) ? xaxis!(p, xaxis...) : xaxis!(p, xaxis)
     isa(yaxis, Tuple) ? yaxis!(p, yaxis...) : yaxis!(p, yaxis)
-    isa(zaxis, Tuple) ? zaxis!(p, zaxis...) : zaxis!(p, zaxis)
+    isa(zaxis, Tuple) ? zaxis!(p, zaxis...) : isnothing(zaxis) || zaxis!(p, zaxis) # avoid an empty scene in 2d plots
 
 
     # layout
@@ -881,10 +881,5 @@ end
 
 # recycle magic so that all is well in the world
 # bypass Config(...)
-KWRecycler(::Val{T}, o) where {T} = Recycler(o) # default
-KWRecycler(::Val{:line}, o::Config) =  Recycler(o)
-KWRecycler(::Val{:line}, o) = MagicRecycler(o)
-KWRecycler(::Val{:marker}, o::Config) =  Recycler(o)
-KWRecycler(::Val{:marker}, o) =  MagicRecycler(o)
-KWRecycler(::Val{:fill}, o::Config) =  Recycler(o)
-KWRecycler(::Val{:fill}, o) = MagicRecycler(o)
+KWRecycler(k::Symbol, o) =
+    k ∈ (:line, :marker, :fill) && !isa(o, Config) ? MagicRecycler(o) : Recycler(o)

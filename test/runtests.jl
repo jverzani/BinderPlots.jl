@@ -246,16 +246,49 @@ end
     @test p.layout.yaxis.dtick == 1
     @test !haskey(p.layout.xaxis, :dtick)
     zticks!(p, 0:2:4)
-    @test p.layout.zaxis.dtick == 2
+    @test p.layout.scene.zaxis.dtick == 2
     xticks!(p, [1,2,3], ["a","b","c"])
     @test p.layout.xaxis.ticktext == ["a","b","c"]
     zlims!(p, (0, 1))
-    @test p.layout.zaxis.range == (0, 1)
+    @test p.layout.scene.zaxis.range == (0, 1)
     @test isempty(p.layout.xaxis.range)
 
     # extrema includes z values of 3d traces
     p = plot([1,2], [3,4], [5,6])
     @test extrema(p).z == (5, 6)
+    @test !haskey(p.layout, :scene)  # extrema does not add a scene
+    zlims!(p, (0, 10))
+    @test extrema(p).z == (0, 10)
+
+    # 3d axis settings go to the scene
+    zlabel!(p, "z")
+    @test p.layout.scene.zaxis.title.text == "z"
+    zaxis!(p; showgrid=false)
+    @test p.layout.scene.zaxis.showgrid == false
+    @test !haskey(p.layout, :zaxis)
+end
+
+@testset "keyword handling" begin
+    # magic arguments expand to plotly settings
+    p = plot(1:3, [1,2,3]; line=(:dot, 2, :blue), label="a")
+    c = p.data[end]
+    @test c.line.dash == :dot
+    @test c.line.width == 2
+    @test c.line.color == :blue
+    @test c.name == "a"
+
+    p = scatter(1:3, [1,2,3]; marker=(:diamond, 10, 0.5, :red))
+    c = p.data[end]
+    @test c.marker.symbol == "diamond"
+    @test c.marker.size == 10
+
+    p = plot(sin, 0, 1; fill=(:green, 0.2))
+    @test p.data[end].fillcolor == rgb(:green, 0.2)
+
+    # keyword values are recycled across series
+    p = plot([1 2; 3 4]; linecolor=(:red, :blue), label=("one", "two"))
+    @test [c.line.color for c in p.data] == [:red, :blue]
+    @test [c.name for c in p.data] == ["one", "two"]
 end
 
 VERSION >= v"1.12" && isempty(VERSION.prerelease) && include("test-jet.jl")
