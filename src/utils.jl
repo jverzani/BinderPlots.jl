@@ -295,18 +295,19 @@ end
 Recycler(x::_RGB) = Recycler((x,))
 
 function Base.convert(::Type{_RGB}, c::PlotUtils.Colors.RGB)
-    (; b,g,r) = c
-    _RGB(b,g,r,1.0)
+    (; r,g,b) = c
+    _RGB(r,g,b,1.0)
 end
 function Base.convert(::Type{_RGB}, c::PlotUtils.Colors.RGBA)
-    (; b,g,r,alpha) = c
-    _RGB(b,g,r,alpha)
+    (; r,g,b,alpha) = c
+    _RGB(r,g,b,alpha)
 end
 rgb(c::PlotUtils.Colors.RGB) = convert(_RGB, c)
 rgb(c::PlotUtils.Colors.RGBA) = convert(_RGB, c)
-rgb(c::Symbol, α=1.0) = _RGB(PlotUtils.Colors.color_names[string(c)]..., α)
-rgb(c::Symbol, ::Nothing) = _RGB(PlotUtils.Colors.color_names[string(c)]..., 1.0)
-rgb(c::AbstractString, α=1.0) = startswith(c, r"#|rgb") ? c * string(round(Int, 255*α), base=16) : rgb(Symbol(c), α)
+# color_names holds 0-255 values; _RGB holds values in [0,1]
+rgb(c::Symbol, α=1.0) = _RGB((PlotUtils.Colors.color_names[string(c)] ./ 255)..., α)
+rgb(c::Symbol, ::Nothing) = rgb(c, 1.0)
+rgb(c::AbstractString, α=1.0) = startswith(c, r"#|rgb") ? c * string(round(Int, 255*α), base=16, pad=2) : rgb(Symbol(c), α)
 rgb(c::AbstractString, ::Nothing) = startswith(c, r"#|rgb") ? c : rgb(Symbol(c), nothing)
 rgb(r::_RGB, α=1.0) = _RGB(r.r,r.g,r.b,α)
 rgb(r::_RGB, ::Nothing) = r
@@ -315,12 +316,15 @@ rgb(::Nothing, ::Any) = nothing
 
 
 
-StructType(::Type{BinderPlots._RGB}) = StringType()
-
+# CSS rgba uses 0-255 for the color channels
 function Base.string(c::_RGB)
     (;r,g,b,α) = c
-    "rgba($r,$g,$b,$α)"
+    R, G, B = round.(Int, 255 .* (r, g, b))
+    "rgba($R,$G,$B,$α)"
 end
+
+# PlotlyLight writes JSON with its own `json` function
+PlotlyLight.json(io::IO, c::_RGB) = PlotlyLight.json(io, string(c))
 
 # make a colormap
 function colormap(cname, N=100; kwargs...)

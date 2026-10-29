@@ -291,4 +291,25 @@ end
     @test [c.name for c in p.data] == ["one", "two"]
 end
 
+
+@testset "colors" begin
+    # CSS rgba uses 0-255 channels; all constructors agree
+    @test string(rgb(255, 0, 0)) == "rgba(255,0,0,1.0)"
+    @test string(rgb(:red)) == "rgba(255,0,0,1.0)"
+    @test string(rgb("red", 0.5)) == "rgba(255,0,0,0.5)"
+    @test string(rgb(BinderPlots.RGB(1, 0, 0))) == "rgba(255,0,0,1.0)"
+    @test string(rgb(BinderPlots.RGBA(0, 0, 1, 0.5))) == "rgba(0,0,255,0.5)"
+    @test rgb("#ff0000", 0.02) == "#ff000005"
+    @test string(range(rgb(0, 0, 0), rgb(200, 100, 0), 3)[2]) == "rgba(100,50,0,1.0)"
+
+    # colors are written to plotly as CSS strings
+    html(p) = sprint(show, MIME("text/html"), p)
+    p = plot(1:2, [1, 2]; linecolor=rgb(255, 0, 0))
+    @test occursin("\"rgba(255,0,0,1.0)\"", html(p))
+    p = plot(rand(5, 3); linecolor=range(rgb(10, 10, 10), rgb(200, 200, 200), 3))
+    @test occursin("\"rgba(200,200,200,1.0)\"", html(p))
+    p = surface(rand(5, 5); palette=(cgrad(:bamO50),))
+    @test occursin("rgba(", html(p))
+end
+
 VERSION >= v"1.12" && isempty(VERSION.prerelease) && include("test-jet.jl")
